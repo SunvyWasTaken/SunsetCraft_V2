@@ -1,0 +1,3 @@
+[submodule "SunsetEngine"]
+	path = SunsetEngine
+	url = https://github.com/SunvyWasTaken/SunsetEngine.git
