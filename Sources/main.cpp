@@ -3,14 +3,14 @@
 //
 
 #include "SunsetEngine.h"
-#include "Sources/Game.h"
+#include "TestLayer.h"
 
 int main()
 {
     const SunsetEngine::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2"};
     SunsetEngine::Application app{setting};
 
-    app.PushLayer<GameLayer>();
+    app.PushLayer<TestLayer>();
 
     app.Run();
 }

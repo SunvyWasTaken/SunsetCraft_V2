@@ -7,9 +7,18 @@
 #include <imgui.h>
 #include <random>
 #include <glm/gtc/type_ptr.hpp>
+#include <utility>
 
 #include "FastNoiseSIMD.h"
+#include "BaseObject/BaseCube.h"
+#include "Render/BufferObject/Buffers.h"
+#include "Render/Camera.h"
+#include "Render/Drawable.h"
 #include "Render/Image.h"
+#include "Render/Material.h"
+#include "Render/Mesh.h"
+#include "Render/RenderCommande.h"
+#include "Render/Shader.h"
 #include "Render/Texture.h"
 
 namespace
@@ -35,6 +44,8 @@ namespace
     std::vector<Noises> noises;
     std::vector<std::string> NoiseName;
     int currentSelectNoise = 0;
+
+    SunsetEngine::Camera camera;
 
     FastNoiseSIMD::NoiseType ItoNoise(const int i)
     {
@@ -89,23 +100,53 @@ namespace
         }
         return 0.f;
     }
+
+    std::unique_ptr<SunsetEngine::Drawable> m_Chunk;
+
+    constexpr std::uint32_t EncodeVoxel(
+        const std::uint32_t x,
+        const std::uint32_t y,
+        const std::uint32_t z)
+    {
+        return  (x & 0x1F) |
+                ((y & 0x1F) << 5) |
+                ((z & 0x1F) << 10);
+    }
 }
 
 GameLayer::GameLayer()
 {
     NoiseValue = FastNoiseSIMD::GetEmptySet(50*50);
+
+    m_Chunk = std::make_unique<SunsetEngine::Drawable>();
+
+    m_Chunk->m_Material = std::make_shared<SunsetEngine::Material>();
+    m_Chunk->m_Material->m_Shader = std::make_shared<SunsetEngine::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");
 }
 
 GameLayer::~GameLayer()
 {
+    m_Chunk = nullptr;
     texture.reset();
     FastNoiseSIMD::FreeNoiseSet(NoiseValue);
 }
 
 void GameLayer::OnUpdate(float dt)
 {
+    const float speed = 100.f * dt;
+    if (SunsetEngine::InputRegister::IsKeyPress("Forward"))
+        camera.MoveForward(speed);
+    if (SunsetEngine::InputRegister::IsKeyPress("Backward"))
+        camera.MoveBackward(speed);
+    if (SunsetEngine::InputRegister::IsKeyPress("Right"))
+        camera.MoveRight(speed);
+    if (SunsetEngine::InputRegister::IsKeyPress("Left"))
+        camera.MoveLeft(speed);
+
     if (!IsDirty)
         return;
+
+    std::vector<uint32_t> chunkData;
 
     if (currentSelectNoise >= noises.size() || currentSelectNoise < 0)
         currentSelectNoise = 0;
@@ -121,10 +162,24 @@ void GameLayer::OnUpdate(float dt)
 
     unsigned char* data = new unsigned char[50 * 50 * 4];
 
+    for (int x = 0; x < 50; ++x)
+    {
+        for (int z = 0; z < 50; ++z)
+        {
+            float val = NoiseValue[z + x * 50];
+            val *= 50.f;
+            for (int y = 0; y < 256; ++y)
+            {
+                if (y < val)
+                chunkData.emplace_back(EncodeVoxel(x, y, z));
+            }
+        }
+    }
+
     for (int i = 0; i < 50 * 50; ++i)
     {
         NoiseValue[i] = (NoiseValue[i] + 1) / 2;
-        unsigned char value = static_cast<unsigned char>(GetNoiseValue(n, NoiseValue[i]) * 255.0f);
+        const auto value = static_cast<unsigned char>(GetNoiseValue(n, NoiseValue[i]) * 255.0f);
         data[i * 4] = value;
         data[i * 4 + 1] = value;
         data[i * 4 + 2] = value;
@@ -140,13 +195,25 @@ void GameLayer::OnUpdate(float dt)
 
     std::unique_ptr tex = std::make_unique<SunsetEngine::Textures>("noise", imgs, 50, 50);
 
-    n.texture.reset(tex.release());
+    n.texture = std::move(tex);
+
+    SunsetEngine::BufferElement buffer{SunsetEngine::ShaderDataType::UInt, "data"};
+    buffer.divisor = 1;
+
+    m_Chunk->m_Mesh = SunsetEngine::Mesh::CreateVertexOnly(chunkData.data(), sizeof(uint8_t), chunkData.size(), {buffer});
+    m_Chunk->m_RenderState.HasIndice = false;
+    m_Chunk->m_RenderState.DrawInstance = true;
 
     IsDirty = false;
 }
 
 void GameLayer::OnDraw()
 {
+    SunsetEngine::RenderCommande::UseCamera(camera);
+    SunsetEngine::RenderCommande::Submit(*m_Chunk);
+
+    SunsetEngine::DrawCube({0.f, 0.f, 0.f}, {1.f, 1.f, 1.f}, {255.f, 255.f, 255.f, 255.f});
+
     ImGui::Begin("Parameter");
     ImGui::InputInt("Seed", &seed);
     ImGui::SameLine();
