@@ -10,14 +10,11 @@
 #include <utility>
 
 #include "FastNoiseSIMD.h"
-#include "../cmake-build-debug/vcpkg_installed/x64-linux/include/GLFW/glfw3.h"
 #include "BaseObject/BaseCube.h"
-#include "Render/BufferObject/Buffers.h"
 #include "Render/Camera.h"
 #include "Render/Drawable.h"
 #include "Render/Image.h"
 #include "Render/Material.h"
-#include "Render/Mesh.h"
 #include "Render/RenderCommande.h"
 #include "Render/Shader.h"
 #include "Render/Texture.h"
