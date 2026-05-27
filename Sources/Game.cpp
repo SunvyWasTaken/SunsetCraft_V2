@@ -27,6 +27,7 @@ namespace
     std::ranlux24_base rng{std::random_device{}()};
     int ImageSize = 100;
     bool IsDirty = false;
+    bool noisesGen = false;
 
     struct Noises
     {
@@ -116,7 +117,7 @@ namespace
 
 GameLayer::GameLayer()
 {
-    NoiseValue = FastNoiseSIMD::GetEmptySet(50*50);
+    NoiseValue = FastNoiseSIMD::GetEmptySet(100*100);
 
     m_Chunk = std::make_unique<SunsetEngine::Drawable>();
 
@@ -133,7 +134,7 @@ GameLayer::~GameLayer()
 
 void GameLayer::OnUpdate(float dt)
 {
-    const float speed = 100.f * dt;
+    const float speed = 10.f * dt;
     if (SunsetEngine::InputRegister::IsKeyPress("Forward"))
         camera.MoveForward(speed);
     if (SunsetEngine::InputRegister::IsKeyPress("Backward"))
@@ -142,6 +143,17 @@ void GameLayer::OnUpdate(float dt)
         camera.MoveRight(speed);
     if (SunsetEngine::InputRegister::IsKeyPress("Left"))
         camera.MoveLeft(speed);
+    if (SunsetEngine::InputRegister::IsKeyPress("Up"))
+        camera.MoveUp(speed);
+    if (SunsetEngine::InputRegister::IsKeyPress("Down"))
+        camera.MoveDown(speed);
+
+    glm::vec2 mous = SunsetEngine::InputRegister::GetMouseDelta();
+    if (mous.length() >= 0.1)
+    {
+        camera.AddPitch(-mous.y);
+        camera.AddYaw(mous.x);
+    }
 
     if (!IsDirty)
         return;
@@ -158,51 +170,32 @@ void GameLayer::OnUpdate(float dt)
     noise->SetFractalOctaves(n.FractalOctaves);
     noise->SetFrequency(n.Frequency);
 
-    noise->FillNoiseSet(NoiseValue, 0, 0, 0, 50, 50, 1);
+    noise->FillNoiseSet(NoiseValue, 0, 0, 0, 100, 100, 1);
 
-    unsigned char* data = new unsigned char[50 * 50 * 4];
+    unsigned char* data = new unsigned char[100 * 100 * 4];
 
-    for (int x = 0; x < 50; ++x)
+    for (int i = 0; i < 100 * 100; ++i)
     {
-        for (int z = 0; z < 50; ++z)
-        {
-            float val = NoiseValue[z + x * 50];
-            val *= 50.f;
-            for (int y = 0; y < 256; ++y)
-            {
-                if (y < val)
-                chunkData.emplace_back(EncodeVoxel(x, y, z));
-            }
-        }
-    }
-
-    for (int i = 0; i < 50 * 50; ++i)
-    {
-        NoiseValue[i] = (NoiseValue[i] + 1) / 2;
-        const auto value = static_cast<unsigned char>(GetNoiseValue(n, NoiseValue[i]) * 255.0f);
+        const float val = (NoiseValue[i] + 1) / 2;
+        const auto value = static_cast<unsigned char>(GetNoiseValue(n, val) * 255.0f);
         data[i * 4] = value;
         data[i * 4 + 1] = value;
         data[i * 4 + 2] = value;
         data[i * 4 + 3] = 255;
     }
 
+    noisesGen = true;
+
     std::vector<SunsetEngine::Image> imgs;
     imgs.emplace_back();
     imgs.at(0).SetData(data);
-    imgs.at(0).width = 50;
-    imgs.at(0).height = 50;
+    imgs.at(0).width = 100;
+    imgs.at(0).height = 100;
     imgs.at(0).nbrChannels = 4;
 
-    std::unique_ptr tex = std::make_unique<SunsetEngine::Textures>("noise", imgs, 50, 50);
+    std::unique_ptr tex = std::make_unique<SunsetEngine::Textures>("noise", imgs, 100, 100);
 
     n.texture = std::move(tex);
-
-    SunsetEngine::BufferElement buffer{SunsetEngine::ShaderDataType::UInt, "data"};
-    buffer.divisor = 1;
-
-    m_Chunk->m_Mesh = SunsetEngine::Mesh::CreateVertexOnly(chunkData.data(), sizeof(uint8_t), chunkData.size(), {buffer});
-    m_Chunk->m_RenderState.HasIndice = false;
-    m_Chunk->m_RenderState.DrawInstance = true;
 
     IsDirty = false;
 }
@@ -210,9 +203,25 @@ void GameLayer::OnUpdate(float dt)
 void GameLayer::OnDraw()
 {
     SunsetEngine::RenderCommande::UseCamera(camera);
-    SunsetEngine::RenderCommande::Submit(*m_Chunk);
 
-    SunsetEngine::DrawCube({0.f, 0.f, 0.f}, {1.f, 1.f, 1.f}, {255.f, 255.f, 255.f, 255.f});
+    if (noisesGen)
+    {
+        for (int x = 0; x < 100; ++x)
+        {
+            for (int z = 0; z < 100; ++z)
+            {
+                float val = GetNoiseValue(noises[currentSelectNoise], NoiseValue[z + x * 100]);
+                val *= 24.f;
+                for (int y = -10; y < 25; ++y)
+                {
+                    if (y < val)
+                    {
+                        SunsetEngine::DrawCube({x, y, z}, {}, {});
+                    }
+                }
+            }
+        }
+    }
 
     ImGui::Begin("Parameter");
     ImGui::InputInt("Seed", &seed);
@@ -223,7 +232,7 @@ void GameLayer::OnDraw()
         seed = dist(rng);
     }
 
-    ImGui::InputInt("Image Size", &ImageSize);
+    // ImGui::InputInt("Image Size", &ImageSize);
 
     if (ImGui::Button("delete"))
     {}
@@ -291,11 +300,11 @@ void GameLayer::OnDraw()
     }
 
     ImGui::End();
-    ImGui::Begin("Viewport");
-    for (auto& n : noises)
-    {
-        if (n.texture)
-            ImGui::Image(n.texture->operator()(), {(float)ImageSize, (float)ImageSize});
-    }
-    ImGui::End();
+    // ImGui::Begin("Viewport");
+    // for (auto& n : noises)
+    // {
+    //     if (n.texture)
+    //         ImGui::Image(n.texture->operator()(), {(float)ImageSize, (float)ImageSize});
+    // }
+    // ImGui::End();
 }
