@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "FastNoiseSIMD.h"
+#include "../cmake-build-debug/vcpkg_installed/x64-linux/include/GLFW/glfw3.h"
 #include "BaseObject/BaseCube.h"
 #include "Render/BufferObject/Buffers.h"
 #include "Render/Camera.h"
@@ -25,17 +26,67 @@ namespace
 {
     int seed = 0;
     std::ranlux24_base rng{std::random_device{}()};
-    int ImageSize = 100;
+    int ImageSize = 170;
     bool IsDirty = false;
     bool noisesGen = false;
+
+    bool MoveCamera = false;
 
     struct Noises
     {
         int NoiseType = 0;
         int FractalOctaves = 1;
-        float Frequency = 1.f;
+        float Frequency = 0.5f;
         std::unique_ptr<SunsetEngine::Textures> texture = nullptr;
         std::vector<glm::fvec2> points;
+        float* noise = nullptr;
+
+        Noises()
+        {
+            noise = FastNoiseSIMD::GetEmptySet(100*100);
+        }
+
+        ~Noises()
+        {
+            if (noise)
+                FastNoiseSIMD::FreeNoiseSet(noise);
+        }
+
+        Noises(const Noises&) = delete;
+        Noises& operator=(const Noises&) = delete;
+
+        Noises(Noises&& other) noexcept
+        {
+            NoiseType = other.NoiseType;
+            FractalOctaves = other.FractalOctaves;
+            Frequency = other.Frequency;
+
+            texture = std::move(other.texture);
+            points = std::move(other.points);
+
+            noise = other.noise;
+            other.noise = nullptr;
+        }
+
+        Noises& operator=(Noises&& other) noexcept
+        {
+            if (this == &other) return *this;
+
+            if (noise)
+                FastNoiseSIMD::FreeNoiseSet(noise);
+
+            NoiseType = other.NoiseType;
+            FractalOctaves = other.FractalOctaves;
+            Frequency = other.Frequency;
+
+            texture = std::move(other.texture);
+            points = std::move(other.points);
+
+            noise = other.noise;
+            other.noise = nullptr;
+
+            return *this;
+        }
     };
 
     float* NoiseValue = nullptr;
@@ -77,7 +128,7 @@ namespace
         }
     }
 
-    float GetNoiseValue(Noises& n, float noise)
+    float GetNoiseValue(const Noises& n, float noise)
     {
         if (n.points.empty())
             return 0.f;
@@ -123,6 +174,7 @@ GameLayer::GameLayer()
 
     m_Chunk->m_Material = std::make_shared<SunsetEngine::Material>();
     m_Chunk->m_Material->m_Shader = std::make_shared<SunsetEngine::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");
+    SunsetEngine::InputRegister::RegisterAction("Shift", [&](const SunsetEngine::Event::Action& acc)->bool{ if (acc == SunsetEngine::Event::Action::Press){ MoveCamera = !MoveCamera; } return true;});
 }
 
 GameLayer::~GameLayer()
@@ -149,10 +201,13 @@ void GameLayer::OnUpdate(float dt)
         camera.MoveDown(speed);
 
     glm::vec2 mous = SunsetEngine::InputRegister::GetMouseDelta();
-    if (mous.length() >= 0.1)
+    if (MoveCamera)
     {
-        camera.AddPitch(-mous.y);
-        camera.AddYaw(mous.x);
+        if (mous.length() >= 0.1)
+        {
+            camera.AddPitch(-mous.y);
+            camera.AddYaw(mous.x);
+        }
     }
 
     if (!IsDirty)
@@ -163,40 +218,51 @@ void GameLayer::OnUpdate(float dt)
     if (currentSelectNoise >= noises.size() || currentSelectNoise < 0)
         currentSelectNoise = 0;
 
-    Noises& n = noises[currentSelectNoise];
+    {
+        Noises& n = noises[currentSelectNoise];
 
-    std::unique_ptr<FastNoiseSIMD> noise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD(seed));
-    noise->SetNoiseType(ItoNoise(n.NoiseType));
-    noise->SetFractalOctaves(n.FractalOctaves);
-    noise->SetFrequency(n.Frequency);
+        std::unique_ptr<FastNoiseSIMD> noise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD(seed));
+        noise->SetNoiseType(ItoNoise(n.NoiseType));
+        noise->SetFractalOctaves(n.FractalOctaves);
+        noise->SetFrequency(n.Frequency);
 
-    noise->FillNoiseSet(NoiseValue, 0, 0, 0, 100, 100, 1);
+        noise->FillNoiseSet(n.noise, 0, 0, 0, 100, 100, 1);
 
-    unsigned char* data = new unsigned char[100 * 100 * 4];
+        unsigned char* data = new unsigned char[100 * 100 * 4];
+
+        for (int i = 0; i < 100 * 100; ++i)
+        {
+            const float val = (n.noise[i] + 1) / 2;
+            const auto value = static_cast<unsigned char>(GetNoiseValue(n, val) * 255.0f);
+            data[i * 4] = value;
+            data[i * 4 + 1] = value;
+            data[i * 4 + 2] = value;
+            data[i * 4 + 3] = 255;
+        }
+
+        std::vector<SunsetEngine::Image> imgs;
+        imgs.emplace_back();
+        imgs.at(0).SetData(data);
+        imgs.at(0).width = 100;
+        imgs.at(0).height = 100;
+        imgs.at(0).nbrChannels = 4;
+
+        std::unique_ptr tex = std::make_unique<SunsetEngine::Textures>("noise", imgs, 100, 100);
+
+        n.texture = std::move(tex);
+    }
 
     for (int i = 0; i < 100 * 100; ++i)
     {
-        const float val = (NoiseValue[i] + 1) / 2;
-        const auto value = static_cast<unsigned char>(GetNoiseValue(n, val) * 255.0f);
-        data[i * 4] = value;
-        data[i * 4 + 1] = value;
-        data[i * 4 + 2] = value;
-        data[i * 4 + 3] = 255;
+        NoiseValue[i] = 0.f;
+        for (const auto& n : noises)
+        {
+            NoiseValue[i] += GetNoiseValue(n, n.noise[i]);
+        }
+        NoiseValue[i] /= noises.size();
     }
 
     noisesGen = true;
-
-    std::vector<SunsetEngine::Image> imgs;
-    imgs.emplace_back();
-    imgs.at(0).SetData(data);
-    imgs.at(0).width = 100;
-    imgs.at(0).height = 100;
-    imgs.at(0).nbrChannels = 4;
-
-    std::unique_ptr tex = std::make_unique<SunsetEngine::Textures>("noise", imgs, 100, 100);
-
-    n.texture = std::move(tex);
-
     IsDirty = false;
 }
 
@@ -210,9 +276,9 @@ void GameLayer::OnDraw()
         {
             for (int z = 0; z < 100; ++z)
             {
-                float val = GetNoiseValue(noises[currentSelectNoise], NoiseValue[z + x * 100]);
+                float val = NoiseValue[z + x * 100];
                 val *= 24.f;
-                for (int y = -10; y < 25; ++y)
+                for (int y = -25; y < 25; ++y)
                 {
                     if (y < val)
                     {
@@ -232,7 +298,7 @@ void GameLayer::OnDraw()
         seed = dist(rng);
     }
 
-    // ImGui::InputInt("Image Size", &ImageSize);
+    ImGui::InputInt("Image Size", &ImageSize);
 
     if (ImGui::Button("delete"))
     {}
@@ -275,7 +341,7 @@ void GameLayer::OnDraw()
         const char* items[]{ "Value", "ValueFractal", "Perlin", "PerlinFractal", "Simplex", "SimplexFractal", "WhiteNoise", "Cellular", "Cubic", "CubicFractal" };
         ImGui::Combo("Noise Type", &n.NoiseType, items, 10);
         ImGui::InputInt("Fractal Octave", &n.FractalOctaves);
-        ImGui::SliderFloat("Frequency", &n.Frequency, 0.001f, 2);
+        ImGui::SliderFloat("Frequency", &n.Frequency, 0.0001f, 0.5000f);
         if (ImGui::Button("Add points"))
         {
             n.points.emplace_back();
@@ -300,11 +366,11 @@ void GameLayer::OnDraw()
     }
 
     ImGui::End();
-    // ImGui::Begin("Viewport");
-    // for (auto& n : noises)
-    // {
-    //     if (n.texture)
-    //         ImGui::Image(n.texture->operator()(), {(float)ImageSize, (float)ImageSize});
-    // }
-    // ImGui::End();
+    ImGui::Begin("Viewport");
+    for (auto& n : noises)
+    {
+        if (n.texture)
+            ImGui::Image(n.texture->operator()(), {(float)ImageSize, (float)ImageSize});
+    }
+    ImGui::End();
 }
