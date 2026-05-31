@@ -4,11 +4,17 @@
 
 #include "Noise.h"
 
+#include <fstream>
+#include <utility>
+#include <nlohmann/json.hpp>
+
 #include "Chunk.h"
 
 namespace
 {
     std::vector<NoiseData> noiseData;
+
+    constexpr const char* DefaultNoiseDataPath = "NoiseData.json";
 
     FastNoiseSIMD::NoiseType ItoNoise(const int i)
     {
@@ -45,12 +51,12 @@ namespace
             return 0.f;
 
         if (noise <= n.front().x)
-            return n.front().x;
+            return n.front().y;
 
         if (noise >= n.back().x)
-            return n.back().x;
+            return n.back().y;
 
-        for (size_t i = 0; i < n.size(); ++i)
+        for (size_t i = 0; i + 1 < n.size(); ++i)
         {
             const glm::vec2 p1 = n[i];
             const glm::vec2 p2 = n[i + 1];
@@ -120,6 +126,87 @@ void Noise::Update(int seed)
         n.noise->SetFractalOctaves(n.FractalOctaves);
         n.noise->SetFrequency(n.Frequency);
     }
+}
+
+bool Noise::Save(const std::string& filepath)
+{
+    nlohmann::json root = nlohmann::json::array();
+
+    for (const auto& n : noiseData)
+    {
+        nlohmann::json points = nlohmann::json::array();
+        for (const auto& point : n.points)
+        {
+            points.push_back({ { "x", point.x }, { "y", point.y } });
+        }
+
+        root.push_back({
+            { "name", n.Name },
+            { "noiseType", n.NoiseType },
+            { "fractalOctaves", n.FractalOctaves },
+            { "frequency", n.Frequency },
+            { "amplitude", n.Amplitude },
+            { "points", points }
+        });
+    }
+
+    std::ofstream file(SAVE_PATH + filepath);
+    if (!file.is_open())
+        return false;
+
+    file << root.dump(4);
+    return true;
+}
+
+bool Noise::Load(const std::string& filepath, int seed)
+{
+    std::ifstream file(SAVE_PATH + filepath);
+    if (!file.is_open())
+    {
+        Update(seed);
+        return false;
+    }
+
+    nlohmann::json root = nlohmann::json::parse(file, nullptr, false);
+    if (!root.is_array())
+    {
+        Update(seed);
+        return false;
+    }
+
+    std::vector<NoiseData> loadedNoiseData;
+    for (const auto& item : root)
+    {
+        if (!item.is_object())
+            continue;
+
+        NoiseData data;
+        data.Name = item.value("name", "");
+        data.NoiseType = item.value("noiseType", 0);
+        data.FractalOctaves = item.value("fractalOctaves", 1);
+        data.Frequency = item.value("frequency", 0.025f);
+        data.Amplitude = item.value("amplitude", 24);
+        data.points.clear();
+
+        for (const auto& point : item.value("points", nlohmann::json::array()))
+        {
+            if (!point.is_object())
+                continue;
+
+            data.points.emplace_back(point.value("x", 0.f), point.value("y", 0.f));
+        }
+
+        if (data.points.empty())
+        {
+            data.points = { {-1.f, -1.f}, {1.f, 1.f} };
+        }
+
+        loadedNoiseData.emplace_back(std::move(data));
+    }
+
+    noiseData = std::move(loadedNoiseData);
+    Update(seed);
+    return true;
 }
 
 NoiseData & Noise::GetData(int index)

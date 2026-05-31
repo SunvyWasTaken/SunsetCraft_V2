@@ -27,6 +27,9 @@ namespace
 
     std::vector<Chunk> chunks;
 
+    bool LastNoiseSaveSucceeded = true;
+    bool LastNoiseLoadSucceeded = true;
+
     constexpr float CurveMin = -1.f;
     constexpr float CurveMax = 1.f;
     constexpr float CurvePointRadius = 5.f;
@@ -273,6 +276,24 @@ void GameLayer::OnDraw()
         seed = dist(rng);
         Noise::SetSeed(seed);
     }
+
+    static char noiseDataPath[128] = "NoiseData.json";
+    ImGui::InputText("Noise Data File", noiseDataPath, 128);
+    if (ImGui::Button("Save Noises"))
+    {
+        LastNoiseSaveSucceeded = Noise::Save(noiseDataPath);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load Noises"))
+    {
+        LastNoiseLoadSucceeded = Noise::Load(noiseDataPath, seed);
+        CurrentSelectedNoise = 0;
+        IsDirty = true;
+    }
+    if (!LastNoiseSaveSucceeded)
+        ImGui::TextUnformatted("Save failed: cannot open file.");
+    if (!LastNoiseLoadSucceeded)
+        ImGui::TextUnformatted("Load failed: file not found.");
 
     static char name[50] = "name?";
     ImGui::InputText("Noise Name", name, 50);
