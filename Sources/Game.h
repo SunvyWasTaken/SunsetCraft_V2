@@ -7,7 +7,7 @@
 
 #include "Core/Layer.h"
 
-class GameLayer : public SunsetEngine::Layer
+class GameLayer : public Sunset::Layer
 {
 public:
     GameLayer();

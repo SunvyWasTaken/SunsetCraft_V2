@@ -8,8 +8,8 @@
 
 int main()
 {
-    const SunsetEngine::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2"};
-    SunsetEngine::Application app{setting};
+    const Sunset::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2"};
+    Sunset::Application app{setting};
 
     app.PushLayer<GameLayer>();
 

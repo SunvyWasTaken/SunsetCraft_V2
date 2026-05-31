@@ -34,7 +34,7 @@ namespace
         int NoiseType = 0;
         int FractalOctaves = 1;
         float Frequency = 0.5f;
-        std::unique_ptr<SunsetEngine::Textures> texture = nullptr;
+        std::unique_ptr<Sunset::Textures> texture = nullptr;
         std::vector<glm::fvec2> points;
         float* noise = nullptr;
 
@@ -88,13 +88,13 @@ namespace
 
     float* NoiseValue = nullptr;
 
-    std::unique_ptr<SunsetEngine::Textures> texture = nullptr;
+    std::unique_ptr<Sunset::Textures> texture = nullptr;
 
     std::vector<Noises> noises;
     std::vector<std::string> NoiseName;
     int currentSelectNoise = 0;
 
-    SunsetEngine::Camera camera;
+    Sunset::Camera camera;
 
     FastNoiseSIMD::NoiseType ItoNoise(const int i)
     {
@@ -150,7 +150,7 @@ namespace
         return 0.f;
     }
 
-    std::unique_ptr<SunsetEngine::Drawable> m_Chunk;
+    std::unique_ptr<Sunset::Drawable> m_Chunk;
 
     constexpr std::uint32_t EncodeVoxel(
         const std::uint32_t x,
@@ -167,11 +167,11 @@ GameLayer::GameLayer()
 {
     NoiseValue = FastNoiseSIMD::GetEmptySet(100*100);
 
-    m_Chunk = std::make_unique<SunsetEngine::Drawable>();
+    m_Chunk = std::make_unique<Sunset::Drawable>();
 
-    m_Chunk->m_Material = std::make_shared<SunsetEngine::Material>();
-    m_Chunk->m_Material->m_Shader = std::make_shared<SunsetEngine::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");
-    SunsetEngine::InputRegister::RegisterAction("Shift", [&](const SunsetEngine::Event::Action& acc)->bool{ if (acc == SunsetEngine::Event::Action::Press){ MoveCamera = !MoveCamera; } return true;});
+    m_Chunk->m_Material = std::make_shared<Sunset::Material>();
+    m_Chunk->m_Material->m_Shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");
+    Sunset::InputRegister::RegisterAction("Shift", [&](const Sunset::Event::Action& acc)->bool{ if (acc == Sunset::Event::Action::Press){ MoveCamera = !MoveCamera; } return true;});
 }
 
 GameLayer::~GameLayer()
@@ -184,20 +184,20 @@ GameLayer::~GameLayer()
 void GameLayer::OnUpdate(float dt)
 {
     const float speed = 10.f * dt;
-    if (SunsetEngine::InputRegister::IsKeyPress("Forward"))
+    if (Sunset::InputRegister::IsKeyPress("Forward"))
         camera.MoveForward(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Backward"))
+    if (Sunset::InputRegister::IsKeyPress("Backward"))
         camera.MoveBackward(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Right"))
+    if (Sunset::InputRegister::IsKeyPress("Right"))
         camera.MoveRight(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Left"))
+    if (Sunset::InputRegister::IsKeyPress("Left"))
         camera.MoveLeft(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Up"))
+    if (Sunset::InputRegister::IsKeyPress("Up"))
         camera.MoveUp(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Down"))
+    if (Sunset::InputRegister::IsKeyPress("Down"))
         camera.MoveDown(speed);
 
-    glm::vec2 mous = SunsetEngine::InputRegister::GetMouseDelta();
+    glm::vec2 mous = Sunset::InputRegister::GetMouseDelta();
     if (MoveCamera)
     {
         if (mous.length() >= 0.1)
@@ -237,14 +237,14 @@ void GameLayer::OnUpdate(float dt)
             data[i * 4 + 3] = 255;
         }
 
-        std::vector<SunsetEngine::Image> imgs;
+        std::vector<Sunset::Image> imgs;
         imgs.emplace_back();
         imgs.at(0).SetData(data);
         imgs.at(0).width = 100;
         imgs.at(0).height = 100;
         imgs.at(0).nbrChannels = 4;
 
-        std::unique_ptr tex = std::make_unique<SunsetEngine::Textures>("noise", imgs, 100, 100);
+        std::unique_ptr tex = std::make_unique<Sunset::Textures>("noise", imgs, 100, 100);
 
         n.texture = std::move(tex);
     }
@@ -265,21 +265,24 @@ void GameLayer::OnUpdate(float dt)
 
 void GameLayer::OnDraw()
 {
-    SunsetEngine::RenderCommande::UseCamera(camera);
+    Sunset::RenderCommande::UseCamera(camera);
 
-    if (noisesGen)
     {
-        for (int x = 0; x < 100; ++x)
+        SS_PROFILE_SCOPE("Draw All Cube");
+        if (noisesGen)
         {
-            for (int z = 0; z < 100; ++z)
+            for (int x = 0; x < 100; ++x)
             {
-                float val = NoiseValue[z + x * 100];
-                val *= 24.f;
-                for (int y = -25; y < 25; ++y)
+                for (int z = 0; z < 100; ++z)
                 {
-                    if (y < val)
+                    float val = NoiseValue[z + x * 100];
+                    val *= 24.f;
+                    for (int y = -25; y < 25; ++y)
                     {
-                        SunsetEngine::DrawCube({x, y, z}, {}, {});
+                        if (y < val)
+                        {
+                            Sunset::DrawCube({x, y, z}, {}, {});
+                        }
                     }
                 }
             }

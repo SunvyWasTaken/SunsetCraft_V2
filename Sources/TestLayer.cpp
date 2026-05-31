@@ -10,11 +10,11 @@
 
 namespace
 {
-    SunsetEngine::Camera camera;
+    Sunset::Camera camera;
 }
 
 TestLayer::TestLayer()
-    : SunsetEngine::Layer()
+    : Sunset::Layer()
 {
 }
 
@@ -25,20 +25,20 @@ TestLayer::~TestLayer()
 void TestLayer::OnUpdate(float dt)
 {
     const float speed = 1.f * dt;
-    if (SunsetEngine::InputRegister::IsKeyPress("Forward"))
+    if (Sunset::InputRegister::IsKeyPress("Forward"))
         camera.MoveForward(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Backward"))
+    if (Sunset::InputRegister::IsKeyPress("Backward"))
         camera.MoveBackward(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Right"))
+    if (Sunset::InputRegister::IsKeyPress("Right"))
         camera.MoveRight(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Left"))
+    if (Sunset::InputRegister::IsKeyPress("Left"))
         camera.MoveLeft(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Up"))
+    if (Sunset::InputRegister::IsKeyPress("Up"))
         camera.MoveUp(speed);
-    if (SunsetEngine::InputRegister::IsKeyPress("Down"))
+    if (Sunset::InputRegister::IsKeyPress("Down"))
         camera.MoveDown(speed);
 
-    glm::vec2 mous = SunsetEngine::InputRegister::GetMouseDelta();
+    glm::vec2 mous = Sunset::InputRegister::GetMouseDelta();
     if (mous.length() >= 0.1)
     {
         camera.AddPitch(-mous.y);
@@ -50,7 +50,7 @@ void TestLayer::OnUpdate(float dt)
 
 void TestLayer::OnDraw()
 {
-    SunsetEngine::RenderCommande::UseCamera(camera);
-    SunsetEngine::DrawCube({-0.5f, -0.5f, -2.f}, {1, 1, 1}, {});
-    SunsetEngine::DrawCube({-1.5f, -1.5f, -3.5f}, {1, 1, 1}, {});
+    Sunset::RenderCommande::UseCamera(camera);
+    Sunset::DrawCube({-0.5f, -0.5f, -2.f}, {1, 1, 1}, {});
+    Sunset::DrawCube({-1.5f, -1.5f, -3.5f}, {1, 1, 1}, {});
 }

@@ -7,7 +7,7 @@
 
 #include "Core/Layer.h"
 
-class TestLayer : public SunsetEngine::Layer
+class TestLayer : public Sunset::Layer
 {
     public:
     TestLayer();
