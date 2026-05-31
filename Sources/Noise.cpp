@@ -76,8 +76,7 @@ void Noise::Init(int seed)
     noiseData.clear();
 
     // Load All noiseData
-
-    Update(seed);
+    Load(DefaultNoiseDataPath, seed);
 }
 
 void Noise::Destroy()
