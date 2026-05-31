@@ -82,7 +82,10 @@ void Noise::Destroy()
 void Noise::SetSeed(int seed)
 {
     for (auto& n : noiseData)
-        n.noise->SetSeed(seed);
+    {
+        if (n.noise)
+            n.noise->SetSeed(seed);
+    }
 }
 
 void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
@@ -108,6 +111,10 @@ void Noise::Update(int seed)
 {
     for (auto& n : noiseData)
     {
+        std::sort(n.points.begin(), n.points.end(), [](const glm::fvec2& left, const glm::fvec2& right)
+        {
+            return left.x < right.x;
+        });
         n.noise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD(seed));
         n.noise->SetNoiseType(ItoNoise(n.NoiseType));
         n.noise->SetFractalOctaves(n.FractalOctaves);
