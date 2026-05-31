@@ -8,7 +8,7 @@
 
 Chunk::Chunk(const glm::vec2 &position)
     : m_Position(position)
-    , data()
+    , NoiseValue()
 {
 }
 
@@ -22,12 +22,13 @@ void Chunk::Draw() const
     {
         for (int z = 0; z < SIZE_Z; ++z)
         {
-            for (int y = 0; y < SIZE_Y; ++y)
+            const float val = NoiseValue[z + x * SIZE_X];
+            for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
-                // if (data[] == BlockRegistry::AIR)
-                //     continue;
-                // else (data[] == BlockRegistry::STONE)
-                //     Sunset::DrawCube({x, y, z}, {}, {});
+                if (y == floor(val))
+                {
+                    Sunset::DrawCube({x + m_Position.x, y, z + m_Position.y}, {}, {});
+                }
             }
         }
     }

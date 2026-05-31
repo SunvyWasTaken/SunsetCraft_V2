@@ -21,20 +21,40 @@ namespace
     bool MoveCamera = false;
     Sunset::Camera camera;
 
-    bool IsDirty = true;
+    bool IsDirty = false;
     bool noiseGen = false;
-    std::vector<float> NoiseValue;
+
+    int CurrentSelectedNoise = 0;
+
+    std::vector<Chunk> chunks;
 }
 
 GameLayer::GameLayer()
 {
     Noise::Init(seed);
-    Sunset::InputRegister::RegisterAction("Shift", [&](const Sunset::Event::Action& acc)->bool{ if (acc == Sunset::Event::Action::Press){ MoveCamera = !MoveCamera; } return true;});
+    Sunset::InputRegister::RegisterAction("Shift",
+        [&](const Sunset::Event::Action& acc)->bool
+        {
+            if (acc == Sunset::Event::Action::Press)
+            {
+                MoveCamera = !MoveCamera;
+            }
+            return true;
+        });
+    chunks.emplace_back(glm::ivec2{0, 0});
+    chunks.emplace_back(glm::ivec2{SIZE_X, 0});
+    chunks.emplace_back(glm::ivec2{-SIZE_X, 0});
+    chunks.emplace_back(glm::ivec2{0, SIZE_Z});
+    chunks.emplace_back(glm::ivec2{0, -SIZE_Z});
+    chunks.emplace_back(glm::ivec2{SIZE_X, -SIZE_Z});
+    chunks.emplace_back(glm::ivec2{SIZE_X, SIZE_Z});
+    chunks.emplace_back(glm::ivec2{-SIZE_X, SIZE_Z});
+    chunks.emplace_back(glm::ivec2{-SIZE_X, -SIZE_Z});
 }
 
 GameLayer::~GameLayer()
 {
-    NoiseValue.clear();
+    chunks.clear();
     Noise::Destroy();
 }
 
@@ -67,7 +87,10 @@ void GameLayer::OnUpdate(float dt)
     if (!IsDirty)
         return;
 
-    Noise::Get(NoiseValue, {0, 0});
+    for (auto& c : chunks)
+    {
+        Noise::Get(c.NoiseValue, c.m_Position);
+    }
     noiseGen = true;
 
     IsDirty = false;
@@ -81,20 +104,8 @@ void GameLayer::OnDraw()
         SS_PROFILE_SCOPE("Draw All Cube");
         if (noiseGen)
         {
-            for (int x = 0; x < SIZE_X; ++x)
-            {
-                for (int z = 0; z < SIZE_Z; ++z)
-                {
-                    float val = NoiseValue[z + x * SIZE_X];
-                    for (int y = -25; y < 25; ++y)
-                    {
-                        if (y < val)
-                        {
-                            Sunset::DrawCube({x, y, z}, {}, {});
-                        }
-                    }
-                }
-            }
+            for (const auto& c : chunks)
+                c.Draw();
         }
     }
 
@@ -108,10 +119,67 @@ void GameLayer::OnDraw()
         Noise::SetSeed(seed);
     }
 
-    // if(ImGui::Button("Generate"))
-    // {
-    //     IsDirty = true;
-    // }
+    static char name[50] = "name?";
+    ImGui::InputText("Noise Name", name, 50);
+    if (ImGui::Button("Add"))
+    {
+        Noise::GetDatas().emplace_back();
+        Noise::GetDatas().back().Name = name;
+    }
+
+    if (!Noise::GetDatas().empty())
+    {
+        if (ImGui::BeginCombo("Noise", Noise::GetData(CurrentSelectedNoise).Name.c_str()))
+        {
+            for (int i = 0; i < Noise::GetDatas().size(); ++i)
+            {
+                bool isSelected = (CurrentSelectedNoise == i);
+
+                if (ImGui::Selectable(Noise::GetData(i).Name.c_str(), isSelected))
+                {
+                    CurrentSelectedNoise = i;
+                }
+
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+
+            ImGui::EndCombo();
+        }
+
+        NoiseData& n = Noise::GetData(CurrentSelectedNoise);
+
+        const char* items[]{ "Value", "ValueFractal", "Perlin", "PerlinFractal", "Simplex", "SimplexFractal", "WhiteNoise", "Cellular", "Cubic", "CubicFractal" };
+        ImGui::Combo("Noise Type", &n.NoiseType, items, 10);
+        ImGui::InputInt("Fractal Octave", &n.FractalOctaves);
+        ImGui::SliderFloat("Frequency", &n.Frequency, 0.0001f, 0.5000f);
+        ImGui::SliderInt("Amplitude", &n.Amplitude, 1, 250);
+        if (ImGui::Button("Add points"))
+        {
+            n.points.emplace_back();
+        }
+        for (int i = 0; i < n.points.size(); ++i)
+        {
+            std::string pointName = "##Point " + std::to_string(i);
+            ImGui::DragFloat2(pointName.c_str(), glm::value_ptr(n.points[i]), 0.001f, -1, 1);
+            ImGui::SameLine();
+            std::function<void()> action;
+            if (ImGui::Button(("-##" + pointName).c_str()))
+            {
+                action = [&](){ n.points.erase(n.points.begin() + i); };
+            }
+            if (action)
+                action();
+        }
+
+        if(ImGui::Button("Generate"))
+        {
+            Noise::Update(seed);
+            IsDirty = true;
+        }
+    }
 
     ImGui::End();
 }

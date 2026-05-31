@@ -5,21 +5,9 @@
 #include "Noise.h"
 
 #include "Chunk.h"
-#include "FastNoiseSIMD.h"
 
 namespace
 {
-    struct NoiseData
-    {
-        int NoiseType = 0;
-        int FractalOctaves = 1;
-
-        float Frequency = 0.025f;
-        float Amplitude = 24.f;
-        std::unique_ptr<FastNoiseSIMD> noise = nullptr;
-        std::vector<glm::fvec2> points{ {-1, -1}, {1, 1} };
-    };
-
     std::vector<NoiseData> noiseData;
 
     FastNoiseSIMD::NoiseType ItoNoise(const int i)
@@ -79,16 +67,11 @@ namespace
 
 void Noise::Init(int seed)
 {
-    // Load All noiseData
-    noiseData.emplace_back();
+    noiseData.clear();
 
-    for (auto& n : noiseData)
-    {
-        n.noise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD(seed));
-        n.noise->SetNoiseType(ItoNoise(n.NoiseType));
-        n.noise->SetFractalOctaves(n.FractalOctaves);
-        n.noise->SetFrequency(n.Frequency);
-    }
+    // Load All noiseData
+
+    Update(seed);
 }
 
 void Noise::Destroy()
@@ -112,11 +95,32 @@ void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
         if (!n.noise)
             continue;
 
-        n.noise->FillNoiseSet(NoiseSet, location.x, location.y, 0, SIZE_X, SIZE_Z, 0);
+        n.noise->FillNoiseSet(NoiseSet, location.x, location.y, 0, SIZE_X, SIZE_Z, 1);
         for (int i = 0; i < SIZE_X * SIZE_Z; ++i)
         {
             data[i] += GetNoiseValue(n.points, NoiseSet[i]) * n.Amplitude;
         }
     }
     FastNoiseSIMD::FreeNoiseSet(NoiseSet);
+}
+
+void Noise::Update(int seed)
+{
+    for (auto& n : noiseData)
+    {
+        n.noise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD(seed));
+        n.noise->SetNoiseType(ItoNoise(n.NoiseType));
+        n.noise->SetFractalOctaves(n.FractalOctaves);
+        n.noise->SetFrequency(n.Frequency);
+    }
+}
+
+NoiseData & Noise::GetData(int index)
+{
+    return noiseData[index];
+}
+
+std::vector<NoiseData> & Noise::GetDatas()
+{
+    return noiseData;
 }
