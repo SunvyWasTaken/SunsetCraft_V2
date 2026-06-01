@@ -4,7 +4,6 @@
 
 #include "Game.h"
 #include "SunsetEngine.h"
-#include "TestLayer.h"
 
 int main()
 {
