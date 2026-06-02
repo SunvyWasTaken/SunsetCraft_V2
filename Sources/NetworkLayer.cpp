@@ -34,5 +34,11 @@ void NetworkLayer::OnDraw()
     {
         Sunset::NetworkService::Get().Join({});
     }
+    char mess[120] = "/0";
+    ImGui::InputText("##message", mess, 120);
+    if (ImGui::Button("Send"))
+    {
+        Sunset::NetworkService::Get().Send({});
+    }
     ImGui::End();
 }
