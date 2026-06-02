@@ -16,4 +16,8 @@ public:
     void OnUpdate(float dt) override;
 
     void OnDraw() override;
+
+private:
+    std::array<char, 120> m_Message{};
+    std::vector<std::string> m_ChatLog;
 };
