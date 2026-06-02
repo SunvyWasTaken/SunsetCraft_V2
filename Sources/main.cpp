@@ -3,6 +3,7 @@
 //
 
 #include "Game.h"
+#include "NetworkLayer.h"
 #include "SunsetEngine.h"
 
 int main()
@@ -10,6 +11,7 @@ int main()
     const Sunset::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2"};
     Sunset::Application app{setting};
 
+    app.PushLayer<NetworkLayer>();
     app.PushLayer<GameLayer>();
 
     app.Run();
