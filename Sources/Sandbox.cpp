@@ -25,19 +25,19 @@ Sandbox::~Sandbox()
 
 void Sandbox::OnUpdate(float deltatime)
 {
-    const float speed = 10.f * deltatime;
-    if (Sunset::InputRegister::IsKeyPress("Forward"))
-        camera.MoveForward(speed);
-    if (Sunset::InputRegister::IsKeyPress("Backward"))
-        camera.MoveBackward(speed);
-    if (Sunset::InputRegister::IsKeyPress("Right"))
-        camera.MoveRight(speed);
-    if (Sunset::InputRegister::IsKeyPress("Left"))
-        camera.MoveLeft(speed);
-    if (Sunset::InputRegister::IsKeyPress("Up"))
-        camera.MoveUp(speed);
-    if (Sunset::InputRegister::IsKeyPress("Down"))
-        camera.MoveDown(speed);
+    // const float speed = 10.f * deltatime;
+    // if (Sunset::InputRegister::IsKeyPress("Forward"))
+    //     camera.MoveForward(speed);
+    // if (Sunset::InputRegister::IsKeyPress("Backward"))
+    //     camera.MoveBackward(speed);
+    // if (Sunset::InputRegister::IsKeyPress("Right"))
+    //     camera.MoveRight(speed);
+    // if (Sunset::InputRegister::IsKeyPress("Left"))
+    //     camera.MoveLeft(speed);
+    // if (Sunset::InputRegister::IsKeyPress("Up"))
+    //     camera.MoveUp(speed);
+    // if (Sunset::InputRegister::IsKeyPress("Down"))
+    //     camera.MoveDown(speed);
 
     // glm::vec2 mous = Sunset::InputRegister::GetMouseDelta();
     // if (mous.length() >= 0.1)

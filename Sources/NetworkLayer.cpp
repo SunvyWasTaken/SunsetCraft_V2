@@ -27,7 +27,7 @@ namespace
 
 NetworkLayer::NetworkLayer()
 {
-    Sunset::NetworkService::Get().RegisterHandler<ChatMessage>([this](const ChatMessage& message)
+    Sunset::NetworkService::Get().RegisterHandler<ChatMessage>([this](Sunset::PeerId peer, const ChatMessage& message)
     {
         const std::string text = ToString(message);
         if (text.empty())

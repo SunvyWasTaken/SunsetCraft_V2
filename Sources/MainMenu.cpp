@@ -8,6 +8,7 @@
 
 #include "Sandbox.h"
 #include "Core/Application.h"
+#include "Network/NetworkService.h"
 
 void MainMenu::OnUpdate(float dt)
 {
@@ -16,18 +17,22 @@ void MainMenu::OnUpdate(float dt)
 void MainMenu::OnDraw()
 {
     ImGui::Begin("Menu");
-    if (ImGui::TreeNode("Main Menu"))
+
+    if (ImGui::Button("Start Server"))
     {
-        if (ImGui::Button("Start"))
-        {
-            Sunset::Application::GetApplication().ClearLayer();
-            Sunset::Application::GetApplication().LoadLayer<Sandbox>();
-        }
-        if (ImGui::Button("Quit"))
-        {
-            Sunset::Application::CloseApplication();
-        }
-        ImGui::TreePop();
+        Sunset::NetworkService::Get().Host(7777, 2);
+        Sunset::Application::GetApplication().ClearLayer();
+        Sunset::Application::GetApplication().LoadLayer<Sandbox>();
+    }
+    if (ImGui::Button("Join Server"))
+    {
+        Sunset::NetworkService::Get().Join({});
+        Sunset::Application::GetApplication().ClearLayer();
+        Sunset::Application::GetApplication().LoadLayer<Sandbox>();
+    }
+    if (ImGui::Button("Quit"))
+    {
+        Sunset::Application::CloseApplication();
     }
     ImGui::End();
 }
