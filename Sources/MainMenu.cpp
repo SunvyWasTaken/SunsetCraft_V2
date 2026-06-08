@@ -6,6 +6,7 @@
 
 #include <imgui.h>
 
+#include "Game.h"
 #include "Sandbox.h"
 #include "Core/Application.h"
 #include "Network/NetworkService.h"
@@ -22,13 +23,13 @@ void MainMenu::OnDraw()
     {
         Sunset::NetworkService::Get().Host(7777, 2);
         Sunset::Application::GetApplication().ClearLayer();
-        Sunset::Application::GetApplication().LoadLayer<Sandbox>();
+        Sunset::Application::GetApplication().LoadLayer<GameLayer>();
     }
     if (ImGui::Button("Join Server"))
     {
         Sunset::NetworkService::Get().Join({});
         Sunset::Application::GetApplication().ClearLayer();
-        Sunset::Application::GetApplication().LoadLayer<Sandbox>();
+        Sunset::Application::GetApplication().LoadLayer<GameLayer>();
     }
     if (ImGui::Button("Quit"))
     {

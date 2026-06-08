@@ -11,7 +11,7 @@
 
 namespace
 {
-    Sunset::Camera camera;
+    // Sunset::Camera camera;
 }
 
 Sandbox::Sandbox()
@@ -46,11 +46,11 @@ void Sandbox::OnUpdate(float deltatime)
     //     camera.AddYaw(mous.x);
     // }
     world->Update(deltatime);
-    PRINTSCREEN("Camera location {}", camera.GetPosition());
+    // PRINTSCREEN("Camera location {}", camera.GetPosition());
 }
 
 void Sandbox::OnDraw()
 {
-    Sunset::RenderCommande::UseCamera(camera);
+    //Sunset::RenderCommande::UseCamera(camera);
     //Sunset::DrawCube({0, 0, -5}, {1, 1, 1}, {});
 }

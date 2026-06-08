@@ -14,6 +14,9 @@ public:
     ~GameLayer() override;
     void OnUpdate(float dt) override;
     void OnDraw() override;
+
+private:
+    std::unique_ptr<Sunset::World> world = nullptr;
 };
 
 

@@ -17,8 +17,6 @@ namespace
 {
     int seed = 0;
     std::ranlux24_base rng{std::random_device{}()};
-    bool MoveCamera = false;
-    Sunset::Camera camera;
 
     bool IsDirty = false;
     bool noiseGen = false;
@@ -189,16 +187,8 @@ namespace
 
 GameLayer::GameLayer()
 {
+    world = std::make_unique<Sunset::World>();
     Noise::Init(seed);
-    Sunset::InputRegister::RegisterAction("Shift",
-        [&](const Sunset::Event::Action& acc)->bool
-        {
-            if (acc == Sunset::Event::Action::Press)
-            {
-                MoveCamera = !MoveCamera;
-            }
-            return true;
-        });
     chunks.emplace_back(glm::ivec2{0, 0});
     chunks.emplace_back(glm::ivec2{SIZE_X, 0});
     chunks.emplace_back(glm::ivec2{-SIZE_X, 0});
@@ -218,29 +208,7 @@ GameLayer::~GameLayer()
 
 void GameLayer::OnUpdate(float dt)
 {
-    const float speed = 10.f * dt;
-    if (Sunset::InputRegister::IsKeyPress("Forward"))
-        camera.MoveForward(speed);
-    if (Sunset::InputRegister::IsKeyPress("Backward"))
-        camera.MoveBackward(speed);
-    if (Sunset::InputRegister::IsKeyPress("Right"))
-        camera.MoveRight(speed);
-    if (Sunset::InputRegister::IsKeyPress("Left"))
-        camera.MoveLeft(speed);
-    if (Sunset::InputRegister::IsKeyPress("Up"))
-        camera.MoveUp(speed);
-    if (Sunset::InputRegister::IsKeyPress("Down"))
-        camera.MoveDown(speed);
-
-    glm::vec2 mous = Sunset::InputRegister::GetMouseDelta();
-    if (MoveCamera)
-    {
-        if (mous.length() >= 0.1)
-        {
-            camera.AddPitch(-mous.y);
-            camera.AddYaw(mous.x);
-        }
-    }
+    world->Update(dt);
 
     if (!IsDirty)
         return;
@@ -256,8 +224,6 @@ void GameLayer::OnUpdate(float dt)
 
 void GameLayer::OnDraw()
 {
-    Sunset::RenderCommande::UseCamera(camera);
-
     {
         SS_PROFILE_SCOPE("Draw All Cube");
         if (noiseGen)
