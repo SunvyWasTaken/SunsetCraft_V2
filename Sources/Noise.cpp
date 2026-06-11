@@ -95,6 +95,7 @@ void Noise::SetSeed(int seed)
 
 void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
 {
+    SS_PROFILE_FUNCTION();
     data.clear();
     data.resize(SIZE_X * SIZE_Z);
     float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_X * SIZE_Z);

@@ -325,6 +325,7 @@ GameLayer::~GameLayer()
 
 void GameLayer::OnUpdate(float dt)
 {
+    SS_PROFILE_FUNCTION();
     Sunset::NetworkService::Get().Update(dt);
     world->Update(dt);
 
@@ -336,18 +337,15 @@ void GameLayer::OnUpdate(float dt)
         Noise::Get(c.NoiseValue, c.m_Position);
     }
     noiseGen = true;
-
     IsDirty = false;
 }
 
 void GameLayer::OnDraw()
 {
+    SS_PROFILE_FUNCTION();
+    if (noiseGen)
     {
-        SS_PROFILE_SCOPE("Draw All Cube");
-        if (noiseGen)
-        {
-            for (const auto& c : chunks)
-                c.Draw();
-        }
+        for (const auto& c : chunks)
+            c.Draw();
     }
 }

@@ -4,19 +4,21 @@
 
 #include "Game.h"
 #include "MainMenu.h"
-#include "NetworkLayer.h"
-#include "Sandbox.h"
 #include "SunsetEngine.h"
+#include "Network/NetworkService.h"
 
 int main()
 {
+#ifdef SUNSET_HEADLESS
+    const Sunset::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2", true, 30.f};
+    Sunset::Application app{setting};
+    Sunset::NetworkService::Init();
+    Sunset::NetworkService::Get().Host(7777, 2);
+    app.PushLayer<GameLayer>();
+#else
     const Sunset::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2"};
     Sunset::Application app{setting};
-
-    // app.PushLayer<NetworkLayer>();
-    // app.PushLayer<GameLayer>();
-
     app.PushLayer<MainMenu>();
-
+#endif
     app.Run();
 }
