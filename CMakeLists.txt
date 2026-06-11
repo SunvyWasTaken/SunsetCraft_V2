@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.28)
 #basically this will change the RESOURCES_PATH to be the local path
 #! ! ! ! ! ! !
 #delete the out folder after changing if visual studio doesn't recognize the change
-set(PRODUCTION_BUILD ON CACHE BOOL "Make this a production build" FORCE)
+set(PRODUCTION_BUILD OFF CACHE BOOL "Make this a production build" FORCE)
 
 project(SunsetCraftV2)
 

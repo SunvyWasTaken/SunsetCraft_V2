@@ -10,15 +10,14 @@
 
 #include "Chunk.h"
 #include "Noise.h"
-#include "Render/Camera.h"
-#include "Render/RenderCommande.h"
+#include "Network/NetworkService.h"
 
 namespace
 {
     int seed = 0;
     std::ranlux24_base rng{std::random_device{}()};
 
-    bool IsDirty = false;
+    bool IsDirty = true;
     bool noiseGen = false;
 
     int CurrentSelectedNoise = 0;
@@ -185,54 +184,20 @@ namespace
     }
 }
 
-GameLayer::GameLayer()
+GameOverlay::GameOverlay()
 {
-    world = std::make_unique<Sunset::World>();
-    Noise::Init(seed);
-    chunks.emplace_back(glm::ivec2{0, 0});
-    chunks.emplace_back(glm::ivec2{SIZE_X, 0});
-    chunks.emplace_back(glm::ivec2{-SIZE_X, 0});
-    chunks.emplace_back(glm::ivec2{0, SIZE_Z});
-    chunks.emplace_back(glm::ivec2{0, -SIZE_Z});
-    chunks.emplace_back(glm::ivec2{SIZE_X, -SIZE_Z});
-    chunks.emplace_back(glm::ivec2{SIZE_X, SIZE_Z});
-    chunks.emplace_back(glm::ivec2{-SIZE_X, SIZE_Z});
-    chunks.emplace_back(glm::ivec2{-SIZE_X, -SIZE_Z});
 }
 
-GameLayer::~GameLayer()
+GameOverlay::~GameOverlay()
 {
-    chunks.clear();
-    Noise::Destroy();
 }
 
-void GameLayer::OnUpdate(float dt)
+void GameOverlay::OnUpdate(float dt)
 {
-    world->Update(dt);
-
-    if (!IsDirty)
-        return;
-
-    for (auto& c : chunks)
-    {
-        Noise::Get(c.NoiseValue, c.m_Position);
-    }
-    noiseGen = true;
-
-    IsDirty = false;
 }
 
-void GameLayer::OnDraw()
+void GameOverlay::OnDraw()
 {
-    {
-        SS_PROFILE_SCOPE("Draw All Cube");
-        if (noiseGen)
-        {
-            for (const auto& c : chunks)
-                c.Draw();
-        }
-    }
-
     ImGui::Begin("Parameter");
     ImGui::InputInt("Seed", &seed);
     ImGui::SameLine();
@@ -335,4 +300,54 @@ void GameLayer::OnDraw()
     }
 
     ImGui::End();
+}
+
+GameLayer::GameLayer()
+{
+    world = std::make_unique<Sunset::World>();
+    Noise::Init(seed);
+    chunks.emplace_back(glm::ivec2{0, 0});
+    chunks.emplace_back(glm::ivec2{SIZE_X, 0});
+    chunks.emplace_back(glm::ivec2{-SIZE_X, 0});
+    chunks.emplace_back(glm::ivec2{0, SIZE_Z});
+    chunks.emplace_back(glm::ivec2{0, -SIZE_Z});
+    chunks.emplace_back(glm::ivec2{SIZE_X, -SIZE_Z});
+    chunks.emplace_back(glm::ivec2{SIZE_X, SIZE_Z});
+    chunks.emplace_back(glm::ivec2{-SIZE_X, SIZE_Z});
+    chunks.emplace_back(glm::ivec2{-SIZE_X, -SIZE_Z});
+}
+
+GameLayer::~GameLayer()
+{
+    chunks.clear();
+    Noise::Destroy();
+}
+
+void GameLayer::OnUpdate(float dt)
+{
+    Sunset::NetworkService::Get().Update(dt);
+    world->Update(dt);
+
+    if (!IsDirty)
+        return;
+
+    for (auto& c : chunks)
+    {
+        Noise::Get(c.NoiseValue, c.m_Position);
+    }
+    noiseGen = true;
+
+    IsDirty = false;
+}
+
+void GameLayer::OnDraw()
+{
+    {
+        SS_PROFILE_SCOPE("Draw All Cube");
+        if (noiseGen)
+        {
+            for (const auto& c : chunks)
+                c.Draw();
+        }
+    }
 }
