@@ -49,8 +49,25 @@ namespace
 
                 if (dist2 <= m_RenderDistance * m_RenderDistance)
                 {
-                    const auto c = (chunks.insert({ key, Chunk{key} })).first;
-                    Noise::Get(c->second.NoiseValue, key * glm::ivec2{SIZE_X, SIZE_Z});
+                    auto& c = (chunks.insert({ key, Chunk{key} }).first)->second;
+                    Noise::Get(c.NoiseValue, key * glm::ivec2{SIZE_X, SIZE_Z});
+                    c.Blocks.fill(BlockRegistry::AIR);
+
+                    for (int __x = 0; __x < SIZE_X; ++__x)
+                    {
+                        for (int __z = 0; __z < SIZE_Z; ++__z)
+                        {
+                            size_t i1 = __x + __z * SIZE_X;
+                            float val = c.NoiseValue[i1];
+                            for (int __y = 0; __y < floor(val); ++__y)
+                            {
+                                size_t i2 = i1 + __y * SIZE_Y * SIZE_Z;
+                                c.Blocks[i2] = BlockRegistry::STONE;
+                            }
+                        }
+                    }
+
+
                 }
             }
         }

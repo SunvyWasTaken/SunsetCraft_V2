@@ -5,9 +5,12 @@
 #include "Chunk.h"
 
 #include "BaseObject/BaseCube.h"
+#include "Render/Drawable.h"
+#include "Render/Meshes/Mesh.h"
 
 Chunk::Chunk(const glm::vec2 &position)
     : m_Position(position)
+    , Blocks()
     , NoiseValue()
 {
 }
@@ -32,4 +35,26 @@ void Chunk::Draw() const
             }
         }
     }
+}
+
+void Chunk::BuildMesh()
+{
+    std::vector<uint32_t> data;
+    data.reserve(SIZE_X * SIZE_Y * SIZE_Z);
+    for (int x = 0; x < SIZE_X; ++x)
+    {
+        for (int z = 0; z < SIZE_Z; ++z)
+        {
+            for (int y = -SIZE_Y; y < SIZE_Y; ++y)
+            {
+                size_t i = x + z * SIZE_X + y * SIZE_Y * SIZE_Z;
+                if (Blocks[i] == BlockRegistry::STONE)
+                {
+
+                }
+            }
+        }
+    }
+    m_Drawable = std::make_unique<Sunset::Drawable>();
+    m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(data.data(), sizeof(uint32_t), data.size(), {}, {});
 }
