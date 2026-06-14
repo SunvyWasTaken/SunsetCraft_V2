@@ -61,13 +61,13 @@ namespace
                             float val = c.NoiseValue[i1];
                             for (int __y = 0; __y < floor(val); ++__y)
                             {
-                                size_t i2 = i1 + __y * SIZE_Y * SIZE_Z;
+                                size_t i2 = i1 + __y * SIZE_X * SIZE_Z;
                                 c.Blocks[i2] = BlockRegistry::STONE;
                             }
                         }
                     }
 
-
+                    c.BuildMesh();
                 }
             }
         }
