@@ -8,7 +8,6 @@
 #include <random>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Chunk.h"
 #include "ChunkRegistry.h"
 #include "Noise.h"
 #include "GameFramework/Components/CameraComponent.h"
@@ -325,6 +324,5 @@ void GameLayer::OnUpdate(float dt)
 void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
-
     ChunkRegistry::DrawChunk(player.GetComponent<Sunset::CameraComponent>()->camera);
 }
