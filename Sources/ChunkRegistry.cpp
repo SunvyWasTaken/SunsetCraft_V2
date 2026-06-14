@@ -45,10 +45,10 @@ namespace
                 if (chunks.contains(key))
                     continue;
 
-                if (dist2 < m_RenderDistance)
+                if (dist2 <= m_RenderDistance * m_RenderDistance)
                 {
                     const auto c = (chunks.insert({ key, Chunk{key} })).first;
-                    Noise::Get(c->second.NoiseValue, key);
+                    Noise::Get(c->second.NoiseValue, key * glm::ivec2{SIZE_X, SIZE_Z});
                 }
             }
         }
@@ -96,7 +96,7 @@ void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
     SS_PROFILE_FUNCTION();
     const glm::ivec2 positionInChunk{
         WorldToChunk(position.x),
-        WorldToChunk(position.y)};
+        WorldToChunk(position.z)};
 
     UnloadChunk(positionInChunk);
     LoadChunk(positionInChunk);

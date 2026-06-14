@@ -76,7 +76,12 @@ void Noise::Init(int seed)
     noiseData.clear();
 
     // Load All noiseData
-    Load(DefaultNoiseDataPath, seed);
+    if (!Load(DefaultNoiseDataPath))
+    {
+        LOG("SunsetCraft", warn, "Load default noise data failed");
+    }
+
+    Update(seed);
 }
 
 void Noise::Destroy()
@@ -158,19 +163,18 @@ bool Noise::Save(const std::string& filepath)
     return true;
 }
 
-bool Noise::Load(const std::string& filepath, int seed)
+bool Noise::Load(const std::string& filepath)
 {
     std::ifstream file(SAVE_PATH + filepath);
     if (!file.is_open())
     {
-        Update(seed);
+
         return false;
     }
 
     nlohmann::json root = nlohmann::json::parse(file, nullptr, false);
     if (!root.is_array())
     {
-        Update(seed);
         return false;
     }
 
@@ -205,7 +209,6 @@ bool Noise::Load(const std::string& filepath, int seed)
     }
 
     noiseData = std::move(loadedNoiseData);
-    Update(seed);
     return true;
 }
 

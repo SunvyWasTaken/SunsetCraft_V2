@@ -216,7 +216,8 @@ void GameOverlay::OnDraw()
     ImGui::SameLine();
     if (ImGui::Button("Load Noises"))
     {
-        LastNoiseLoadSucceeded = Noise::Load(noiseDataPath, seed);
+        LastNoiseLoadSucceeded = Noise::Load(noiseDataPath);
+        Noise::Update(seed);
         CurrentSelectedNoise = 0;
     }
     if (!LastNoiseSaveSucceeded)

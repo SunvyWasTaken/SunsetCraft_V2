@@ -18,6 +18,9 @@ int main()
 #else
     const Sunset::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2"};
     Sunset::Application app{setting};
+
+    INITLOG("SunsetCraft")
+
     app.PushLayer<MainMenu>();
 #endif
     app.Run();

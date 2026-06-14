@@ -27,7 +27,7 @@ void Chunk::Draw() const
             {
                 if (y == floor(val))
                 {
-                    Sunset::DrawCube({x + m_Position.x, y, z + m_Position.y}, {}, {});
+                    Sunset::DrawCube({x + m_Position.x * SIZE_X, y, z + m_Position.y * SIZE_Z}, {}, {});
                 }
             }
         }

@@ -26,7 +26,7 @@ struct Noise
     static void Get(std::vector<float>& data, const glm::ivec2& location);
     static void Update(int seed);
     static bool Save(const std::string& filepath);
-    static bool Load(const std::string& filepath, int seed);
+    static bool Load(const std::string& filepath);
 
     static NoiseData& GetData(int index);
     static std::vector<NoiseData>& GetDatas();
