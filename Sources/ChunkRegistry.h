@@ -13,6 +13,8 @@ struct ChunkRegistry
 {
     static void Init(int seed, size_t renderDistance = 16);
 
+    static void SetRenderDistance(size_t renderDistance);
+
     static void Destroy();
 
     static void UpdatePlayerPosition(const glm::vec3& position);

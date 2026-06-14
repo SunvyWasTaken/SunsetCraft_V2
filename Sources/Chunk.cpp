@@ -9,6 +9,7 @@
 #include "Render/Material.h"
 #include "Render/RenderCommande.h"
 #include "Render/Shader.h"
+#include "Render/BufferObject/Buffers.h"
 #include "Render/Meshes/Mesh.h"
 
 namespace
@@ -113,9 +114,16 @@ void Chunk::BuildMesh()
         step(*this, context);
     }
 
+    std::vector<uint32_t> drawCount(context.Vertices.size());
     m_Drawable = std::make_unique<Sunset::Drawable>();
-    m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(context.Vertices.data(), sizeof(uint32_t), context.Vertices.size(), {}, {});
-    m_Drawable->m_RenderState.DrawInstance = true;
+    m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(
+        context.Vertices.data(),
+        sizeof(uint32_t),
+        context.Vertices.size(),
+        drawCount,
+        {Sunset::BufferElement(Sunset::ShaderDataType::UInt, "vData")});
+    m_Drawable->m_Position = glm::vec3{m_Position.x * SIZE_X, 0.0f, m_Position.y * SIZE_Z};
+    m_Drawable->m_RenderState.DrawInstance = false;
     m_Drawable->m_RenderState.HasIndice = false;
     if (shader == nullptr)
     {

@@ -102,6 +102,11 @@ void ChunkRegistry::Init(int seed, const size_t renderDistance)
     Noise::Init(Seed);
 }
 
+void ChunkRegistry::SetRenderDistance(size_t renderDistance)
+{
+    m_RenderDistance = renderDistance;
+}
+
 void ChunkRegistry::Destroy()
 {
     LOG("ChunkRegistry", info, "ChunkRegistry destroy");

@@ -198,6 +198,7 @@ void GameOverlay::OnUpdate(float dt)
 void GameOverlay::OnDraw()
 {
     ImGui::Begin("Parameter");
+
     ImGui::InputInt("Seed", &seed);
     ImGui::SameLine();
     if (ImGui::Button("Random"))
@@ -206,6 +207,10 @@ void GameOverlay::OnDraw()
         seed = dist(rng);
         Noise::SetSeed(seed);
     }
+
+    static int renderDistance = 32;
+    ImGui::InputInt("Render Distance", &renderDistance);
+    ChunkRegistry::SetRenderDistance(renderDistance);
 
     static char noiseDataPath[128] = "NoiseData.json";
     ImGui::InputText("Noise Data File", noiseDataPath, 128);

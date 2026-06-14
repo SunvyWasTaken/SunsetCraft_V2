@@ -2,7 +2,7 @@
 
 layout(location = 0) in uint vData;
 
-uniform vec3 location;
+uniform mat4 model;
 uniform mat4 projection;
 uniform mat4 view;
 
@@ -18,12 +18,12 @@ uint DecodeCorner(uint data) { return (data >> 19u) & 7u; }
 uint DecodeBlock(uint data) { return (data >> 22u) & 255u; }
 
 const vec3 faceVerts[36] = vec3[](
-    vec3(0,0,0), vec3(1,1,0), vec3(1,0,0), vec3(0,0,0), vec3(0,1,0), vec3(1,1,0),
-    vec3(1,0,1), vec3(0,1,1), vec3(0,0,1), vec3(1,0,1), vec3(1,1,1), vec3(0,1,1),
-    vec3(0,0,1), vec3(0,1,0), vec3(0,0,0), vec3(0,0,1), vec3(0,1,1), vec3(0,1,0),
-    vec3(1,0,0), vec3(1,1,1), vec3(1,0,1), vec3(1,0,0), vec3(1,1,0), vec3(1,1,1),
-    vec3(0,1,0), vec3(1,1,1), vec3(1,1,0), vec3(0,1,0), vec3(0,1,1), vec3(1,1,1),
-    vec3(0,0,1), vec3(1,0,0), vec3(1,0,1), vec3(0,0,1), vec3(0,0,0), vec3(1,0,0)
+    vec3(0,0,0), vec3(1,0,0), vec3(1,1,0), vec3(0,0,0), vec3(1,1,0), vec3(0,1,0),
+    vec3(1,0,1), vec3(0,0,1), vec3(0,1,1), vec3(1,0,1), vec3(0,1,1), vec3(1,1,1),
+    vec3(0,0,1), vec3(0,0,0), vec3(0,1,0), vec3(0,0,1), vec3(0,1,0), vec3(0,1,1),
+    vec3(1,0,0), vec3(1,0,1), vec3(1,1,1), vec3(1,0,0), vec3(1,1,1), vec3(1,1,0),
+    vec3(0,1,0), vec3(1,1,0), vec3(1,1,1), vec3(0,1,0), vec3(1,1,1), vec3(0,1,1),
+    vec3(0,0,1), vec3(1,0,1), vec3(1,0,0), vec3(0,0,1), vec3(1,0,0), vec3(0,0,0)
 );
 
 const vec3 faceNormals[6] = vec3[](
@@ -41,11 +41,11 @@ void main()
     uint vertexIndex = face * 6u + corner;
 
     vec3 blockPos = vec3(float(DecodeX(vData)), float(DecodeY(vData)), float(DecodeZ(vData)));
-    vec3 worldPos = blockPos + faceVerts[vertexIndex] + location;
+    vec3 localPos = blockPos + faceVerts[vertexIndex];
 
     FragNormal = faceNormals[face];
     FragUV = cornerUV[corner];
     BlockType = DecodeBlock(vData);
 
-    gl_Position = projection * view * vec4(worldPos, 1.0);
+    gl_Position = projection * view * model * vec4(localPos, 1.0);
 }
