@@ -27,7 +27,7 @@ public:
 
     using BuildStep = std::function<void(Chunk&, BuildContext&)>;
 
-    explicit Chunk(const glm::vec2& position);
+    explicit Chunk(const glm::ivec2& position);
 
     ~Chunk();
 

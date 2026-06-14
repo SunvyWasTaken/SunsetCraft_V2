@@ -6,6 +6,9 @@
 
 #include "BaseObject/BaseCube.h"
 #include "Render/Drawable.h"
+#include "Render/Material.h"
+#include "Render/RenderCommande.h"
+#include "Render/Shader.h"
 #include "Render/Meshes/Mesh.h"
 
 namespace
@@ -20,6 +23,8 @@ namespace
     };
 
     constexpr uint32_t FaceVertexCount = 6;
+
+    std::shared_ptr<Sunset::Shader> shader = nullptr;
 
     size_t BlockIndex(const int x, const int y, const int z)
     {
@@ -80,7 +85,7 @@ namespace
     }
 }
 
-Chunk::Chunk(const glm::vec2 &position)
+Chunk::Chunk(const glm::ivec2 &position)
     : m_Position(position)
     , Blocks()
     , NoiseValue()
@@ -96,24 +101,7 @@ Chunk::~Chunk()
 void Chunk::Draw() const
 {
     if (m_Drawable != nullptr)
-    {
-        m_Drawable->Draw();
-        return;
-    }
-
-    for (int x = 0; x < SIZE_X; ++x)
-    {
-        for (int z = 0; z < SIZE_Z; ++z)
-        {
-            for (int y = 0; y < SIZE_Y; ++y)
-            {
-                if (Blocks[BlockIndex(x, y, z)] != BlockRegistry::AIR)
-                {
-                    Sunset::DrawCube({x + m_Position.x * SIZE_X, y, z + m_Position.y * SIZE_Z}, {}, {});
-                }
-            }
-        }
-    }
+        Sunset::RenderCommande::Submit(*m_Drawable);
 }
 
 void Chunk::BuildMesh()
@@ -127,6 +115,11 @@ void Chunk::BuildMesh()
 
     m_Drawable = std::make_unique<Sunset::Drawable>();
     m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(context.Vertices.data(), sizeof(uint32_t), context.Vertices.size(), {}, {});
+    if (shader == nullptr)
+    {
+        shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "shader.vert", SHADERS_PATH "shader.frag");
+    }
+    m_Drawable->m_Material->m_Shader = shader;
 }
 
 void Chunk::AddBuildStep(BuildStep step)

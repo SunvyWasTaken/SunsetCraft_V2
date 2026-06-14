@@ -17,8 +17,8 @@ namespace
         template <typename T>
         std::size_t operator()(const T& t) const
         {
-            auto h1 = std::hash<float>{}(t.x);
-            auto h2 = std::hash<float>{}(t.y);
+            auto h1 = std::hash<int>{}(t.x);
+            auto h2 = std::hash<int>{}(t.y);
             return h1 ^ (h2 << 1);
         }
     };
@@ -49,7 +49,7 @@ namespace
 
                 if (dist2 <= m_RenderDistance * m_RenderDistance)
                 {
-                    auto& c = (chunks.insert({ key, Chunk{key} }).first)->second;
+                    auto& c = chunks.try_emplace(key, key).first->second;
                     Noise::Get(c.NoiseValue, key * glm::ivec2{SIZE_X, SIZE_Z});
                     c.Blocks.fill(BlockRegistry::AIR);
 
@@ -66,7 +66,6 @@ namespace
                             }
                         }
                     }
-
                     c.BuildMesh();
                 }
             }
