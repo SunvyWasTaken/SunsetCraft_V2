@@ -1,26 +1,19 @@
 {
   "name" : "sunset-craft",
   "version-string" : "1.0.0",
-  "dependencies" : [ {
-    "name" : "glad"
-  }, {
-    "name" : "glfw3"
-  }, {
-    "name" : "glm"
-  }, {
-    "name" : "opengl"
-  }, {
-    "name" : "stb"
-  }, {
-    "name" : "nlohmann-json"
-  }, {
-    "name" : "spdlog"
-  }, {
-    "name" : "imgui",
-    "features" : [ "glfw-binding", "opengl3-binding", "docking-experimental" ]
-  }, {
-    "name" : "enet"
-  }, {
-    "name" : "entt"
-  }]
+  "dependencies" : [
+    "assimp",
+    "enet",
+    "entt",
+    "glad",
+    "glfw3",
+    "glm",
+    {
+      "name" : "imgui",
+      "features" : [ "glfw-binding", "opengl3-binding", "docking-experimental" ]
+    },
+    "nlohmann-json",
+    "spdlog",
+    "stb"
+  ]
 }

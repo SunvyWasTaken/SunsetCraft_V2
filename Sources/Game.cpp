@@ -9,16 +9,15 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Chunk.h"
+#include "ChunkRegistry.h"
 #include "Noise.h"
+#include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
 
 namespace
 {
     int seed = 0;
     std::ranlux24_base rng{std::random_device{}()};
-
-    bool IsDirty = true;
-    bool noiseGen = false;
 
     int CurrentSelectedNoise = 0;
 
@@ -219,7 +218,6 @@ void GameOverlay::OnDraw()
     {
         LastNoiseLoadSucceeded = Noise::Load(noiseDataPath, seed);
         CurrentSelectedNoise = 0;
-        IsDirty = true;
     }
     if (!LastNoiseSaveSucceeded)
         ImGui::TextUnformatted("Save failed: cannot open file.");
@@ -295,7 +293,6 @@ void GameOverlay::OnDraw()
         if(ImGui::Button("Generate"))
         {
             Noise::Update(seed);
-            IsDirty = true;
         }
     }
 
@@ -305,22 +302,12 @@ void GameOverlay::OnDraw()
 GameLayer::GameLayer()
 {
     world = std::make_unique<Sunset::World>();
-    Noise::Init(seed);
-    chunks.emplace_back(glm::ivec2{0, 0});
-    chunks.emplace_back(glm::ivec2{SIZE_X, 0});
-    chunks.emplace_back(glm::ivec2{-SIZE_X, 0});
-    chunks.emplace_back(glm::ivec2{0, SIZE_Z});
-    chunks.emplace_back(glm::ivec2{0, -SIZE_Z});
-    chunks.emplace_back(glm::ivec2{SIZE_X, -SIZE_Z});
-    chunks.emplace_back(glm::ivec2{SIZE_X, SIZE_Z});
-    chunks.emplace_back(glm::ivec2{-SIZE_X, SIZE_Z});
-    chunks.emplace_back(glm::ivec2{-SIZE_X, -SIZE_Z});
+    ChunkRegistry::Init(seed);
 }
 
 GameLayer::~GameLayer()
 {
-    chunks.clear();
-    Noise::Destroy();
+    ChunkRegistry::Destroy();
 }
 
 void GameLayer::OnUpdate(float dt)
@@ -328,24 +315,13 @@ void GameLayer::OnUpdate(float dt)
     SS_PROFILE_FUNCTION();
     Sunset::NetworkService::Get().Update(dt);
     world->Update(dt);
-
-    if (!IsDirty)
-        return;
-
-    for (auto& c : chunks)
-    {
-        Noise::Get(c.NoiseValue, c.m_Position);
-    }
-    noiseGen = true;
-    IsDirty = false;
+    Sunset::Controller& controller = world->GetController(0);
+    glm::vec3 loc = controller.GetEntity().GetComponent<Sunset::TransformComponent>()->GetLocation();
+    ChunkRegistry::UpdatePlayerPosition(loc);
 }
 
 void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
-    if (noiseGen)
-    {
-        for (const auto& c : chunks)
-            c.Draw();
-    }
+    ChunkRegistry::DrawChunk();
 }

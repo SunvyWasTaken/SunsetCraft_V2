@@ -6,9 +6,9 @@
 
 #include "BlockRegistry.h"
 
-#define SIZE_X 100
-#define SIZE_Y 75
-#define SIZE_Z 100
+#define SIZE_X 16
+#define SIZE_Y 25
+#define SIZE_Z 16
 
 class Chunk
 {
