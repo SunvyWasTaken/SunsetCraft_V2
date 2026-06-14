@@ -115,6 +115,8 @@ void Chunk::BuildMesh()
 
     m_Drawable = std::make_unique<Sunset::Drawable>();
     m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(context.Vertices.data(), sizeof(uint32_t), context.Vertices.size(), {}, {});
+    m_Drawable->m_RenderState.DrawInstance = true;
+    m_Drawable->m_RenderState.HasIndice = false;
     if (shader == nullptr)
     {
         shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "shader.vert", SHADERS_PATH "shader.frag");
