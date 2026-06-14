@@ -11,6 +11,7 @@
 #include "Chunk.h"
 #include "ChunkRegistry.h"
 #include "Noise.h"
+#include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
 
@@ -19,9 +20,9 @@ namespace
     int seed = 0;
     std::ranlux24_base rng{std::random_device{}()};
 
-    int CurrentSelectedNoise = 0;
+    Sunset::Entity player;
 
-    std::vector<Chunk> chunks;
+    int CurrentSelectedNoise = 0;
 
     bool LastNoiseSaveSucceeded = true;
     bool LastNoiseLoadSucceeded = true;
@@ -303,7 +304,8 @@ void GameOverlay::OnDraw()
 GameLayer::GameLayer()
 {
     world = std::make_unique<Sunset::World>();
-    ChunkRegistry::Init(seed);
+    ChunkRegistry::Init(seed, 24);
+    player = world->GetController(0).GetEntity();
 }
 
 GameLayer::~GameLayer()
@@ -316,13 +318,13 @@ void GameLayer::OnUpdate(float dt)
     SS_PROFILE_FUNCTION();
     Sunset::NetworkService::Get().Update(dt);
     world->Update(dt);
-    Sunset::Controller& controller = world->GetController(0);
-    glm::vec3 loc = controller.GetEntity().GetComponent<Sunset::TransformComponent>()->GetLocation();
+    glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
     ChunkRegistry::UpdatePlayerPosition(loc);
 }
 
 void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
-    ChunkRegistry::DrawChunk();
+
+    ChunkRegistry::DrawChunk(player.GetComponent<Sunset::CameraComponent>()->camera);
 }

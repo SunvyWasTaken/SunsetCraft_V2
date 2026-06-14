@@ -6,6 +6,8 @@
 
 #include "Chunk.h"
 #include "Noise.h"
+#include "Math/AABB.h"
+#include "Render/Camera.h"
 
 namespace
 {
@@ -106,10 +108,11 @@ void ChunkRegistry::GetBlock(const glm::vec3 &position)
 {
 }
 
-void ChunkRegistry::DrawChunk()
+void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
 {
     for (const auto &c: chunks | std::views::values)
     {
-        c.Draw();
+         if (camera.GetFrustum().IsVisible(Sunset::AABB{glm::vec3{c.m_Position.x * SIZE_X, -SIZE_Y, c.m_Position.y * SIZE_Z}, glm::vec3{c.m_Position.x * SIZE_X + SIZE_X, SIZE_Y, c.m_Position.y * SIZE_Z + SIZE_Z}}))
+            c.Draw();
     }
 }

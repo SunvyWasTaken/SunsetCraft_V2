@@ -4,6 +4,11 @@
 
 #pragma once
 
+namespace Sunset
+{
+    class Camera;
+}
+
 struct ChunkRegistry
 {
     static void Init(int seed, size_t renderDistance = 16);
@@ -14,5 +19,5 @@ struct ChunkRegistry
 
     static void GetBlock(const glm::vec3& position);
 
-    static void DrawChunk();
+    static void DrawChunk(const Sunset::Camera& camera);
 };
