@@ -103,16 +103,20 @@ void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
     SS_PROFILE_FUNCTION();
     data.clear();
     data.resize(SIZE_X * SIZE_Z);
-    float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_X * SIZE_Z);
+    float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_X);
     for (const auto& n : noiseData)
     {
         if (!n.noise)
             continue;
 
-        n.noise->FillNoiseSet(NoiseSet, location.x, 0, location.y, SIZE_X, 1, SIZE_Z);
-        for (int i = 0; i < SIZE_X * SIZE_Z; ++i)
+        for (int z = 0; z < SIZE_Z; ++z)
         {
-            data[i] += GetNoiseValue(n.points, NoiseSet[i]) * n.Amplitude;
+            n.noise->FillNoiseSet(NoiseSet, location.x, 0, location.y + z, SIZE_X, 1, 1);
+            for (int x = 0; x < SIZE_X; ++x)
+            {
+                const int i = x + z * SIZE_X;
+                data[i] += GetNoiseValue(n.points, NoiseSet[x]) * n.Amplitude;
+            }
         }
     }
     FastNoiseSIMD::FreeNoiseSet(NoiseSet);

@@ -207,6 +207,12 @@ void GameOverlay::OnDraw()
         Noise::SetSeed(seed);
     }
 
+    static int renderDistance = 16;
+    if (ImGui::SliderInt("Render Distance", &renderDistance, 4, 128))
+    {
+        ChunkRegistry::SetRenderDistance(renderDistance);
+    }
+
     static char noiseDataPath[128] = "NoiseData.json";
     ImGui::InputText("Noise Data File", noiseDataPath, 128);
     if (ImGui::Button("Save Noises"))

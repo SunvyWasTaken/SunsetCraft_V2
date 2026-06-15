@@ -11,9 +11,11 @@ namespace Sunset
 
 struct ChunkRegistry
 {
-    static void Init(int seed, size_t renderDistance = 16);
+    static void Init(int seed, uint8_t renderDistance = 16);
 
     static void Destroy();
+
+    static void SetRenderDistance(uint8_t renderDistance);
 
     static void UpdatePlayerPosition(const glm::vec3& position);
 

@@ -24,13 +24,13 @@ namespace
         }
     };
 
-    int32_t m_RenderDistance = 0;
+    uint8_t m_RenderDistance = 0;
     std::unordered_map<glm::ivec2, Chunk, double_hash> chunks;
 
     template <typename T>
-    int WorldToChunk(T value)
+    int WorldToChunk(T value, const int chunkSize)
     {
-        return static_cast<int>(std::floor(value / SIZE_X));
+        return static_cast<int>(std::floor(value / chunkSize));
     }
 
     void LoadChunk(const glm::ivec2& position)
@@ -76,7 +76,7 @@ namespace
     }
 }
 
-void ChunkRegistry::Init(int seed, const size_t renderDistance)
+void ChunkRegistry::Init(const int seed, const uint8_t renderDistance)
 {
     INITLOG("ChunkRegistry");
     LOG("ChunkRegistry", info, "ChunkRegistry init");
@@ -91,12 +91,17 @@ void ChunkRegistry::Destroy()
     WorldGen::Destroy();
 }
 
+void ChunkRegistry::SetRenderDistance(const uint8_t renderDistance)
+{
+    m_RenderDistance = renderDistance;
+}
+
 void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
 {
     SS_PROFILE_FUNCTION();
     const glm::ivec2 positionInChunk{
-        WorldToChunk(position.x),
-        WorldToChunk(position.z)};
+        WorldToChunk(position.x, SIZE_X),
+        WorldToChunk(position.z, SIZE_Z)};
 
     UnloadChunk(positionInChunk);
     LoadChunk(positionInChunk);
