@@ -303,7 +303,7 @@ void GameOverlay::OnDraw()
 GameLayer::GameLayer()
 {
     world = std::make_unique<Sunset::World>();
-    ChunkRegistry::Init(seed, 24);
+    ChunkRegistry::Init(seed, 8);
     player = world->GetController(0).GetEntity();
 }
 

@@ -27,7 +27,6 @@ public:
     void BuildMesh();
 
     glm::ivec2 m_Position;
-    std::array<Block, SIZE_X * SIZE_Y * SIZE_Z> Blocks;
-    std::vector<float> NoiseValue;
     std::unique_ptr<Sunset::Drawable> m_Drawable;
+    std::array<Block, SIZE_X * (SIZE_Y * 2) * SIZE_Z> Blocks;
 };

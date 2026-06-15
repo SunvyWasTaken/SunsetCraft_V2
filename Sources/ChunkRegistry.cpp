@@ -8,6 +8,7 @@
 #include "Noise.h"
 #include "Math/AABB.h"
 #include "Render/Camera.h"
+#include "WorldGen/WorldGen.h"
 
 namespace
 {
@@ -23,7 +24,6 @@ namespace
         }
     };
 
-    int Seed = 0;
     int32_t m_RenderDistance = 0;
     std::unordered_map<glm::ivec2, Chunk, double_hash> chunks;
 
@@ -49,25 +49,8 @@ namespace
 
                 if (dist2 <= m_RenderDistance * m_RenderDistance)
                 {
-                    auto& c = (chunks.insert({ key, Chunk{key} }).first)->second;
-                    Noise::Get(c.NoiseValue, key * glm::ivec2{SIZE_X, SIZE_Z});
-                    c.Blocks.fill(BlockRegistry::AIR);
-
-                    for (int __x = 0; __x < SIZE_X; ++__x)
-                    {
-                        for (int __z = 0; __z < SIZE_Z; ++__z)
-                        {
-                            size_t i1 = __x + __z * SIZE_X;
-                            float val = c.NoiseValue[i1];
-                            for (int __y = 0; __y < floor(val); ++__y)
-                            {
-                                size_t i2 = i1 + __y * SIZE_Y * SIZE_Z;
-                                c.Blocks[i2] = BlockRegistry::STONE;
-                            }
-                        }
-                    }
-
-
+                    auto& c = (chunks.try_emplace(key, key).first)->second;
+                    WorldGen::GenChunk(c);
                 }
             }
         }
@@ -97,17 +80,15 @@ void ChunkRegistry::Init(int seed, const size_t renderDistance)
 {
     INITLOG("ChunkRegistry");
     LOG("ChunkRegistry", info, "ChunkRegistry init");
-    Seed = seed;
     m_RenderDistance = renderDistance;
-
-    Noise::Init(Seed);
+    WorldGen::Init(seed);
 }
 
 void ChunkRegistry::Destroy()
 {
     LOG("ChunkRegistry", info, "ChunkRegistry destroy");
-    Noise::Destroy();
     chunks.clear();
+    WorldGen::Destroy();
 }
 
 void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
