@@ -109,7 +109,7 @@ void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
         if (!n.noise)
             continue;
 
-        n.noise->FillNoiseSet(NoiseSet, location.x, location.y, 0, SIZE_X, SIZE_Z, 1);
+        n.noise->FillNoiseSet(NoiseSet, location.x, 0, location.y, SIZE_X, 1, SIZE_Z);
         for (int i = 0; i < SIZE_X * SIZE_Z; ++i)
         {
             data[i] += GetNoiseValue(n.points, NoiseSet[i]) * n.Amplitude;

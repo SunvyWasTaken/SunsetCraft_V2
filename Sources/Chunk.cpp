@@ -8,14 +8,37 @@
 #include "Render/Drawable.h"
 #include "Render/Meshes/Mesh.h"
 
-constexpr std::array<glm::vec3, 6> checkDir = {
-    glm::vec3{-1, 0, 0},
-    {1, 0, 0},
-    {0, -1, 0},
-    {0, 1, 0},
-    {0, 0, -1},
-    {0, 0, 1}
-};
+namespace
+{
+    constexpr std::array<glm::ivec3, 6> checkDir = {
+        glm::ivec3{-1, 0, 0},
+        {1, 0, 0},
+        {0, -1, 0},
+        {0, 1, 0},
+        {0, 0, -1},
+        {0, 0, 1}
+    };
+
+    constexpr int ChunkHeight = SIZE_Y * 2;
+    constexpr int SliceSize = SIZE_X * SIZE_Z;
+
+    constexpr bool IsInsideChunk(const int x, const int y, const int z)
+    {
+        return x >= 0 && x < SIZE_X
+            && y >= -SIZE_Y && y < SIZE_Y
+            && z >= 0 && z < SIZE_Z;
+    }
+
+    constexpr size_t BlockIndex(const int x, const int y, const int z)
+    {
+        return static_cast<size_t>(x + z * SIZE_X + (y + SIZE_Y) * SliceSize);
+    }
+
+    bool IsAir(const Chunk& chunk, const int x, const int y, const int z)
+    {
+        return chunk.Blocks[BlockIndex(x, y, z)] == BlockRegistry::AIR;
+    }
+}
 
 Chunk::Chunk(const glm::vec2 &position)
     : m_Position(position)
@@ -35,14 +58,14 @@ void Chunk::Draw() const
         {
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
-                const int64_t index = x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z;
-                if (Blocks[index] == BlockRegistry::STONE)
-                {
-                    for (const auto& dir : checkDir)
-                    {
-                        int64_t i = (x + dir.x) + (z + dir.z) * SIZE_X + ((y + dir.y) + SIZE_Y) * SIZE_X * SIZE_Z;
+                if (Blocks[BlockIndex(x, y, z)] != BlockRegistry::STONE)
+                    continue;
 
-                        if (x + dir.x < 0 || x + dir.x >= SIZE_X || z + dir.z < 0 || z + dir.z >= SIZE_Z || Blocks[i] == BlockRegistry::AIR)
+                for (const auto& dir : checkDir)
+                {
+                    if (IsInsideChunk(x + dir.x, y + dir.y, z + dir.z))
+                    {
+                        if (IsAir(*this, x + dir.x, y + dir.y, z + dir.z))
                         {
                             Sunset::DrawCube({x + m_Position.x * SIZE_X, y, z + m_Position.y * SIZE_Z}, {}, {});
                             break;
@@ -57,14 +80,14 @@ void Chunk::Draw() const
 void Chunk::BuildMesh()
 {
     std::vector<uint32_t> data;
-    data.reserve(SIZE_X * SIZE_Y * SIZE_Z);
+    data.reserve(SIZE_X * ChunkHeight * SIZE_Z);
     for (int x = 0; x < SIZE_X; ++x)
     {
         for (int z = 0; z < SIZE_Z; ++z)
         {
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
-                size_t i = x + z * SIZE_X + y * SIZE_Y * SIZE_Z;
+                const size_t i = BlockIndex(x, y, z);
                 if (Blocks[i] == BlockRegistry::STONE)
                 {
 
