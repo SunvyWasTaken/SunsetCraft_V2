@@ -14,6 +14,8 @@ namespace
 {
     std::vector<NoiseData> noiseData;
 
+    std::recursive_mutex noiseMutex;
+
     constexpr const char* DefaultNoiseDataPath = "NoiseData.json";
 
     FastNoiseSIMD::NoiseType ItoNoise(const int i)
@@ -73,6 +75,7 @@ namespace
 
 void Noise::Init(int seed)
 {
+    std::lock_guard lock(noiseMutex);
     noiseData.clear();
 
     // Load All noiseData
@@ -86,11 +89,13 @@ void Noise::Init(int seed)
 
 void Noise::Destroy()
 {
+    std::lock_guard lock(noiseMutex);
     noiseData.clear();
 }
 
 void Noise::SetSeed(int seed)
 {
+    std::lock_guard lock(noiseMutex);
     for (auto& n : noiseData)
     {
         if (n.noise)
@@ -101,6 +106,7 @@ void Noise::SetSeed(int seed)
 void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
 {
     SS_PROFILE_FUNCTION();
+    std::lock_guard lock(noiseMutex);
     data.clear();
     data.resize(SIZE_X * SIZE_Z);
     float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_X);
@@ -124,6 +130,7 @@ void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
 
 void Noise::Update(int seed)
 {
+    std::lock_guard lock(noiseMutex);
     for (auto& n : noiseData)
     {
         std::sort(n.points.begin(), n.points.end(), [](const glm::fvec2& left, const glm::fvec2& right)
@@ -139,6 +146,7 @@ void Noise::Update(int seed)
 
 bool Noise::Save(const std::string& filepath)
 {
+    std::lock_guard lock(noiseMutex);
     nlohmann::json root = nlohmann::json::array();
 
     for (const auto& n : noiseData)
@@ -169,6 +177,7 @@ bool Noise::Save(const std::string& filepath)
 
 bool Noise::Load(const std::string& filepath)
 {
+    std::lock_guard lock(noiseMutex);
     std::ifstream file(SAVE_PATH + filepath);
     if (!file.is_open())
     {

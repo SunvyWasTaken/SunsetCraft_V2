@@ -12,10 +12,7 @@
 namespace
 {
     int Seed = 0;
-    std::vector<std::unique_ptr<GenLayout>> WorldGenLayout;
-
-    GenerationData data;
-}
+    std::vector<std::unique_ptr<GenLayout>> WorldGenLayout;}
 
 void WorldGen::Init(const int seed)
 {
@@ -37,6 +34,7 @@ void WorldGen::Destroy()
 
 void WorldGen::GenChunk(Chunk &chunk)
 {
+    GenerationData data;
     data.seed = Seed;
     for (auto& layout : WorldGenLayout)
     {

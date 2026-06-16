@@ -35,39 +35,20 @@ namespace
     }
 }
 
-struct CaveGen::Impl
-{
-    std::unique_ptr<FastNoiseSIMD> noise = nullptr;
-    std::unique_ptr<FastNoiseSIMD>& operator()()
-    {
-        return noise;
-    }
-};
-
-CaveGen::CaveGen()
-    : impl(std::make_unique<Impl>())
-{
-    (*impl)() = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
-    (*impl)()->SetNoiseType(FastNoiseSIMD::NoiseType::ValueFractal);
-    (*impl)()->SetFrequency(0.05f);
-    (*impl)()->SetFractalOctaves(3);
-}
-
-CaveGen::~CaveGen()
-{
-}
-
 void CaveGen::operator()(Chunk &chunk, GenerationData &data)
 {
     SS_PROFILE_FUNCTION();
-    (*impl)()->SetSeed(data.seed);
+    std::unique_ptr<FastNoiseSIMD> noise(FastNoiseSIMD::NewFastNoiseSIMD(data.seed));
+    noise->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
+    noise->SetFrequency(0.01f);
+    noise->SetFractalOctaves(3);
     float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_Y + SIZE_Y);
 
     for (int x = 0; x < SIZE_X; ++x)
     {
         for (int z = 0; z < SIZE_Z; ++z)
         {
-            (*impl)()->FillNoiseSet(NoiseSet, chunk.m_Position.x * SIZE_X + x, -SIZE_Y, chunk.m_Position.y * SIZE_Z + z, 1, SIZE_Y + SIZE_Y, 1);
+            noise->FillNoiseSet(NoiseSet, chunk.m_Position.x * SIZE_X + x, -SIZE_Y, chunk.m_Position.y * SIZE_Z + z, 1, SIZE_Y + SIZE_Y, 1);
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
                 if (NoiseSet[y + SIZE_Y] < -0.3f)

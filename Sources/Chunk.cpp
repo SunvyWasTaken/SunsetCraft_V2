@@ -92,12 +92,12 @@ void Chunk::BuildMesh()
                         ++idir;
                         if (!IsInChunk(x + dir.x, y + dir.y, z + dir.z))
                         {
-                            glm::vec3 chunkLoc{x + dir.x, y + dir.y, z + dir.z};
-                            chunkLoc += glm::vec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
-                            if (ChunkRegistry::GetBlock(chunkLoc) == BlockRegistry::AIR)
-                            {
-                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir));
-                            }
+                            // glm::vec3 chunkLoc{x + dir.x, y + dir.y, z + dir.z};
+                            // chunkLoc += glm::vec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
+                            // if (ChunkRegistry::GetBlock(chunkLoc) == BlockRegistry::AIR)
+                            // {
+                            //     points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir));
+                            // }
                         }
                         else if (m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)] == BlockRegistry::AIR)
                         {
