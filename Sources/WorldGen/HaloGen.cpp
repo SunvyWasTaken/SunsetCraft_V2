@@ -35,9 +35,9 @@ HaloGen::HaloGen()
     : impl(std::make_unique<Impl>())
 {
     (*impl)() = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
-    (*impl)()->SetNoiseType(FastNoiseSIMD::NoiseType::Perlin);
-    (*impl)()->SetFrequency(0.0001f);
-    (*impl)()->SetFractalOctaves(1);
+    (*impl)()->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
+    (*impl)()->SetFrequency(0.01f);
+    (*impl)()->SetFractalOctaves(3);
 }
 
 HaloGen::~HaloGen()

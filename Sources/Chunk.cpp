@@ -116,6 +116,7 @@ void Chunk::BuildMesh()
     m_Drawable->m_Position = {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
     m_Drawable->m_RenderState.DrawInstance = true;
     m_Drawable->m_RenderState.nbrInstance = 6;
+    // m_Drawable->m_RenderState.wireframe = true;
     m_Drawable->m_RenderState.HasIndice = false;
     if (shader.expired())
     {
