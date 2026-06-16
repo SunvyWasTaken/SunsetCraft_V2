@@ -21,7 +21,7 @@ HaloGen::HaloGen()
 {
     (*impl)() = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
     (*impl)()->SetNoiseType(FastNoiseSIMD::NoiseType::Perlin);
-    (*impl)()->SetFrequency(50);
+    (*impl)()->SetFrequency(0.0001f);
     (*impl)()->SetFractalOctaves(1);
 }
 
@@ -35,12 +35,12 @@ void HaloGen::operator()(Chunk &chunk, ChunkData &data)
     (*impl)()->SetSeed(data.seed);
     float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_X, SIZE_Y + SIZE_Y, SIZE_Z);
 
-    (*impl)()->FillNoiseSet(NoiseSet, chunk.m_Position.x + SIZE_X, 0, chunk.m_Position.y + SIZE_Z, SIZE_X, SIZE_Y + SIZE_Y, SIZE_Z);
-    for (size_t i = 0; i < chunk.Blocks.size(); ++i)
+    (*impl)()->FillNoiseSet(NoiseSet, chunk.m_Position.x * SIZE_X, 0, SIZE_Z, SIZE_X, SIZE_Y + SIZE_Y, SIZE_Z);
+    for (size_t i = 0; i < chunk.m_Blocks.size(); ++i)
     {
-        if (std::abs(NoiseSet[i]) < 0.03f)
+        if (std::abs(NoiseSet[i]) < 0.01f)
         {
-            chunk.Blocks[i] = BlockRegistry::AIR;
+            chunk.m_Blocks[i] = BlockRegistry::AIR;
         }
     }
     FastNoiseSIMD::FreeNoiseSet(NoiseSet);

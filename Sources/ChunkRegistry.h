@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "BlockRegistry.h"
+
 namespace Sunset
 {
     class Camera;
@@ -19,7 +21,7 @@ struct ChunkRegistry
 
     static void UpdatePlayerPosition(const glm::vec3& position);
 
-    static void GetBlock(const glm::vec3& position);
+    static Block GetBlock(const glm::vec3& position);
 
     static void DrawChunk(const Sunset::Camera& camera);
 };

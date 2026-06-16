@@ -74,6 +74,16 @@ namespace
             }
         }
     }
+
+    void BuildDirtyChunk()
+    {
+        SS_PROFILE_FUNCTION();
+        for (auto& c : chunks | std::views::values)
+        {
+            if (c.bIsDirty)
+                c.BuildMesh();
+        }
+    }
 }
 
 void ChunkRegistry::Init(const int seed, const uint8_t renderDistance)
@@ -105,10 +115,20 @@ void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
 
     UnloadChunk(positionInChunk);
     LoadChunk(positionInChunk);
+    BuildDirtyChunk();
 }
 
-void ChunkRegistry::GetBlock(const glm::vec3 &position)
+Block ChunkRegistry::GetBlock(const glm::vec3 &position)
 {
+    const glm::ivec2 positionInChunk{
+        WorldToChunk(position.x, SIZE_X),
+        WorldToChunk(position.z, SIZE_Z)};
+
+    const auto it = chunks.find(positionInChunk);
+    if (it == chunks.end())
+        return BlockRegistry::AIR;
+
+    return it->second.GetBlock(position);
 }
 
 void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)

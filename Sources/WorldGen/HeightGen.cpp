@@ -9,7 +9,6 @@
 void HeightGen::operator()(Chunk &chunk, ChunkData &chunkData)
 {
     SS_PROFILE_FUNCTION();
-    chunk.Blocks.fill(BlockRegistry::AIR);
     for (int x = 0; x < SIZE_X; ++x)
         for (int z = 0; z < SIZE_Z; ++z)
         {
@@ -20,7 +19,7 @@ void HeightGen::operator()(Chunk &chunk, ChunkData &chunkData)
                 const int i2 = i1 + (y + SIZE_Y) * SIZE_X * SIZE_Z;
                 if (y < floor(h))
                 {
-                    chunk.Blocks[i2] = BlockRegistry::STONE;
+                    chunk.m_Blocks[i2] = BlockRegistry::STONE;
                 }
             }
         }
