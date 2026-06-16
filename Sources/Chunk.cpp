@@ -6,93 +6,44 @@
 
 #include "BaseObject/BaseCube.h"
 #include "Render/Drawable.h"
-#include "Render/Material.h"
-#include "Render/RenderCommande.h"
-#include "Render/Shader.h"
-#include "Render/BufferObject/Buffers.h"
 #include "Render/Meshes/Mesh.h"
 
 namespace
 {
-    constexpr glm::ivec3 FaceDirections[] = {
-        { 0, 0, -1 },
-        { 0, 0, 1 },
-        { -1, 0, 0 },
-        { 1, 0, 0 },
-        { 0, 1, 0 },
-        { 0, -1, 0 },
+    constexpr std::array<glm::ivec3, 6> checkDir = {
+        glm::ivec3{-1, 0, 0},
+        {1, 0, 0},
+        {0, -1, 0},
+        {0, 1, 0},
+        {0, 0, -1},
+        {0, 0, 1}
     };
 
-    constexpr uint32_t FaceVertexCount = 6;
+    constexpr int ChunkHeight = SIZE_Y * 2;
+    constexpr int SliceSize = SIZE_X * SIZE_Z;
 
-    std::shared_ptr<Sunset::Shader> shader = nullptr;
-
-    size_t BlockIndex(const int x, const int y, const int z)
+    constexpr bool IsInsideChunk(const int x, const int y, const int z)
     {
-        return static_cast<size_t>(x + z * SIZE_X + y * SIZE_X * SIZE_Z);
+        return x >= 0 && x < SIZE_X
+            && y >= -SIZE_Y && y < SIZE_Y
+            && z >= 0 && z < SIZE_Z;
     }
 
-    bool IsInsideChunk(const int x, const int y, const int z)
+    constexpr size_t BlockIndex(const int x, const int y, const int z)
     {
-        return x >= 0 && x < SIZE_X && y >= 0 && y < SIZE_Y && z >= 0 && z < SIZE_Z;
+        return static_cast<size_t>(x + z * SIZE_X + (y + SIZE_Y) * SliceSize);
     }
 
-    Block GetBlock(const Chunk& chunk, const int x, const int y, const int z)
+    bool IsAir(const Chunk& chunk, const int x, const int y, const int z)
     {
-        if (!IsInsideChunk(x, y, z))
-            return BlockRegistry::AIR;
-
-        return chunk.Blocks[BlockIndex(x, y, z)];
-    }
-
-    bool IsFaceVisible(const Chunk& chunk, const int x, const int y, const int z, const glm::ivec3& direction)
-    {
-        return GetBlock(chunk, x + direction.x, y + direction.y, z + direction.z) == BlockRegistry::AIR;
-    }
-
-    void AppendVisibleFaces(Chunk& chunk, Chunk::BuildContext& context)
-    {
-        context.Vertices.reserve(SIZE_X * SIZE_Y * SIZE_Z);
-
-        for (int y = 0; y < SIZE_Y; ++y)
-        {
-            for (int z = 0; z < SIZE_Z; ++z)
-            {
-                for (int x = 0; x < SIZE_X; ++x)
-                {
-                    const Block block = GetBlock(chunk, x, y, z);
-                    if (block == BlockRegistry::AIR)
-                        continue;
-
-                    for (uint32_t face = 0; face < std::size(FaceDirections); ++face)
-                    {
-                        if (!IsFaceVisible(chunk, x, y, z, FaceDirections[face]))
-                            continue;
-
-                        for (uint32_t corner = 0; corner < FaceVertexCount; ++corner)
-                        {
-                            context.Vertices.push_back(Chunk::PackVertex(
-                                static_cast<uint32_t>(x),
-                                static_cast<uint32_t>(y),
-                                static_cast<uint32_t>(z),
-                                face,
-                                corner,
-                                block));
-                        }
-                    }
-                }
-            }
-        }
+        return chunk.Blocks[BlockIndex(x, y, z)] == BlockRegistry::AIR;
     }
 }
 
-Chunk::Chunk(const glm::ivec2 &position)
+Chunk::Chunk(const glm::vec2 &position)
     : m_Position(position)
     , Blocks()
-    , NoiseValue()
-    , m_BuildSteps()
 {
-    ResetBuildSteps();
 }
 
 Chunk::~Chunk()
@@ -101,54 +52,49 @@ Chunk::~Chunk()
 
 void Chunk::Draw() const
 {
-    if (m_Drawable != nullptr)
-        Sunset::RenderCommande::Submit(*m_Drawable);
+    for (int x = 0; x < SIZE_X; ++x)
+    {
+        for (int z = 0; z < SIZE_Z; ++z)
+        {
+            for (int y = -SIZE_Y; y < SIZE_Y; ++y)
+            {
+                if (Blocks[BlockIndex(x, y, z)] != BlockRegistry::STONE)
+                    continue;
+
+                for (const auto& dir : checkDir)
+                {
+                    if (IsInsideChunk(x + dir.x, y + dir.y, z + dir.z))
+                    {
+                        if (IsAir(*this, x + dir.x, y + dir.y, z + dir.z))
+                        {
+                            Sunset::DrawCube({x + m_Position.x * SIZE_X, y, z + m_Position.y * SIZE_Z}, {}, {});
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 void Chunk::BuildMesh()
 {
-    BuildContext context;
-
-    for (const BuildStep& step : m_BuildSteps)
+    std::vector<uint32_t> data;
+    data.reserve(SIZE_X * ChunkHeight * SIZE_Z);
+    for (int x = 0; x < SIZE_X; ++x)
     {
-        step(*this, context);
-    }
+        for (int z = 0; z < SIZE_Z; ++z)
+        {
+            for (int y = -SIZE_Y; y < SIZE_Y; ++y)
+            {
+                const size_t i = BlockIndex(x, y, z);
+                if (Blocks[i] == BlockRegistry::STONE)
+                {
 
-    std::vector<uint32_t> drawCount(context.Vertices.size());
+                }
+            }
+        }
+    }
     m_Drawable = std::make_unique<Sunset::Drawable>();
-    m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(
-        context.Vertices.data(),
-        sizeof(uint32_t),
-        context.Vertices.size(),
-        drawCount,
-        {Sunset::BufferElement(Sunset::ShaderDataType::UInt, "vData")});
-    m_Drawable->m_Position = glm::vec3{m_Position.x * SIZE_X, 0.0f, m_Position.y * SIZE_Z};
-    m_Drawable->m_RenderState.DrawInstance = false;
-    m_Drawable->m_RenderState.HasIndice = false;
-    if (shader == nullptr)
-    {
-        shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "shader.vert", SHADERS_PATH "shader.frag");
-    }
-    m_Drawable->m_Material->m_Shader = shader;
-}
-
-void Chunk::AddBuildStep(BuildStep step)
-{
-    m_BuildSteps.push_back(std::move(step));
-}
-
-void Chunk::ResetBuildSteps()
-{
-    m_BuildSteps.clear();
-    m_BuildSteps.emplace_back(AppendVisibleFaces);
-}
-
-uint32_t Chunk::PackVertex(const uint32_t x, const uint32_t y, const uint32_t z, const uint32_t face, const uint32_t corner, const Block block)
-{
-    return (x & 0xFu)
-        | ((z & 0xFu) << 4u)
-        | ((y & 0xFFu) << 8u)
-        | ((face & 0x7u) << 16u)
-        | ((corner & 0x7u) << 19u)
-        | ((static_cast<uint32_t>(block) & 0xFFu) << 22u);
+    m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(data.data(), sizeof(uint32_t), data.size(), {}, {});
 }
