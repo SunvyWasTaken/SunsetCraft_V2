@@ -4,15 +4,16 @@
 
 #include "ChunkRegistry.h"
 
+#include <queue>
+#include <unordered_set>
+
 #include "Chunk.h"
-#include "Noise.h"
 #include "Math/AABB.h"
 #include "Render/Camera.h"
 #include "WorldGen/WorldGen.h"
 
 namespace
 {
-
     struct double_hash
     {
         template <typename T>
@@ -26,6 +27,108 @@ namespace
 
     uint8_t m_RenderDistance = 0;
     std::unordered_map<glm::ivec2, Chunk, double_hash> chunks;
+
+#pragma region THREAD
+    struct ChunkJob
+    {
+        glm::ivec2 position{};
+    };
+
+    struct GeneratedChunk
+    {
+        glm::ivec2 position;
+        std::array<Block, SIZE_X * (SIZE_Y * 2) * SIZE_Z> blocks;
+    };
+
+    std::vector<std::jthread> workers;
+
+    std::mutex jobMutex;
+    std::condition_variable_any jobCv;
+    std::queue<ChunkJob> jobs;
+
+    std::mutex resultMutex;
+    std::queue<GeneratedChunk> results;
+
+    std::unordered_set<glm::ivec2, double_hash> pendingChunks;
+
+    void WorkerLoop(std::stop_token stopToken)
+    {
+        while (!stopToken.stop_requested())
+        {
+            ChunkJob job;
+
+            {
+                std::unique_lock lock(jobMutex);
+
+                jobCv.wait(lock, stopToken, []
+                    {
+                        return !jobs.empty();
+                    });
+
+                if (stopToken.stop_requested())
+                    return;
+
+                job = jobs.front();
+                jobs.pop();
+            }
+
+            Chunk temp(job.position);
+            WorldGen::GenChunk(temp);
+
+            GeneratedChunk generated;
+            generated.position = job.position;
+            generated.blocks = std::move(temp.m_Blocks);
+
+            {
+                std::lock_guard lock(resultMutex);
+                results.push(std::move(generated));
+            }
+        }
+    }
+
+    void RequestChunkGeneration(const glm::ivec2& key)
+    {
+        if (chunks.contains(key))
+            return;
+
+        if (pendingChunks.contains(key))
+            return;
+
+        pendingChunks.insert(key);
+
+        {
+            std::lock_guard lock(jobMutex);
+            jobs.push(ChunkJob{ key });
+        }
+
+        jobCv.notify_one();
+    }
+
+    void ConsumeGeneratedChunks()
+    {
+        std::queue<GeneratedChunk> localResults;
+
+        {
+            std::lock_guard lock(resultMutex);
+            localResults.swap(results);
+        }
+
+        while (!localResults.empty())
+        {
+            GeneratedChunk generated = std::move(localResults.front());
+            localResults.pop();
+
+            pendingChunks.erase(generated.position);
+
+            if (chunks.contains(generated.position))
+                continue;
+
+            auto& chunk = chunks.try_emplace(generated.position, generated.position).first->second;
+            chunk.m_Blocks = std::move(generated.blocks);
+            chunk.bIsDirty = true;
+        }
+    }
+#pragma endregion // THREAD
 
     template <typename T>
     int WorldToChunk(T value, const int chunkSize)
@@ -49,8 +152,7 @@ namespace
 
                 if (dist2 <= m_RenderDistance * m_RenderDistance)
                 {
-                    auto& c = (chunks.try_emplace(key, key).first)->second;
-                    WorldGen::GenChunk(c);
+                    RequestChunkGeneration(key);
                 }
             }
         }
@@ -92,11 +194,43 @@ void ChunkRegistry::Init(const int seed, const uint8_t renderDistance)
     LOG("ChunkRegistry", info, "ChunkRegistry init");
     m_RenderDistance = renderDistance;
     WorldGen::Init(seed);
+
+    const uint32_t threadCount = std::max(1u, std::thread::hardware_concurrency() - 1);
+
+    workers.reserve(threadCount);
+
+    for (uint32_t i = 0; i < threadCount; ++i)
+    {
+        workers.emplace_back(WorkerLoop);
+    }
 }
 
 void ChunkRegistry::Destroy()
 {
     LOG("ChunkRegistry", info, "ChunkRegistry destroy");
+
+    for (auto& worker : workers)
+    {
+        worker.request_stop();
+    }
+
+    jobCv.notify_all();
+    workers.clear();
+
+    {
+        std::lock_guard lock(jobMutex);
+        std::queue<ChunkJob> empty;
+        jobs.swap(empty);
+    }
+
+    {
+        std::lock_guard lock(resultMutex);
+        std::queue<GeneratedChunk> empty;
+        results.swap(empty);
+    }
+
+    pendingChunks.clear();
+
     chunks.clear();
     WorldGen::Destroy();
 }
@@ -115,6 +249,7 @@ void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
 
     UnloadChunk(positionInChunk);
     LoadChunk(positionInChunk);
+    ConsumeGeneratedChunks();
     BuildDirtyChunk();
 }
 
