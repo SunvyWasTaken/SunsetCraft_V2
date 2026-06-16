@@ -21,17 +21,17 @@ namespace
     std::shared_ptr<Sunset::Shader> shader = nullptr;
 
     constexpr std::array<glm::ivec3, 6> checkDir = {
-        glm::ivec3{-1, 0, 0},
-        {1, 0, 0},
-        {0, -1, 0},
-        {0, 1, 0},
-        {0, 0, -1},
-        {0, 0, 1}
+        glm::ivec3 {-1,  0,  0},
+                { 1,  0,  0},
+                { 0, -1,  0},
+                { 0,  1,  0},
+                { 0,  0, -1},
+                { 0,  0,  1}
     };
 
     bool IsInChunk(const int x, const int y, const int z)
     {
-        return x <= 0 && x > SIZE_X && y <= -SIZE_Y && y > SIZE_Y && z <= 0 && z > SIZE_Z;
+        return x >= 0 && x < SIZE_X && y >= -SIZE_Y && y < SIZE_Y && z >= 0 && z < SIZE_Z;
     }
 
     int GetIndex(const int x, const int y, const int z)
@@ -44,11 +44,12 @@ namespace
         return   (static_cast<uint32_t>(x) & 0xFu)            |
                 ((static_cast<uint32_t>(y) & 0x1FFu) << 4)     |
                 ((static_cast<uint32_t>(z) & 0xFu) << 13)    |
-                ((static_cast<uint32_t>(dir) & 0x7) << 16);
+                ((static_cast<uint32_t>(dir) & 0x7) << 17);
     }
 
     void CreateMesh(Chunk& chunk)
     {
+        SS_PROFILE_FUNCTION();
         std::vector<uint32_t> points;
         for (int x = 0; x < SIZE_X; ++x)
         {
@@ -59,7 +60,7 @@ namespace
                     const int index = GetIndex(x, y, z);
                     if (chunk.Blocks[index] == BlockRegistry::STONE)
                     {
-                        int idir = 0;
+                        int idir = -1;
                         for (const auto& dir : checkDir)
                         {
                             ++idir;
@@ -79,10 +80,13 @@ namespace
         }
 
         std::vector<uint32_t> indices(points.size());
-        chunk.m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(points.data(), sizeof(uint32_t), points.size(), indices, {Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data")});
+        auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
+        faceData.divisor = 1;
+        chunk.m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(points.data(), sizeof(uint32_t), points.size(), indices, {faceData});
         chunk.m_Drawable->m_Position = {chunk.m_Position.x * SIZE_X, 0, chunk.m_Position.y * SIZE_Z};
         chunk.m_Drawable->m_RenderState.DrawInstance = true;
         chunk.m_Drawable->m_RenderState.nbrInstance = 6;
+        chunk.m_Drawable->m_RenderState.wireframe = true;
         chunk.m_Drawable->m_RenderState.HasIndice = false;
         if (shader == nullptr)
         {
