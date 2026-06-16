@@ -69,7 +69,10 @@ void Chunk::Draw() const
 
 Block Chunk::GetBlock(const glm::vec3 &position) const
 {
-    glm::vec3 pos = WorldToChunk(m_Position, position);
+    const glm::ivec3 pos = WorldToChunk(m_Position, glm::ivec3{position});
+    if (!IsInChunk(pos.x, pos.y, pos.z))
+        return BlockRegistry::AIR;
+
     return m_Blocks[GetIndex(pos.x, pos.y, pos.z)];
 }
 
@@ -92,12 +95,12 @@ void Chunk::BuildMesh()
                         ++idir;
                         if (!IsInChunk(x + dir.x, y + dir.y, z + dir.z))
                         {
-                            // glm::vec3 chunkLoc{x + dir.x, y + dir.y, z + dir.z};
-                            // chunkLoc += glm::vec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
-                            // if (ChunkRegistry::GetBlock(chunkLoc) == BlockRegistry::AIR)
-                            // {
-                            //     points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir));
-                            // }
+                            glm::ivec3 worldPos{x + dir.x, y + dir.y, z + dir.z};
+                            worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
+                            if (ChunkRegistry::GetBlock(worldPos) == BlockRegistry::AIR)
+                            {
+                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir));
+                            }
                         }
                         else if (m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)] == BlockRegistry::AIR)
                         {
@@ -108,7 +111,7 @@ void Chunk::BuildMesh()
             }
         }
     }
-    
+
     auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
     faceData.divisor = 1;
     m_Drawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(uint32_t), points.size(), {faceData});

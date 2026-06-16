@@ -12,7 +12,11 @@
 
 namespace
 {
-    std::vector<NoiseData> noiseData;
+    std::vector<NoiseData>& GetNoiseData()
+    {
+        static std::vector<NoiseData> noiseData;
+        return noiseData;
+    }
 
     std::recursive_mutex noiseMutex;
 
@@ -76,7 +80,7 @@ namespace
 void Noise::Init(int seed)
 {
     std::lock_guard lock(noiseMutex);
-    noiseData.clear();
+    GetNoiseData().clear();
 
     // Load All noiseData
     if (!Load(DefaultNoiseDataPath))
@@ -90,13 +94,13 @@ void Noise::Init(int seed)
 void Noise::Destroy()
 {
     std::lock_guard lock(noiseMutex);
-    noiseData.clear();
+    GetNoiseData().clear();
 }
 
 void Noise::SetSeed(int seed)
 {
     std::lock_guard lock(noiseMutex);
-    for (auto& n : noiseData)
+    for (auto& n : GetNoiseData())
     {
         if (n.noise)
             n.noise->SetSeed(seed);
@@ -110,7 +114,7 @@ void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
     data.clear();
     data.resize(SIZE_X * SIZE_Z);
     float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_X);
-    for (const auto& n : noiseData)
+    for (const auto& n : GetNoiseData())
     {
         if (!n.noise)
             continue;
@@ -131,7 +135,7 @@ void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
 void Noise::Update(int seed)
 {
     std::lock_guard lock(noiseMutex);
-    for (auto& n : noiseData)
+    for (auto& n : GetNoiseData())
     {
         std::sort(n.points.begin(), n.points.end(), [](const glm::fvec2& left, const glm::fvec2& right)
         {
@@ -149,7 +153,7 @@ bool Noise::Save(const std::string& filepath)
     std::lock_guard lock(noiseMutex);
     nlohmann::json root = nlohmann::json::array();
 
-    for (const auto& n : noiseData)
+    for (const auto& n : GetNoiseData())
     {
         nlohmann::json points = nlohmann::json::array();
         for (const auto& point : n.points)
@@ -221,16 +225,16 @@ bool Noise::Load(const std::string& filepath)
         loadedNoiseData.emplace_back(std::move(data));
     }
 
-    noiseData = std::move(loadedNoiseData);
+    GetNoiseData() = std::move(loadedNoiseData);
     return true;
 }
 
 NoiseData & Noise::GetData(int index)
 {
-    return noiseData[index];
+    return GetNoiseData()[index];
 }
 
 std::vector<NoiseData> & Noise::GetDatas()
 {
-    return noiseData;
+    return GetNoiseData();
 }
