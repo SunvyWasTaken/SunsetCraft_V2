@@ -10,7 +10,7 @@ struct CaveGen : public GenLayout
 {
     CaveGen();
     ~CaveGen() override;
-    void operator()(Chunk& chunk, ChunkData& data) override;
+    void operator()(Chunk& chunk, GenerationData& data) override;
 private:
     struct Impl;
     std::unique_ptr<Impl> impl;

@@ -57,7 +57,7 @@ HaloGen::~HaloGen()
 {
 }
 
-void HaloGen::operator()(Chunk &chunk, ChunkData &data)
+void HaloGen::operator()(Chunk &chunk, GenerationData &data)
 {
     SS_PROFILE_FUNCTION();
     chunk.m_Blocks.fill(BlockRegistry::STONE);

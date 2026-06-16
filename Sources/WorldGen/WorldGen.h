@@ -6,16 +6,15 @@
 
 class Chunk;
 
-struct ChunkData
+struct GenerationData
 {
     int seed = 0;
-    std::vector<float> NoiseValue;
 };
 
 struct GenLayout
 {
     virtual ~GenLayout() = default;
-    virtual void operator()(Chunk& chunk, ChunkData& data) = 0;
+    virtual void operator()(Chunk& chunk, GenerationData& data) = 0;
 };
 
 struct WorldGen

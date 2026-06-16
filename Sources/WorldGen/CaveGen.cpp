@@ -57,7 +57,7 @@ CaveGen::~CaveGen()
 {
 }
 
-void CaveGen::operator()(Chunk &chunk, ChunkData &data)
+void CaveGen::operator()(Chunk &chunk, GenerationData &data)
 {
     SS_PROFILE_FUNCTION();
     (*impl)()->SetSeed(data.seed);
