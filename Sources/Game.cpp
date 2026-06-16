@@ -207,7 +207,7 @@ void GameOverlay::OnDraw()
         Noise::SetSeed(seed);
     }
 
-    static int renderDistance = 8;
+    static int renderDistance = 24;
     if (ImGui::SliderInt("Render Distance", &renderDistance, 4, 128))
     {
         ChunkRegistry::SetRenderDistance(renderDistance);
@@ -309,7 +309,7 @@ void GameOverlay::OnDraw()
 GameLayer::GameLayer()
 {
     world = std::make_unique<Sunset::World>();
-    ChunkRegistry::Init(seed, 1);
+    ChunkRegistry::Init(seed, 24);
     player = world->GetController(0).GetEntity();
 }
 

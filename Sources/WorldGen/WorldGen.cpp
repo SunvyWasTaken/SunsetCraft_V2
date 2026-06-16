@@ -4,6 +4,7 @@
 
 #include "WorldGen.h"
 
+#include "HaloGen.h"
 #include "HeightGen.h"
 #include "../Chunk.h"
 #include "../Noise.h"
@@ -103,6 +104,7 @@ void WorldGen::Init(const int seed)
     Noise::Init(Seed);
 
     WorldGenLayout.emplace_back(std::make_unique<HeightGen>());
+    WorldGenLayout.emplace_back(std::make_unique<HaloGen>());
 }
 
 void WorldGen::Destroy()
@@ -116,6 +118,7 @@ void WorldGen::Destroy()
 void WorldGen::GenChunk(Chunk &chunk)
 {
     ChunkData data;
+    data.seed = Seed;
     Noise::Get(data.NoiseValue, chunk.m_Position * glm::ivec2{SIZE_X, SIZE_Z});
     for (auto& layout : WorldGenLayout)
     {

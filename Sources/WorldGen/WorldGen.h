@@ -8,6 +8,7 @@ class Chunk;
 
 struct ChunkData
 {
+    int seed = 0;
     std::vector<float> NoiseValue;
 };
 
