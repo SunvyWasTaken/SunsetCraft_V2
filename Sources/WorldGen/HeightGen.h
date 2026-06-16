@@ -9,5 +9,5 @@
 struct HeightGen : public GenLayout
 {
     ~HeightGen() override = default;
-    void operator()(Chunk& chunk, GenerationData& data) override;
+    void operator()(GeneratedChunk& chunk, GenerationData& data) override;
 };

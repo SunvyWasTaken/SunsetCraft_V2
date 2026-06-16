@@ -57,10 +57,10 @@ HaloGen::~HaloGen()
 {
 }
 
-void HaloGen::operator()(Chunk &chunk, GenerationData &data)
+void HaloGen::operator()(GeneratedChunk &chunk, GenerationData &data)
 {
     SS_PROFILE_FUNCTION();
-    chunk.m_Blocks.fill(BlockRegistry::STONE);
+    chunk.blocks.fill(BlockRegistry::STONE);
     (*impl)()->SetSeed(data.seed);
     float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_Y + SIZE_Y);
 
@@ -68,12 +68,12 @@ void HaloGen::operator()(Chunk &chunk, GenerationData &data)
     {
         for (int z = 0; z < SIZE_Z; ++z)
         {
-            (*impl)()->FillNoiseSet(NoiseSet, chunk.m_Position.x * SIZE_X + x, -SIZE_Y, chunk.m_Position.y * SIZE_Z + z, 1, SIZE_Y + SIZE_Y, 1);
+            (*impl)()->FillNoiseSet(NoiseSet, chunk.position.x * SIZE_X + x, -SIZE_Y, chunk.position.y * SIZE_Z + z, 1, SIZE_Y + SIZE_Y, 1);
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
                 if (NoiseSet[y + SIZE_Y] < EaseInOutLerp(-1, 1.f, Normalize(-SIZE_Y, SIZE_Y, y)))
                 {
-                    chunk.m_Blocks[x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z] = BlockRegistry::AIR;
+                    chunk.blocks[x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z] = BlockRegistry::AIR;
                 }
             }
         }

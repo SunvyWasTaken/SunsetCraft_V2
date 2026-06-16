@@ -9,5 +9,5 @@
 struct CaveGen : public GenLayout
 {
     ~CaveGen() override = default;
-    void operator()(Chunk& chunk, GenerationData& data) override;
+    void operator()(GeneratedChunk& chunk, GenerationData& data) override;
 };

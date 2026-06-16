@@ -35,7 +35,7 @@ namespace
     }
 }
 
-void CaveGen::operator()(Chunk &chunk, GenerationData &data)
+void CaveGen::operator()(GeneratedChunk &chunk, GenerationData &data)
 {
     SS_PROFILE_FUNCTION();
     std::unique_ptr<FastNoiseSIMD> noise(FastNoiseSIMD::NewFastNoiseSIMD(data.seed));
@@ -48,12 +48,12 @@ void CaveGen::operator()(Chunk &chunk, GenerationData &data)
     {
         for (int z = 0; z < SIZE_Z; ++z)
         {
-            noise->FillNoiseSet(NoiseSet, chunk.m_Position.x * SIZE_X + x, -SIZE_Y, chunk.m_Position.y * SIZE_Z + z, 1, SIZE_Y + SIZE_Y, 1);
+            noise->FillNoiseSet(NoiseSet, chunk.position.x * SIZE_X + x, -SIZE_Y, chunk.position.y * SIZE_Z + z, 1, SIZE_Y + SIZE_Y, 1);
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
                 if (NoiseSet[y + SIZE_Y] < -0.3f)
                 {
-                    chunk.m_Blocks[x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z] = BlockRegistry::AIR;
+                    chunk.blocks[x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z] = BlockRegistry::AIR;
                 }
             }
         }

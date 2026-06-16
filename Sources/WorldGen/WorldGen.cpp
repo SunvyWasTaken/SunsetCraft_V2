@@ -32,7 +32,7 @@ void WorldGen::Destroy()
     Noise::Destroy();
 }
 
-void WorldGen::GenChunk(Chunk &chunk)
+void WorldGen::GenChunk(GeneratedChunk &chunk)
 {
     GenerationData data;
     data.seed = Seed;

@@ -7,11 +7,11 @@
 #include "../Noise.h"
 #include "../Chunk.h"
 
-void HeightGen::operator()(Chunk &chunk, GenerationData &chunkData)
+void HeightGen::operator()(GeneratedChunk &chunk, GenerationData &chunkData)
 {
     SS_PROFILE_FUNCTION();
     std::vector<float> NoiseValue;
-    Noise::Get(NoiseValue, chunk.m_Position * glm::ivec2{SIZE_X, SIZE_Z});
+    Noise::Get(NoiseValue, chunk.position * glm::ivec2{SIZE_X, SIZE_Z});
     for (int x = 0; x < SIZE_X; ++x)
         for (int z = 0; z < SIZE_Z; ++z)
         {
@@ -22,7 +22,7 @@ void HeightGen::operator()(Chunk &chunk, GenerationData &chunkData)
                 const int i2 = i1 + (y + SIZE_Y) * SIZE_X * SIZE_Z;
                 if (y < floor(h))
                 {
-                    chunk.m_Blocks[i2] = BlockRegistry::STONE;
+                    chunk.blocks[i2] = BlockRegistry::STONE;
                 }
             }
         }

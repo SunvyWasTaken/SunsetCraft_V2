@@ -108,11 +108,10 @@ void Chunk::BuildMesh()
             }
         }
     }
-
-    std::vector<uint32_t> indices(points.size());
+    
     auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
     faceData.divisor = 1;
-    m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(points.data(), sizeof(uint32_t), points.size(), indices, {faceData});
+    m_Drawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(uint32_t), points.size(), {faceData});
     m_Drawable->m_Position = {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
     m_Drawable->m_RenderState.DrawInstance = true;
     m_Drawable->m_RenderState.nbrInstance = 6;

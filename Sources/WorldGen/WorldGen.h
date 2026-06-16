@@ -4,22 +4,28 @@
 
 #pragma once
 
-class Chunk;
+#include "../Chunk.h"
 
 struct GenerationData
 {
     int seed = 0;
 };
 
+struct GeneratedChunk
+{
+    glm::ivec2 position;
+    std::array<Block, SIZE_X * (SIZE_Y * 2) * SIZE_Z> blocks;
+};
+
 struct GenLayout
 {
     virtual ~GenLayout() = default;
-    virtual void operator()(Chunk& chunk, GenerationData& data) = 0;
+    virtual void operator()(GeneratedChunk& chunk, GenerationData& data) = 0;
 };
 
 struct WorldGen
 {
     static void Init(int seed);
     static void Destroy();
-    static void GenChunk(Chunk& chunk);
+    static void GenChunk(GeneratedChunk& chunk);
 };

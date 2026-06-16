@@ -10,7 +10,7 @@ struct HaloGen : public GenLayout
 {
     HaloGen();
     ~HaloGen() override;
-    void operator()(Chunk& chunk, GenerationData& data) override;
+    void operator()(GeneratedChunk& chunk, GenerationData& data) override;
 
 private:
     struct Impl;

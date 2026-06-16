@@ -34,12 +34,6 @@ namespace
         glm::ivec2 position{};
     };
 
-    struct GeneratedChunk
-    {
-        glm::ivec2 position;
-        std::array<Block, SIZE_X * (SIZE_Y * 2) * SIZE_Z> blocks;
-    };
-
     std::vector<std::jthread> workers;
 
     std::mutex jobMutex;
@@ -72,12 +66,8 @@ namespace
                 jobs.pop();
             }
 
-            Chunk temp(job.position);
-            WorldGen::GenChunk(temp);
-
-            GeneratedChunk generated;
-            generated.position = job.position;
-            generated.blocks = std::move(temp.m_Blocks);
+            GeneratedChunk generated{job.position};
+            WorldGen::GenChunk(generated);
 
             {
                 std::lock_guard lock(resultMutex);
