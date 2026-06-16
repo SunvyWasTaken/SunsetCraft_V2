@@ -1,102 +1,61 @@
 #version 330 core
 
-layout(location = 0) in uint vData;
+layout(location = 0) in uint data;
 
 uniform mat4 model;
 uniform mat4 projection;
 uniform mat4 view;
 
 out vec3 FragNormal;
-out vec2 FragUV;
-flat out uint BlockType;
+flat out int BlockType;
 
 vec3 DecodePos(uint v)
 {
     return vec3(
-        float(v & 31u),
-        float((v >> 5) & 31u),
-        float((v >> 10) & 31u)
+        float((v >> 0) & 0xFu),
+        float((v >> 4) & 0x1FFu),
+        float((v >> 13) & 0xFu)
     );
 }
 
-const vec3 cubeVerts[36] = vec3[](
-    // Front
-    vec3(0,0,0), vec3(1,0,0), vec3(1,1,0),
-    vec3(0,0,0), vec3(1,1,0), vec3(0,1,0),
+uint DecodeSide(uint v)
+{
+    return (v >> 16) & uint(0x7);
+}
 
-    // Back
-    vec3(1,0,1), vec3(0,0,1), vec3(0,1,1),
-    vec3(1,0,1), vec3(0,1,1), vec3(1,1,1),
-
-    // Left
-    vec3(0,0,1), vec3(0,0,0), vec3(0,1,0),
-    vec3(0,0,1), vec3(0,1,0), vec3(0,1,1),
-
-    // Right
-    vec3(1,0,0), vec3(1,0,1), vec3(1,1,1),
-    vec3(1,0,0), vec3(1,1,1), vec3(1,1,0),
-
-    // Top
-    vec3(0,1,0), vec3(1,1,0), vec3(1,1,1),
-    vec3(0,1,0), vec3(1,1,1), vec3(0,1,1),
-
-    // Bottom
-    vec3(0,0,1), vec3(1,0,1), vec3(1,0,0),
-    vec3(0,0,1), vec3(1,0,0), vec3(0,0,0)
+const vec3 faceVerts[36] = vec3[](
+        vec3(0,0,0), vec3(0,0,1), vec3(0,1,1), vec3(0,0,1), vec3(0,1,1), vec3(0,1,0),
+        vec3(1,0,0), vec3(1,0,1), vec3(1,1,1), vec3(1,0,1), vec3(1,1,1), vec3(1,1,0),
+        vec3(0,0,0), vec3(1,0,0), vec3(1,0,1), vec3(1,0,1), vec3(0,0,1), vec3(0,0,0),
+        vec3(0,1,0), vec3(1,1,0), vec3(1,1,1), vec3(1,1,1), vec3(0,1,1), vec3(0,1,0),
+        vec3(0,0,0), vec3(1,0,0), vec3(1,1,0), vec3(1,1,0), vec3(0,1,0), vec3(0,0,0),
+        vec3(0,0,1), vec3(1,0,1), vec3(1,1,1), vec3(1,1,1), vec3(0,1,1), vec3(0,0,1)
 );
 
-const vec3 cubeNormals[36] = vec3[](
-    vec3(0,0,-1), vec3(0,0,-1), vec3(0,0,-1),
-    vec3(0,0,-1), vec3(0,0,-1), vec3(0,0,-1),
-
-    vec3(0,0,1), vec3(0,0,1), vec3(0,0,1),
-    vec3(0,0,1), vec3(0,0,1), vec3(0,0,1),
-
-    vec3(-1,0,0), vec3(-1,0,0), vec3(-1,0,0),
-    vec3(-1,0,0), vec3(-1,0,0), vec3(-1,0,0),
-
-    vec3(1,0,0), vec3(1,0,0), vec3(1,0,0),
-    vec3(1,0,0), vec3(1,0,0), vec3(1,0,0),
-
-    vec3(0,1,0), vec3(0,1,0), vec3(0,1,0),
-    vec3(0,1,0), vec3(0,1,0), vec3(0,1,0),
-
-    vec3(0,-1,0), vec3(0,-1,0), vec3(0,-1,0),
-    vec3(0,-1,0), vec3(0,-1,0), vec3(0,-1,0)
+const vec3 faceNormals[6] = vec3[](
+        vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, -1, 0), vec3(0, 1, 0), vec3(0, 0, -1), vec3(0, 0, 1)
 );
 
-const vec2 cubeUV[36] = vec2[](
-    vec2(0,0), vec2(1,0), vec2(1,1),
-    vec2(0,0), vec2(1,1), vec2(0,1),
-
-    vec2(0,0), vec2(1,0), vec2(1,1),
-    vec2(0,0), vec2(1,1), vec2(0,1),
-
-    vec2(0,0), vec2(1,0), vec2(1,1),
-    vec2(0,0), vec2(1,1), vec2(0,1),
-
-    vec2(0,0), vec2(1,0), vec2(1,1),
-    vec2(0,0), vec2(1,1), vec2(0,1),
-
-    vec2(0,0), vec2(1,0), vec2(1,1),
-    vec2(0,0), vec2(1,1), vec2(0,1),
-
-    vec2(0,0), vec2(1,0), vec2(1,1),
-    vec2(0,0), vec2(1,1), vec2(0,1)
-);
+int faceOffset(uint side)
+{
+    if (side == 0u) return 0;
+    if (side == 1u) return 6;
+    if (side == 2u) return 12;
+    if (side == 3u) return 18;
+    if (side == 4u) return 24;
+    return 30;
+}
 
 void main()
 {
-    vec3 blockPos = DecodePos(vData);
+    vec3 blockPos = DecodePos(data);
+    uint side = DecodeSide(data);
+    uint vertIndex = (gl_VertexID % 6);
 
-    int vertexIndex = gl_VertexID;
+    vec3 vertPos = faceVerts[faceOffset(vertIndex)];
 
-    vec3 localPos = cubeVerts[vertexIndex];
+    vec3 position = blockPos + vertPos;
 
-    vec3 worldPos = blockPos + localPos + location;
-
-    FragNormal = cubeNormals[vertexIndex];
-    FragUV = cubeUV[vertexIndex];
-
-    gl_Position = projection * view * model * vec4(worldPos, 1.0);
+    gl_Position = projection * view * model * vec4(position, 1.0);
+    FragNormal = faceNormals[vertIndex];
 }

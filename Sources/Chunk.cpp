@@ -6,6 +6,7 @@
 
 #include "BaseObject/BaseCube.h"
 #include "Render/Drawable.h"
+#include "Render/RenderCommande.h"
 #include "Render/Meshes/Mesh.h"
 
 namespace
@@ -52,49 +53,29 @@ Chunk::~Chunk()
 
 void Chunk::Draw() const
 {
-    for (int x = 0; x < SIZE_X; ++x)
-    {
-        for (int z = 0; z < SIZE_Z; ++z)
-        {
-            for (int y = -SIZE_Y; y < SIZE_Y; ++y)
-            {
-                if (Blocks[BlockIndex(x, y, z)] != BlockRegistry::STONE)
-                    continue;
+    Sunset::RenderCommande::Submit(*m_Drawable);
 
-                for (const auto& dir : checkDir)
-                {
-                    if (IsInsideChunk(x + dir.x, y + dir.y, z + dir.z))
-                    {
-                        if (IsAir(*this, x + dir.x, y + dir.y, z + dir.z))
-                        {
-                            Sunset::DrawCube({x + m_Position.x * SIZE_X, y, z + m_Position.y * SIZE_Z}, {}, {});
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-void Chunk::BuildMesh()
-{
-    std::vector<uint32_t> data;
-    data.reserve(SIZE_X * ChunkHeight * SIZE_Z);
-    for (int x = 0; x < SIZE_X; ++x)
-    {
-        for (int z = 0; z < SIZE_Z; ++z)
-        {
-            for (int y = -SIZE_Y; y < SIZE_Y; ++y)
-            {
-                const size_t i = BlockIndex(x, y, z);
-                if (Blocks[i] == BlockRegistry::STONE)
-                {
-
-                }
-            }
-        }
-    }
-    m_Drawable = std::make_unique<Sunset::Drawable>();
-    m_Drawable->m_Mesh = Sunset::Mesh::CreateMesh(data.data(), sizeof(uint32_t), data.size(), {}, {});
+    // for (int x = 0; x < SIZE_X; ++x)
+    // {
+    //     for (int z = 0; z < SIZE_Z; ++z)
+    //     {
+    //         for (int y = -SIZE_Y; y < SIZE_Y; ++y)
+    //         {
+    //             if (Blocks[BlockIndex(x, y, z)] != BlockRegistry::STONE)
+    //                 continue;
+    //
+    //             for (const auto& dir : checkDir)
+    //             {
+    //                 if (IsInsideChunk(x + dir.x, y + dir.y, z + dir.z))
+    //                 {
+    //                     if (IsAir(*this, x + dir.x, y + dir.y, z + dir.z))
+    //                     {
+    //                         Sunset::DrawCube({x + m_Position.x * SIZE_X, y, z + m_Position.y * SIZE_Z}, {}, {});
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
