@@ -207,7 +207,7 @@ void GameOverlay::OnDraw()
         Noise::SetSeed(seed);
     }
 
-    static int renderDistance = 16;
+    static int renderDistance = 8;
     if (ImGui::SliderInt("Render Distance", &renderDistance, 4, 128))
     {
         ChunkRegistry::SetRenderDistance(renderDistance);
