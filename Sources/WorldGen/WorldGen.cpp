@@ -4,6 +4,7 @@
 
 #include "WorldGen.h"
 
+#include "CaveGen.h"
 #include "HaloGen.h"
 #include "HeightGen.h"
 #include "../Chunk.h"
@@ -27,7 +28,8 @@ void WorldGen::Init(const int seed)
     Noise::Init(Seed);
 
     WorldGenLayout.emplace_back(std::make_unique<HeightGen>());
-    WorldGenLayout.emplace_back(std::make_unique<HaloGen>());
+    // WorldGenLayout.emplace_back(std::make_unique<HaloGen>());
+    WorldGenLayout.emplace_back(std::make_unique<CaveGen>());
 }
 
 void WorldGen::Destroy()

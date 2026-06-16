@@ -2,7 +2,7 @@
 // Created by sunvy on 16/06/2026.
 //
 
-#include "HaloGen.h"
+#include "CaveGen.h"
 
 #include "FastNoiseSIMD.h"
 #include "../Chunk.h"
@@ -35,7 +35,7 @@ namespace
     }
 }
 
-struct HaloGen::Impl
+struct CaveGen::Impl
 {
     std::unique_ptr<FastNoiseSIMD> noise = nullptr;
     std::unique_ptr<FastNoiseSIMD>& operator()()
@@ -44,23 +44,22 @@ struct HaloGen::Impl
     }
 };
 
-HaloGen::HaloGen()
+CaveGen::CaveGen()
     : impl(std::make_unique<Impl>())
 {
     (*impl)() = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
-    (*impl)()->SetNoiseType(FastNoiseSIMD::NoiseType::SimplexFractal);
-    (*impl)()->SetFrequency(0.01f);
+    (*impl)()->SetNoiseType(FastNoiseSIMD::NoiseType::ValueFractal);
+    (*impl)()->SetFrequency(0.05f);
     (*impl)()->SetFractalOctaves(3);
 }
 
-HaloGen::~HaloGen()
+CaveGen::~CaveGen()
 {
 }
 
-void HaloGen::operator()(Chunk &chunk, ChunkData &data)
+void CaveGen::operator()(Chunk &chunk, ChunkData &data)
 {
     SS_PROFILE_FUNCTION();
-    chunk.m_Blocks.fill(BlockRegistry::STONE);
     (*impl)()->SetSeed(data.seed);
     float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_Y + SIZE_Y);
 
@@ -71,7 +70,7 @@ void HaloGen::operator()(Chunk &chunk, ChunkData &data)
             (*impl)()->FillNoiseSet(NoiseSet, chunk.m_Position.x * SIZE_X + x, -SIZE_Y, chunk.m_Position.y * SIZE_Z + z, 1, SIZE_Y + SIZE_Y, 1);
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
-                if (NoiseSet[y + SIZE_Y] < EaseInOutLerp(-1, 1.f, Normalize(-SIZE_Y, SIZE_Y, y)))
+                if (NoiseSet[y + SIZE_Y] < -0.3f)
                 {
                     chunk.m_Blocks[x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z] = BlockRegistry::AIR;
                 }
