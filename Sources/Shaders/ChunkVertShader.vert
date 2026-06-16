@@ -23,12 +23,12 @@ uint DecodeSide(uint v)
 }
 
 const vec3 faceVerts[36] = vec3[](
-        vec3(0,0,0), vec3(0,0,1), vec3(0,1,1), vec3(0,1,1), vec3(0,1,0), vec3(0,0,0),
-        vec3(1,0,0), vec3(1,0,1), vec3(1,1,1), vec3(1,1,1), vec3(1,1,0), vec3(1,0,0),
-        vec3(0,0,0), vec3(1,0,0), vec3(1,0,1), vec3(1,0,1), vec3(0,0,1), vec3(0,0,0),
-        vec3(0,1,0), vec3(1,1,0), vec3(1,1,1), vec3(1,1,1), vec3(0,1,1), vec3(0,1,0),
-        vec3(0,0,0), vec3(1,0,0), vec3(1,1,0), vec3(1,1,0), vec3(0,1,0), vec3(0,0,0),
-        vec3(0,0,1), vec3(1,0,1), vec3(1,1,1), vec3(1,1,1), vec3(0,1,1), vec3(0,0,1)
+        vec3(0,0,0), vec3(0,1,0), vec3(0,1,1), vec3(0,1,1), vec3(0,0,1), vec3(0,0,0), // -X
+        vec3(1,0,0), vec3(1,0,1), vec3(1,1,1), vec3(1,1,1), vec3(1,1,0), vec3(1,0,0), //  X
+        vec3(0,0,0), vec3(0,0,1), vec3(1,0,1), vec3(1,0,1), vec3(1,0,0), vec3(0,0,0), // -Y
+        vec3(0,1,0), vec3(1,1,0), vec3(1,1,1), vec3(1,1,1), vec3(0,1,1), vec3(0,1,0), //  Y
+        vec3(0,0,0), vec3(1,0,0), vec3(1,1,0), vec3(1,1,0), vec3(0,1,0), vec3(0,0,0), // -Z
+        vec3(0,0,1), vec3(0,1,1), vec3(1,1,1), vec3(1,1,1), vec3(1,0,1), vec3(0,0,1)  //  Z
 );
 
 const vec3 faceNormals[6] = vec3[](
@@ -49,12 +49,14 @@ void main()
 {
     vec3 blockPos = DecodePos(data);
     uint side = DecodeSide(data);
-    int vertIndex = (gl_VertexID % 6);
 
-    vec3 vertPos = faceVerts[faceOffset(side)];
+    int vertIndex = gl_VertexID % 6;
+    int offset = faceOffset(side);
 
-    vec3 position = blockPos + vertPos - vec3(0, 255, 0);
+    vec3 vertPos = faceVerts[offset + vertIndex];
+
+    vec3 position = blockPos + vertPos - vec3(0.0, 255.0, 0.0);
 
     gl_Position = projection * view * model * vec4(position, 1.0);
-    FragNormal = faceNormals[side];
+    FragNormal = faceNormals[int(side)];
 }

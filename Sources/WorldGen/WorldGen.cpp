@@ -86,7 +86,7 @@ namespace
         chunk.m_Drawable->m_Position = {chunk.m_Position.x * SIZE_X, 0, chunk.m_Position.y * SIZE_Z};
         chunk.m_Drawable->m_RenderState.DrawInstance = true;
         chunk.m_Drawable->m_RenderState.nbrInstance = 6;
-        chunk.m_Drawable->m_RenderState.wireframe = true;
+        // chunk.m_Drawable->m_RenderState.wireframe = true;
         chunk.m_Drawable->m_RenderState.HasIndice = false;
         if (shader == nullptr)
         {
