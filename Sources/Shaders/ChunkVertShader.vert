@@ -7,7 +7,6 @@ uniform mat4 projection;
 uniform mat4 view;
 
 out vec3 FragNormal;
-flat out int BlockType;
 
 vec3 DecodePos(uint v)
 {
@@ -36,13 +35,13 @@ const vec3 faceNormals[6] = vec3[](
         vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, -1, 0), vec3(0, 1, 0), vec3(0, 0, -1), vec3(0, 0, 1)
 );
 
-int faceOffset(uint side)
+int faceOffset(int side)
 {
-    if (side == 0u) return 0;
-    if (side == 1u) return 6;
-    if (side == 2u) return 12;
-    if (side == 3u) return 18;
-    if (side == 4u) return 24;
+    if (side == 0) return 0;
+    if (side == 1) return 6;
+    if (side == 2) return 12;
+    if (side == 3) return 18;
+    if (side == 4) return 24;
     return 30;
 }
 
@@ -50,11 +49,11 @@ void main()
 {
     vec3 blockPos = DecodePos(data);
     uint side = DecodeSide(data);
-    uint vertIndex = (gl_VertexID % 6);
+    int vertIndex = (gl_VertexID % 6);
 
     vec3 vertPos = faceVerts[faceOffset(vertIndex)];
 
-    vec3 position = blockPos + vertPos;
+    vec3 position = blockPos + vertPos - vec3(0, 255, 0);
 
     gl_Position = projection * view * model * vec4(position, 1.0);
     FragNormal = faceNormals[vertIndex];

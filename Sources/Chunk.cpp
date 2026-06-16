@@ -43,6 +43,7 @@ namespace
 
 Chunk::Chunk(const glm::vec2 &position)
     : m_Position(position)
+    , m_Drawable(std::make_unique<Sunset::Drawable>())
     , Blocks()
 {
 }

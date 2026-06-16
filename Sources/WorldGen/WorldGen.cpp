@@ -18,7 +18,7 @@ namespace
     int Seed = 0;
     std::vector<std::unique_ptr<GenLayout>> WorldGenLayout;
 
-    std::shared_ptr<Sunset::Shader> shader;
+    std::shared_ptr<Sunset::Shader> shader = nullptr;
 
     constexpr std::array<glm::ivec3, 6> checkDir = {
         glm::ivec3{-1, 0, 0},
@@ -65,12 +65,12 @@ namespace
                             ++idir;
                             if (!IsInChunk(x + dir.x, y + dir.y, z + dir.z))
                             {
-                                points.emplace_back(EncodePoint(x, y, z, idir));
+                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir));
                                 continue;
                             }
                             if (chunk.Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)] == BlockRegistry::AIR)
                             {
-                                points.emplace_back(EncodePoint(x + dir.x, y + dir.y, z + dir.z, idir));
+                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir));
                             }
                         }
                     }
@@ -86,7 +86,7 @@ namespace
         chunk.m_Drawable->m_RenderState.HasIndice = false;
         if (shader == nullptr)
         {
-            shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "ChunkFragShader.frag", SHADERS_PATH "ChunkFragShader.vert");
+            shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");
         }
         chunk.m_Drawable->m_Material->m_Shader = shader;
     }

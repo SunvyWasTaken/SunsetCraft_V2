@@ -113,6 +113,7 @@ void ChunkRegistry::GetBlock(const glm::vec3 &position)
 
 void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
 {
+    SS_PROFILE_FUNCTION();
     for (const auto &c: chunks | std::views::values)
     {
          if (camera.GetFrustum().IsVisible(Sunset::AABB{glm::vec3{c.m_Position.x * SIZE_X, -SIZE_Y, c.m_Position.y * SIZE_Z}, glm::vec3{c.m_Position.x * SIZE_X + SIZE_X, SIZE_Y, c.m_Position.y * SIZE_Z + SIZE_Z}}))
