@@ -8,6 +8,7 @@ using Block = uint8_t;
 
 struct BlockRegistry
 {
+    static void Init();
     static Block Get(const std::string& name);
     static Block AIR;
     static Block STONE;

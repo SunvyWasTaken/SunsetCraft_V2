@@ -10,6 +10,7 @@
 
 #include "ChunkRegistry.h"
 #include "Noise.h"
+#include "TextureRegistry.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
@@ -309,6 +310,7 @@ void GameOverlay::OnDraw()
 GameLayer::GameLayer()
 {
     world = std::make_unique<Sunset::World>();
+    TextureBlockRegistry::Init();
     ChunkRegistry::Init(seed, 24);
     player = world->GetController(0).GetEntity();
 }
@@ -316,6 +318,7 @@ GameLayer::GameLayer()
 GameLayer::~GameLayer()
 {
     ChunkRegistry::Destroy();
+    TextureBlockRegistry::Destroy();
 }
 
 void GameLayer::OnUpdate(float dt)

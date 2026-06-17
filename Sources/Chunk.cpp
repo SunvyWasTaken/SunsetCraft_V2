@@ -5,6 +5,7 @@
 #include "Chunk.h"
 
 #include "ChunkRegistry.h"
+#include "TextureRegistry.h"
 #include "Render/Drawable.h"
 #include "Render/Material.h"
 #include "Render/RenderCommande.h"
@@ -35,12 +36,13 @@ namespace
         return x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z;
     }
 
-    uint32_t EncodePoint(const int x, const int y, const int z, const int dir)
+    uint32_t EncodePoint(const int x, const int y, const int z, const int dir, const int blockType)
     {
-        return   (static_cast<uint32_t>(x) & 0xFu)            |
-                ((static_cast<uint32_t>(y) & 0x1FFu) << 4)     |
-                ((static_cast<uint32_t>(z) & 0xFu) << 13)    |
-                ((static_cast<uint32_t>(dir) & 0x7) << 17);
+        return   (static_cast<uint32_t>(x) & 0xFu)                  |
+                ((static_cast<uint32_t>(y) & 0x1FFu) << 4)          |
+                ((static_cast<uint32_t>(z) & 0xFu) << 13)           |
+                ((static_cast<uint32_t>(dir) & 0x7u) << 17)         |
+                ((static_cast<uint32_t>(blockType) & 0xFFu) << 20);
     }
 
     glm::ivec3 WorldToChunk(const glm::ivec2& ChunkPos, const glm::ivec3& pos)
@@ -87,7 +89,8 @@ void Chunk::BuildMesh()
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
                 const int index = GetIndex(x, y, z);
-                if (m_Blocks[index] == BlockRegistry::STONE)
+                Block b = m_Blocks[index];
+                if (b == BlockRegistry::STONE)
                 {
                     int idir = -1;
                     for (const auto& dir : checkDir)
@@ -99,12 +102,12 @@ void Chunk::BuildMesh()
                             worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
                             if (ChunkRegistry::GetBlock(worldPos) == BlockRegistry::AIR)
                             {
-                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir));
+                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir, TextureBlockRegistry::GetBlockId(b)));
                             }
                         }
                         else if (m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)] == BlockRegistry::AIR)
                         {
-                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir));
+                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir, TextureBlockRegistry::GetBlockId(b)));
                         }
                     }
                 }
@@ -120,6 +123,7 @@ void Chunk::BuildMesh()
     m_Drawable->m_RenderState.nbrInstance = 6;
     // m_Drawable->m_RenderState.wireframe = true;
     m_Drawable->m_RenderState.HasIndice = false;
+    m_Drawable->m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
     if (shader.expired())
     {
         m_Drawable->m_Material->m_Shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");

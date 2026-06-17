@@ -21,6 +21,7 @@ struct ChunkRegistry
 
     static void UpdatePlayerPosition(const glm::vec3& position);
 
+    [[nodiscard]]
     static Block GetBlock(const glm::vec3& position);
 
     static void DrawChunk(const Sunset::Camera& camera);
