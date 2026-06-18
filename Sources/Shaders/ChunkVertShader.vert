@@ -26,7 +26,7 @@ uint DecodeSide(uint v)
 
 uint DecodeUV(uint v)
 {
-    return (v >> 20) & uint(0xFu);
+    return (v >> 20) & uint(0xFFu);
 }
 
 const vec3 faceVerts[36] = vec3[](
@@ -42,13 +42,8 @@ const vec3 faceNormals[6] = vec3[](
         vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, -1, 0), vec3(0, 1, 0), vec3(0, 0, -1), vec3(0, 0, 1)
 );
 
-const vec2 FaceUV[36] = vec2[](
-    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
-    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
-    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
-    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
-    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
-    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0)
+const vec2 faceUVs[6] = vec2[](
+        vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0)
 );
 
 int faceOffset(uint side)
@@ -76,5 +71,5 @@ void main()
 
     gl_Position = projection * view * model * vec4(position, 1.0);
     FragNormal = faceNormals[int(side)];
-    FragUv = FaceUV[offset + vertIndex];
+    FragUv = faceUVs[vertIndex];
 }

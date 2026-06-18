@@ -11,7 +11,11 @@
 
 namespace
 {
+    constexpr int TextureSize = 32;
+    constexpr int AtlasTileCount = 16;
+
     std::shared_ptr<Sunset::Textures> m_Texture;
+    std::unordered_map<std::string, uint8_t> m_TextureIndexes;
 
     glm::ivec2 LastTexturePos = glm::ivec2(0, 0);
 
@@ -50,8 +54,8 @@ namespace
     [[nodiscard]]
     glm::ivec2 CalculateAtlasSize(size_t textureSize, const size_t nbrTextures)
     {
-        const size_t columns = std::ceil(std::sqrt(nbrTextures));
-        const size_t rows = std::ceil(textureSize / columns);
+        const size_t columns = AtlasTileCount;
+        const size_t rows = std::ceil(static_cast<float>(nbrTextures) / columns);
         return {columns * textureSize, rows * textureSize};
     }
 
@@ -67,7 +71,12 @@ namespace
 
 void TextureBlockRegistry::Init()
 {
-    const glm::ivec2 AtlasSize = CalculateAtlasSize(32, 16);
+    LastTexturePos = glm::ivec2(0, 0);
+    NumLastAddTexture = 0;
+    m_UvList.clear();
+    m_TextureIndexes.clear();
+
+    const glm::ivec2 AtlasSize = CalculateAtlasSize(TextureSize, AtlasTileCount * AtlasTileCount);
     m_Texture = std::make_shared<Sunset::Textures>("BlockTextures", AtlasSize.x, AtlasSize.y);
 }
 
@@ -78,41 +87,40 @@ void TextureBlockRegistry::Destroy()
 
 bool TextureBlockRegistry::LoadTexture(BlockId block, uint8_t side, const std::string& name)
 {
-    // Apply the same texture if it was aleardy load.
-    if (m_UvList.contains(block))
-    {
-        auto& obj = m_UvList[block];
-        uint8_t texUV = 0;
-        for (auto& side : obj)
-        {
-            if (side.name == name)
-                texUV = side.UV;
-        }
-        obj[side].UV = texUV;
-        return true;
-    }
-
-    // Load the texture if it was never load
-    const std::string TexName = RESOURCES + name;
-    if (!IsLoadableImage(TexName))
-    {
-        LOG("SunsetCraft", warn, "This texture {} is not in a valid format to be load", name);
+    if (side >= 6)
         return false;
-    }
 
-    Sunset::Image img{TexName};
-    m_Texture->AddImageAt(img, LastTexturePos);
-
-    std::array<BlockTextureUV, 6> uvList;
-    uvList[block] = {side, name};
-    m_UvList.emplace(block, uvList);
-
-    ++LastTexturePos.x;
-    if (LastTexturePos.x >= 16)
+    // Apply the same texture if it was aleardy load.
+    uint8_t texUV = 0;
+    const auto textureIt = m_TextureIndexes.find(name);
+    if (textureIt != m_TextureIndexes.end())
     {
-        LastTexturePos.x = 0;
-        ++LastTexturePos.y;
+        texUV = textureIt->second;
     }
+    else
+    {
+        // Load the texture if it was never load
+        const std::string TexName = RESOURCES + name;
+        if (!IsLoadableImage(TexName))
+        {
+            LOG("SunsetCraft", warn, "This texture {} is not in a valid format to be load", name);
+            return false;
+        }
+        texUV = NumLastAddTexture++;
+        Sunset::Image img{TexName};
+        m_Texture->Use();
+        m_Texture->AddImageAt(img, LastTexturePos * TextureSize);
+        m_TextureIndexes.emplace(name, texUV);
+
+        ++LastTexturePos.x;
+        if (LastTexturePos.x >= AtlasTileCount)
+        {
+            LastTexturePos.x = 0;
+            ++LastTexturePos.y;
+        }
+    }
+
+    m_UvList[block][side] = {texUV, name};
     return true;
 }
 
