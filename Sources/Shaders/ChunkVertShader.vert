@@ -7,6 +7,7 @@ uniform mat4 projection;
 uniform mat4 view;
 
 out vec3 FragNormal;
+out vec2 FragUv;
 flat out uint UVSide;
 
 vec3 DecodePos(uint v)
@@ -41,6 +42,15 @@ const vec3 faceNormals[6] = vec3[](
         vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, -1, 0), vec3(0, 1, 0), vec3(0, 0, -1), vec3(0, 0, 1)
 );
 
+const vec2 FaceUV[36] = vec2[](
+    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
+    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
+    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
+    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
+    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0),
+    vec2(0,0), vec2(0,1), vec2(1,1), vec2(1,1), vec2(1,0), vec2(0,0)
+);
+
 int faceOffset(uint side)
 {
     if (side == 0u) return 0;
@@ -66,4 +76,5 @@ void main()
 
     gl_Position = projection * view * model * vec4(position, 1.0);
     FragNormal = faceNormals[int(side)];
+    FragUv = FaceUV[offset + vertIndex];
 }
