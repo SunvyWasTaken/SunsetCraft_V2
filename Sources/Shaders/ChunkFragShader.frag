@@ -1,7 +1,7 @@
 #version 330 core
 
 in vec3 FragNormal;
-in vec2 TexCoord;
+in vec2 FragUv;
 flat in uint UVSide;
 
 uniform sampler2D BlockTextures;
@@ -22,7 +22,7 @@ void main()
     vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
     float diffuse = max(dot(normalize(FragNormal), lightDir), 0.55);
 
-    vec4 texColor = texture(BlockTextures, ProcessUV(UVSide, TexCoord));
+    vec4 texColor = texture(BlockTextures, ProcessUV(UVSide, FragUv));
 
-    FragColor = color * diffuse;
+    FragColor = texColor * color * diffuse;
 }

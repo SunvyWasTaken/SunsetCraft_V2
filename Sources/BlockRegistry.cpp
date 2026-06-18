@@ -89,4 +89,4 @@ BlockId BlockRegistry::Get(const std::string &name)
 }
 
 BlockId BlockRegistry::AIR = 0;
-BlockId BlockRegistry::STONE = 1;
+BlockId BlockRegistry::STONE = 3;

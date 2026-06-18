@@ -14,6 +14,7 @@
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
+#include "Render/Texture.h"
 
 namespace
 {
@@ -199,6 +200,7 @@ void GameOverlay::OnUpdate(float dt)
 void GameOverlay::OnDraw()
 {
     ImGui::Begin("Parameter");
+    ImGui::Image(TextureBlockRegistry::GetTexture()->operator()(), {16* 16, 16*16});
     ImGui::InputInt("Seed", &seed);
     ImGui::SameLine();
     if (ImGui::Button("Random"))
@@ -208,7 +210,7 @@ void GameOverlay::OnDraw()
         Noise::SetSeed(seed);
     }
 
-    static int renderDistance = 24;
+    static int renderDistance = 12;
     if (ImGui::SliderInt("Render Distance", &renderDistance, 4, 128))
     {
         ChunkRegistry::SetRenderDistance(renderDistance);
@@ -311,7 +313,8 @@ GameLayer::GameLayer()
 {
     world = std::make_unique<Sunset::World>();
     TextureBlockRegistry::Init();
-    ChunkRegistry::Init(seed, 24);
+    BlockRegistry::Init();
+    ChunkRegistry::Init(seed, 12);
     player = world->GetController(0).GetEntity();
 }
 

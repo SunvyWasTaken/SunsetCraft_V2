@@ -11,7 +11,7 @@
 
 namespace
 {
-    constexpr int TextureSize = 32;
+    constexpr int TextureSize = 16;
     constexpr int AtlasTileCount = 16;
 
     std::shared_ptr<Sunset::Textures> m_Texture;
@@ -35,38 +35,6 @@ namespace
         const std::string filepath = path.string();
         return stbi_info(filepath.c_str(), &width, &height, &channels);
     }
-
-    void OpenFolder(const std::filesystem::path& path, std::vector<std::string>& textures)
-    {
-        textures.clear();
-        for (const auto& entry : std::filesystem::directory_iterator(path))
-        {
-            if (!entry.is_regular_file())
-                continue;
-
-            if (!IsLoadableImage(entry.path()))
-                continue;
-
-            textures.emplace_back(entry.path());
-        }
-    }
-
-    [[nodiscard]]
-    glm::ivec2 CalculateAtlasSize(size_t textureSize, const size_t nbrTextures)
-    {
-        const size_t columns = AtlasTileCount;
-        const size_t rows = std::ceil(static_cast<float>(nbrTextures) / columns);
-        return {columns * textureSize, rows * textureSize};
-    }
-
-    void LoadTextures(const std::filesystem::path& path, std::vector<Sunset::Image>& images, glm::ivec2& atlasSize)
-    {
-        std::vector<std::string> textures;
-
-        OpenFolder(path, textures);
-
-        atlasSize = CalculateAtlasSize(32, textures.size());
-    }
 }
 
 void TextureBlockRegistry::Init()
@@ -76,7 +44,7 @@ void TextureBlockRegistry::Init()
     m_UvList.clear();
     m_TextureIndexes.clear();
 
-    const glm::ivec2 AtlasSize = CalculateAtlasSize(TextureSize, AtlasTileCount * AtlasTileCount);
+    const glm::ivec2 AtlasSize{AtlasTileCount * TextureSize, AtlasTileCount * TextureSize};
     m_Texture = std::make_shared<Sunset::Textures>("BlockTextures", AtlasSize.x, AtlasSize.y);
 }
 
@@ -87,40 +55,41 @@ void TextureBlockRegistry::Destroy()
 
 bool TextureBlockRegistry::LoadTexture(BlockId block, uint8_t side, const std::string& name)
 {
-    if (side >= 6)
-        return false;
-
     // Apply the same texture if it was aleardy load.
-    uint8_t texUV = 0;
-    const auto textureIt = m_TextureIndexes.find(name);
-    if (textureIt != m_TextureIndexes.end())
+    if (m_UvList.contains(block))
     {
-        texUV = textureIt->second;
-    }
-    else
-    {
-        // Load the texture if it was never load
-        const std::string TexName = RESOURCES + name;
-        if (!IsLoadableImage(TexName))
+        auto& obj = m_UvList[block];
+        uint8_t texUV = 0;
+        for (const auto&[UV, n] : obj)
         {
-            LOG("SunsetCraft", warn, "This texture {} is not in a valid format to be load", name);
-            return false;
+            if (n == name)
+                texUV = UV;
         }
-        texUV = NumLastAddTexture++;
-        Sunset::Image img{TexName};
-        m_Texture->Use();
-        m_Texture->AddImageAt(img, LastTexturePos * TextureSize);
-        m_TextureIndexes.emplace(name, texUV);
-
-        ++LastTexturePos.x;
-        if (LastTexturePos.x >= AtlasTileCount)
-        {
-            LastTexturePos.x = 0;
-            ++LastTexturePos.y;
-        }
+        obj[side].UV = texUV;
+        return true;
     }
 
-    m_UvList[block][side] = {texUV, name};
+    // Load the texture if it was never load
+    const std::string TexName = RESOURCES + std::string("Textures/") + name;
+    // if (!IsLoadableImage(TexName))
+    // {
+    //     LOG("SunsetCraft", warn, "This texture {} is not in a valid format to be load", name);
+    //     return false;
+    // }
+
+    Sunset::Image img{TexName};
+    m_Texture->AddImageAt(img, LastTexturePos * glm::ivec2{TextureSize, TextureSize});
+
+    std::array<BlockTextureUV, 6> uvList;
+    uvList[side] = BlockTextureUV{side, name};
+    m_UvList.emplace(block, uvList);
+
+    ++LastTexturePos.x;
+    if (LastTexturePos.x >= AtlasTileCount)
+    {
+        LastTexturePos.x = 0;
+        ++LastTexturePos.y;
+    }
     return true;
 }
 
