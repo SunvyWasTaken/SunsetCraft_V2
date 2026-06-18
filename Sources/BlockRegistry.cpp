@@ -4,14 +4,14 @@
 
 #include "BlockRegistry.h"
 
+#include "TextureRegistry.h"
 #include "Utility/UtilityFunction.h"
 
 namespace
 {
-    std::unordered_map<Block, BlockType> m_BlockRegistry;
-    std::unordered_map<std::string, BlockId> m_BlockRegistryName;
-
     bool bIsInitialized = false;
+
+    std::unordered_map<std::string, BlockId> m_BlockRegistry;
 
     void FillRegistry(const nlohmann::json& blockJson)
     {
@@ -32,30 +32,30 @@ namespace
                 if (tex.contains("all"))
                 {
                     std::string all = tex.value("all", "");
-                    for (auto& t : block.textures)
-                        t = all;
+
+                    for (uint8_t i = 0; i < 6; ++i)
+                        TextureBlockRegistry::LoadTexture(block.id, i, all);
                 }
                 if (tex.contains("top"))
-                    block.textures[static_cast<int>(BlockFace::Top)] = tex["top"];
+                    TextureBlockRegistry::LoadTexture(block.id, 3, tex["top"]);
 
                 if (tex.contains("bottom"))
-                    block.textures[static_cast<int>(BlockFace::Bottom)] = tex["bottom"];
+                    TextureBlockRegistry::LoadTexture(block.id, 2, tex["bottom"]);
 
                 if (tex.contains("north"))
-                    block.textures[static_cast<int>(BlockFace::North)] = tex["north"];
+                    TextureBlockRegistry::LoadTexture(block.id, 4, tex["north"]);
 
                 if (tex.contains("south"))
-                    block.textures[static_cast<int>(BlockFace::South)] = tex["south"];
+                    TextureBlockRegistry::LoadTexture(block.id, 5, tex["south"]);
 
                 if (tex.contains("west"))
-                    block.textures[static_cast<int>(BlockFace::West)] = tex["west"];
+                    TextureBlockRegistry::LoadTexture(block.id, 1, tex["west"]);
 
                 if (tex.contains("east"))
-                    block.textures[static_cast<int>(BlockFace::East)] = tex["east"];
+                    TextureBlockRegistry::LoadTexture(block.id, 0, tex["east"]);
             }
 
-            m_BlockRegistry[block.id] = block;
-            m_BlockRegistryName[block.name] = block.id;
+            m_BlockRegistry[block.name] = block.id;
         }
 
         bIsInitialized = true;
@@ -64,6 +64,9 @@ namespace
 
 void BlockRegistry::Init()
 {
+    if (bIsInitialized)
+        return;
+
     nlohmann::json blockJson;
     if (!Sunset::UtilityFunction::LoadJson(SAVE_PATH "BlockReg.json", blockJson))
     {
@@ -71,13 +74,19 @@ void BlockRegistry::Init()
         return;
     }
 
+    FillRegistry(blockJson);
 
+    AIR = Get("air");
+    STONE = Get("stone");
 }
 
-Block BlockRegistry::Get(const std::string &name)
+BlockId BlockRegistry::Get(const std::string &name)
 {
-    return 0;
+    if (!bIsInitialized)
+        LOG("BlockRegistry::Get", error, "Block not initialized");
+
+    return m_BlockRegistry[name];
 }
 
-Block BlockRegistry::AIR = 0;
-Block BlockRegistry::STONE = 1;
+BlockId BlockRegistry::AIR = 0;
+BlockId BlockRegistry::STONE = 1;

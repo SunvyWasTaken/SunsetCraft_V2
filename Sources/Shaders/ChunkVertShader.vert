@@ -7,6 +7,7 @@ uniform mat4 projection;
 uniform mat4 view;
 
 out vec3 FragNormal;
+flat out uint UVSide;
 
 vec3 DecodePos(uint v)
 {
@@ -20,6 +21,11 @@ vec3 DecodePos(uint v)
 uint DecodeSide(uint v)
 {
     return (v >> 17) & uint(0x7);
+}
+
+uint DecodeUV(uint v)
+{
+    return (v >> 20) & uint(0xFu);
 }
 
 const vec3 faceVerts[36] = vec3[](
@@ -49,6 +55,7 @@ void main()
 {
     vec3 blockPos = DecodePos(data);
     uint side = DecodeSide(data);
+    UVSide = DecodeUV(data);
 
     int vertIndex = gl_VertexID % 6;
     int offset = faceOffset(side);

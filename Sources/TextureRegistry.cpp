@@ -16,7 +16,14 @@ namespace
     glm::ivec2 LastTexturePos = glm::ivec2(0, 0);
 
     uint8_t NumLastAddTexture = 0;
-    std::unordered_map<Block, uint8_t> m_UvList;
+
+    struct BlockTextureUV
+    {
+        uint8_t UV = 0;
+        std::string name;
+    };
+
+    std::unordered_map<BlockId, std::array<BlockTextureUV, 6>> m_UvList;
 
     bool IsLoadableImage(const std::filesystem::path& path)
     {
@@ -69,18 +76,36 @@ void TextureBlockRegistry::Destroy()
     m_Texture.reset();
 }
 
-bool TextureBlockRegistry::LoadTexture(Block block, const std::string& name)
+bool TextureBlockRegistry::LoadTexture(BlockId block, uint8_t side, const std::string& name)
 {
+    // Apply the same texture if it was aleardy load.
+    if (m_UvList.contains(block))
+    {
+        auto& obj = m_UvList[block];
+        uint8_t texUV = 0;
+        for (auto& side : obj)
+        {
+            if (side.name == name)
+                texUV = side.UV;
+        }
+        obj[side].UV = texUV;
+        return true;
+    }
+
+    // Load the texture if it was never load
     const std::string TexName = RESOURCES + name;
     if (!IsLoadableImage(TexName))
     {
         LOG("SunsetCraft", warn, "This texture {} is not in a valid format to be load", name);
         return false;
     }
+
     Sunset::Image img{TexName};
     m_Texture->AddImageAt(img, LastTexturePos);
 
-    m_UvList.emplace(block, NumLastAddTexture++);
+    std::array<BlockTextureUV, 6> uvList;
+    uvList[block] = {side, name};
+    m_UvList.emplace(block, uvList);
 
     ++LastTexturePos.x;
     if (LastTexturePos.x >= 16)
@@ -88,13 +113,12 @@ bool TextureBlockRegistry::LoadTexture(Block block, const std::string& name)
         LastTexturePos.x = 0;
         ++LastTexturePos.y;
     }
-
     return true;
 }
 
-uint8_t TextureBlockRegistry::GetBlockId(Block block)
+uint8_t TextureBlockRegistry::GetUvBlock(BlockId block, uint8_t side)
 {
-    return m_UvList[block];
+    return m_UvList[block][side].UV;
 }
 
 std::shared_ptr<Sunset::Textures>& TextureBlockRegistry::GetTexture()

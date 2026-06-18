@@ -243,7 +243,7 @@ void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
     BuildDirtyChunk();
 }
 
-Block ChunkRegistry::GetBlock(const glm::vec3 &position)
+BlockId ChunkRegistry::GetBlock(const glm::vec3 &position)
 {
     const glm::ivec2 positionInChunk{
         WorldToChunk(position.x, SIZE_X),

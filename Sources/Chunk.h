@@ -24,12 +24,12 @@ public:
 
     void Draw() const;
 
-    Block GetBlock(const glm::vec3& position) const;
+    BlockId GetBlock(const glm::vec3& position) const;
 
     void BuildMesh();
 
     glm::ivec2 m_Position;
     std::unique_ptr<Sunset::Drawable> m_Drawable;
     bool bIsDirty = true;
-    std::array<Block, SIZE_X * (SIZE_Y * 2) * SIZE_Z> m_Blocks;
+    std::array<BlockId, SIZE_X * (SIZE_Y * 2) * SIZE_Z> m_Blocks;
 };

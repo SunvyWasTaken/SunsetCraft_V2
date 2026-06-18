@@ -14,7 +14,7 @@ struct GenerationData
 struct GeneratedChunk
 {
     glm::ivec2 position;
-    std::array<Block, SIZE_X * (SIZE_Y * 2) * SIZE_Z> blocks;
+    std::array<BlockId, SIZE_X * (SIZE_Y * 2) * SIZE_Z> blocks;
 
     explicit GeneratedChunk(const glm::ivec2 pos);
 };

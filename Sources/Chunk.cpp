@@ -69,7 +69,7 @@ void Chunk::Draw() const
     Sunset::RenderCommande::Submit(*m_Drawable);
 }
 
-Block Chunk::GetBlock(const glm::vec3 &position) const
+BlockId Chunk::GetBlock(const glm::vec3 &position) const
 {
     const glm::ivec3 pos = WorldToChunk(m_Position, glm::ivec3{position});
     if (!IsInChunk(pos.x, pos.y, pos.z))
@@ -89,7 +89,7 @@ void Chunk::BuildMesh()
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
                 const int index = GetIndex(x, y, z);
-                Block b = m_Blocks[index];
+                BlockId b = m_Blocks[index];
                 if (b == BlockRegistry::STONE)
                 {
                     int idir = -1;
@@ -102,12 +102,12 @@ void Chunk::BuildMesh()
                             worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
                             if (ChunkRegistry::GetBlock(worldPos) == BlockRegistry::AIR)
                             {
-                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir, TextureBlockRegistry::GetBlockId(b)));
+                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir, TextureBlockRegistry::GetUvBlock(b, idir)));
                             }
                         }
                         else if (m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)] == BlockRegistry::AIR)
                         {
-                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir, TextureBlockRegistry::GetBlockId(b)));
+                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir, TextureBlockRegistry::GetUvBlock(b, idir)));
                         }
                     }
                 }

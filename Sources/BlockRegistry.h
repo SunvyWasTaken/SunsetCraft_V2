@@ -4,12 +4,18 @@
 
 #pragma once
 
-using Block = uint8_t;
+using BlockId = uint8_t;
+
+struct BlockType
+{
+    std::string name;
+    BlockId id;
+};
 
 struct BlockRegistry
 {
     static void Init();
-    static Block Get(const std::string& name);
-    static Block AIR;
-    static Block STONE;
+    static BlockId Get(const std::string& name);
+    static BlockId AIR;
+    static BlockId STONE;
 };

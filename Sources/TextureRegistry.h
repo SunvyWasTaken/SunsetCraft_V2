@@ -17,10 +17,9 @@ struct TextureBlockRegistry
 
     static void Destroy();
 
-    [[nodiscard]]
-    static bool LoadTexture(Block block, const std::string& name);
+    static bool LoadTexture(BlockId block, uint8_t side, const std::string& name);
 
-    static uint8_t GetBlockId(Block block);
+    static uint8_t GetUvBlock(BlockId block, uint8_t side);
 
     [[nodiscard]]
     static std::shared_ptr<Sunset::Textures>& GetTexture();
