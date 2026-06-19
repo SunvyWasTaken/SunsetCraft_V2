@@ -6,6 +6,7 @@
 
 #include "CaveGen.h"
 #include "HeightGen.h"
+#include "WaterGen.h"
 #include "../Chunk.h"
 #include "../Noise.h"
 
@@ -29,6 +30,7 @@ void WorldGen::Init(const int seed)
     Noise::Init(Seed);
 
     WorldGenLayout.emplace_back(std::make_unique<HeightGen>());
+    WorldGenLayout.emplace_back(std::make_unique<WaterGen>());
     // WorldGenLayout.emplace_back(std::make_unique<HaloGen>());
     WorldGenLayout.emplace_back(std::make_unique<CaveGen>());
     // todo : Continue Biome.

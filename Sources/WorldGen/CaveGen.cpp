@@ -53,7 +53,8 @@ void CaveGen::operator()(GeneratedChunk &chunk, GenerationData &data)
             {
                 if (NoiseSet[y + SIZE_Y] < -0.3f)
                 {
-                    chunk.blocks[x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z] = BlockRegistry::AIR;
+                    if (chunk.blocks[x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z] != BlockRegistry::WATER)
+                        chunk.blocks[x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z] = BlockRegistry::AIR;
                 }
             }
         }

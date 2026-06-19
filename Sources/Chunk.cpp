@@ -56,6 +56,7 @@ namespace
 Chunk::Chunk(const glm::vec2 &position)
     : m_Position(position)
     , m_Drawable(std::make_unique<Sunset::Drawable>())
+    , m_TransparentDrawable(std::make_unique<Sunset::Drawable>())
     , m_Blocks()
 {
     m_Blocks.fill(BlockRegistry::AIR);
@@ -103,7 +104,10 @@ void Chunk::BuildMesh()
                         glm::ivec3 worldPos{x + dir.x, y + dir.y, z + dir.z};
                         worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
                         const BlockId testBlock = ChunkRegistry::GetBlock(worldPos);
-                        if (b != BlockRegistry::AIR && BlockRegistry::IsTransparent(b))
+                        if (b == BlockRegistry::AIR)
+                            continue;
+
+                        if (BlockRegistry::IsTransparent(b))
                         {
                             if (b != testBlock)
                                 TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
@@ -115,7 +119,10 @@ void Chunk::BuildMesh()
                     }
                     else if (const BlockId testBlock = m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)]; BlockRegistry::IsTransparent(testBlock))
                     {
-                        if (b != BlockRegistry::AIR && BlockRegistry::IsTransparent(b))
+                        if (b == BlockRegistry::AIR)
+                            continue;
+
+                        if (BlockRegistry::IsTransparent(b))
                         {
                             if (b != testBlock)
                                 TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
@@ -149,10 +156,11 @@ void Chunk::BuildMesh()
             m_Drawable->m_Material->m_Shader = shader.lock();
     }
 
+    if (!TBlocks.empty())
     {
         auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
         faceData.divisor = 1;
-        m_TransparentDrawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(uint32_t), points.size(), {faceData});
+        m_TransparentDrawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(TBlocks.data(), sizeof(uint32_t), TBlocks.size(), {faceData});
         m_TransparentDrawable->m_Position = {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
         m_TransparentDrawable->m_RenderState.DrawInstance = true;
         m_TransparentDrawable->m_RenderState.nbrInstance = 6;

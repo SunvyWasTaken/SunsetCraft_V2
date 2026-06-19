@@ -18,11 +18,11 @@ vec2 ProcessUV(uint index, vec2 localUV)
 
 void main()
 {
-    vec4 color = vec4(1.0);
+    vec4 color = vec4(0.8, 0.8, 1.0, 0.5);
     vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
     float diffuse = max(dot(normalize(FragNormal), lightDir), 0.55);
 
     vec4 texColor = texture(BlockTextures, ProcessUV(UVSide, FragUv));
 
-    FragColor = texColor * color * diffuse;
+    FragColor = color * diffuse;
 }
