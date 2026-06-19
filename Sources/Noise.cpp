@@ -107,6 +107,25 @@ void Noise::SetSeed(int seed)
     }
 }
 
+void Noise::GetDataAt(std::vector<float> &data, int index, const glm::ivec2 &location)
+{
+    SS_PROFILE_FUNCTION();
+    std::lock_guard lock(noiseMutex);
+    data.clear();
+    data.resize(SIZE_X * SIZE_Z);
+    float* NoiseSet = FastNoiseSIMD::GetEmptySet(SIZE_X);
+    auto& noise = GetData(index);
+    for (int z = 0; z < SIZE_Z; ++z)
+    {
+        noise.noise->FillNoiseSet(NoiseSet, location.x, 0, location.y + z, SIZE_X, 1, 1);
+        for (int x = 0; x < SIZE_X; ++x)
+        {
+            const int i = x + z * SIZE_X;
+            data[i] = GetNoiseValue(noise.points, NoiseSet[x]) * noise.Amplitude;
+        }
+    }
+}
+
 void Noise::Get(std::vector<float>& data, const glm::ivec2& location)
 {
     SS_PROFILE_FUNCTION();

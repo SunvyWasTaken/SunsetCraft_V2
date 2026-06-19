@@ -167,9 +167,9 @@ void Chunk::BuildMesh()
         m_TransparentDrawable->m_RenderState.HasIndice = false;
         m_TransparentDrawable->m_RenderState.blending = true;
         // Todo check pourquoi est ce que lorsque la transparence est la le tous devient noir check dans l'engine.
-        // m_TransparentDrawable->m_RenderState.src = Sunset::BlendFactor::SrcAlpha;
-        // m_TransparentDrawable->m_RenderState.dest = Sunset::BlendFactor::OneMinusSrcAlpha;
-        // m_TransparentDrawable->m_RenderState.depthWrite = false;
+        m_TransparentDrawable->m_RenderState.src = Sunset::BlendFactor::SrcAlpha;
+        m_TransparentDrawable->m_RenderState.dest = Sunset::BlendFactor::OneMinusSrcAlpha;
+        m_TransparentDrawable->m_RenderState.depthWrite = false;
         m_TransparentDrawable->m_RenderState.cullMode = Sunset::CullMode::None;
         m_TransparentDrawable->m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
         if (TransparentShader.expired())

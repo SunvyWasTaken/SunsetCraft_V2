@@ -6,6 +6,7 @@
 
 #include "FastNoiseSIMD.h"
 #include "../Chunk.h"
+#include "../Noise.h"
 
 namespace
 {
@@ -48,8 +49,12 @@ void CaveGen::operator()(GeneratedChunk &chunk, GenerationData &data)
     {
         for (int z = 0; z < SIZE_Z; ++z)
         {
+            int H = SIZE_Y;
+            if (const float contiValue = data.NoiseValue[x + z * SIZE_X]; contiValue <= 5.f)
+                H = contiValue - 5;
+
             noise->FillNoiseSet(NoiseSet, chunk.position.x * SIZE_X + x, -SIZE_Y, chunk.position.y * SIZE_Z + z, 1, SIZE_Y + SIZE_Y, 1);
-            for (int y = -SIZE_Y; y < SIZE_Y; ++y)
+            for (int y = -SIZE_Y; y < H; ++y)
             {
                 if (NoiseSet[y + SIZE_Y] < -0.3f)
                 {

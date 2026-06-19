@@ -23,6 +23,7 @@ struct Noise
     static void Init(int seed);
     static void Destroy();
     static void SetSeed(int seed);
+    static void GetDataAt(std::vector<float>& data, int index, const glm::ivec2& location);
     static void Get(std::vector<float>& data, const glm::ivec2& location);
     static void Update(int seed);
     static bool Save(const std::string& filepath);
