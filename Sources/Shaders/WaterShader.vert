@@ -29,7 +29,7 @@ uint DecodeUV(uint v)
     return (v >> 20) & uint(0xFFu);
 }
 
-float y = 0.85;
+const float y = 0.85;
 
 const vec3 faceVerts[36] = vec3[](
         vec3(0,0,0), vec3(0,y,0), vec3(0,y,1), vec3(0,y,1), vec3(0,0,1), vec3(0,0,0), // -X
