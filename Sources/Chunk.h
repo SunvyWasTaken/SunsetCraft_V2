@@ -30,6 +30,7 @@ public:
 
     glm::ivec2 m_Position;
     std::unique_ptr<Sunset::Drawable> m_Drawable;
+	std::unique_ptr<Sunset::Drawable> m_TransparentDrawable;
     bool bIsDirty = true;
     std::array<BlockId, SIZE_X * (SIZE_Y * 2) * SIZE_Z> m_Blocks;
 };

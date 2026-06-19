@@ -16,6 +16,7 @@
 namespace
 {
     std::weak_ptr<Sunset::Shader> shader;
+    std::weak_ptr<Sunset::Shader> TransparentShader;
 
     constexpr std::array<glm::ivec3, 6> checkDir = {
         glm::ivec3 {-1,  0,  0},
@@ -67,6 +68,7 @@ Chunk::~Chunk()
 void Chunk::Draw() const
 {
     Sunset::RenderCommande::Submit(*m_Drawable);
+	Sunset::RenderCommande::Submit(*m_TransparentDrawable);
 }
 
 BlockId Chunk::GetBlock(const glm::vec3 &position) const
@@ -82,6 +84,7 @@ void Chunk::BuildMesh()
 {
     SS_PROFILE_FUNCTION();
     std::vector<uint32_t> points;
+    std::vector<uint32_t> TBlocks;
     for (int x = 0; x < SIZE_X; ++x)
     {
         for (int z = 0; z < SIZE_Z; ++z)
@@ -89,25 +92,37 @@ void Chunk::BuildMesh()
             for (int y = -SIZE_Y; y < SIZE_Y; ++y)
             {
                 const int index = GetIndex(x, y, z);
-                BlockId b = m_Blocks[index];
-                if (b == BlockRegistry::STONE)
+                const BlockId b = m_Blocks[index];
+
+                int side = -1;
+                for (const auto& dir : checkDir)
                 {
-                    int idir = -1;
-                    for (const auto& dir : checkDir)
+                    ++side;
+                    if (!IsInChunk(x + dir.x, y + dir.y, z + dir.z))
                     {
-                        ++idir;
-                        if (!IsInChunk(x + dir.x, y + dir.y, z + dir.z))
+                        glm::ivec3 worldPos{x + dir.x, y + dir.y, z + dir.z};
+                        worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
+                        const BlockId testBlock = ChunkRegistry::GetBlock(worldPos);
+                        if (b != BlockRegistry::AIR && BlockRegistry::IsTransparent(b))
                         {
-                            glm::ivec3 worldPos{x + dir.x, y + dir.y, z + dir.z};
-                            worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
-                            if (ChunkRegistry::GetBlock(worldPos) == BlockRegistry::AIR)
-                            {
-                                points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir, TextureBlockRegistry::GetUvBlock(b, idir)));
-                            }
+                            if (b != testBlock)
+                                TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
                         }
-                        else if (m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)] == BlockRegistry::AIR)
+                        else if (BlockRegistry::IsTransparent(testBlock))
                         {
-                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, idir, TextureBlockRegistry::GetUvBlock(b, idir)));
+                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
+                        }
+                    }
+                    else if (const BlockId testBlock = m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)]; BlockRegistry::IsTransparent(testBlock))
+                    {
+                        if (b != BlockRegistry::AIR && BlockRegistry::IsTransparent(b))
+                        {
+                            if (b != testBlock)
+                                TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
+                        }
+                        else if (BlockRegistry::IsTransparent(testBlock))
+                        {
+                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
                         }
                     }
                 }
@@ -115,22 +130,44 @@ void Chunk::BuildMesh()
         }
     }
 
-    auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
-    faceData.divisor = 1;
-    m_Drawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(uint32_t), points.size(), {faceData});
-    m_Drawable->m_Position = {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
-    m_Drawable->m_RenderState.DrawInstance = true;
-    m_Drawable->m_RenderState.nbrInstance = 6;
-    // m_Drawable->m_RenderState.wireframe = true;
-    m_Drawable->m_RenderState.HasIndice = false;
-    m_Drawable->m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
-    if (shader.expired())
     {
-        m_Drawable->m_Material->m_Shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");
-        shader = m_Drawable->m_Material->m_Shader;
+        auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
+        faceData.divisor = 1;
+        m_Drawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(uint32_t), points.size(), {faceData});
+        m_Drawable->m_Position = {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
+        m_Drawable->m_RenderState.DrawInstance = true;
+        m_Drawable->m_RenderState.nbrInstance = 6;
+        // m_Drawable->m_RenderState.wireframe = true;
+        m_Drawable->m_RenderState.HasIndice = false;
+        m_Drawable->m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
+        if (shader.expired())
+        {
+            m_Drawable->m_Material->m_Shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");
+            shader = m_Drawable->m_Material->m_Shader;
+        }
+        else
+            m_Drawable->m_Material->m_Shader = shader.lock();
     }
-    else
-        m_Drawable->m_Material->m_Shader = shader.lock();
+
+    {
+        auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
+        faceData.divisor = 1;
+        m_TransparentDrawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(uint32_t), points.size(), {faceData});
+        m_TransparentDrawable->m_Position = {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
+        m_TransparentDrawable->m_RenderState.DrawInstance = true;
+        m_TransparentDrawable->m_RenderState.nbrInstance = 6;
+        m_TransparentDrawable->m_RenderState.HasIndice = false;
+        m_TransparentDrawable->m_RenderState.blending = true;
+        m_TransparentDrawable->m_RenderState.cullMode = Sunset::CullMode::None;
+        m_TransparentDrawable->m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
+        if (shader.expired())
+        {
+            m_TransparentDrawable->m_Material->m_Shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "WaterShader.vert", SHADERS_PATH "WaterShader.frag");
+            shader = m_TransparentDrawable->m_Material->m_Shader;
+        }
+        else
+            m_TransparentDrawable->m_Material->m_Shader = shader.lock();
+    }
 
     bIsDirty = false;
 }

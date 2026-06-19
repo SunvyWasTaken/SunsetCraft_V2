@@ -4,6 +4,8 @@
 
 #include "BlockRegistry.h"
 
+#include <unordered_set>
+
 #include "TextureRegistry.h"
 #include "Utility/UtilityFunction.h"
 
@@ -12,6 +14,7 @@ namespace
     bool bIsInitialized = false;
 
     std::unordered_map<std::string, BlockId> m_BlockRegistry;
+    std::unordered_set<BlockId> m_TransparentBlocks;
 
     void FillRegistry(const nlohmann::json& blockJson)
     {
@@ -25,6 +28,15 @@ namespace
             BlockType block;
             block.id = currentBlockId++;
             block.name = block_json["name"];
+
+            if (block_json.contains("transparent"))
+            {
+                auto& IsTransparent = block_json["transparent"];
+                if (IsTransparent.get<bool>())
+                {
+                    m_TransparentBlocks.emplace(block.id);
+                }
+            }
 
             if (block_json.contains("textures"))
             {
@@ -78,6 +90,7 @@ void BlockRegistry::Init()
 
     AIR = Get("air");
     STONE = Get("stone");
+    WATER = Get("water");
 }
 
 BlockId BlockRegistry::Get(const std::string &name)
@@ -88,5 +101,11 @@ BlockId BlockRegistry::Get(const std::string &name)
     return m_BlockRegistry[name];
 }
 
+bool BlockRegistry::IsTransparent(BlockId id)
+{
+    return m_TransparentBlocks.contains(id);
+}
+
 BlockId BlockRegistry::AIR = 0;
+BlockId BlockRegistry::WATER = 1;
 BlockId BlockRegistry::STONE = 3;
