@@ -45,6 +45,8 @@ namespace
 
     std::unordered_set<glm::ivec2, double_hash> pendingChunks;
 
+    constexpr std::array<glm::ivec2, 4> dirs{glm::ivec2{-1,0}, {1,0}, {0,-1}, {0,1}};
+
     void WorkerLoop(std::stop_token stopToken)
     {
         while (!stopToken.stop_requested())
@@ -116,6 +118,12 @@ namespace
             auto& chunk = chunks.try_emplace(generated.position, generated.position).first->second;
             chunk.m_Blocks = std::move(generated.blocks);
             chunk.bIsDirty = true;
+
+            for (auto& dir : dirs)
+            {
+                if (chunks.contains(generated.position + dir))
+                    chunks.at(generated.position + dir).bIsDirty = true;
+            }
         }
     }
 #pragma endregion // THREAD
