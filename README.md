@@ -9,7 +9,7 @@
 
 ---
 
-![Game screenshot](Resources/ScreenShot/Game_19.06.26.png)
+![Game screenshot](Resources/ScreenShot/Game_20.06.26.png)
 
 ---
 
