@@ -19,6 +19,8 @@ struct ChunkRegistry
 
     static void SetRenderDistance(uint8_t renderDistance);
 
+    static void UpdateWaterTime(float time);
+
     static void UpdatePlayerPosition(const glm::vec3& position);
 
     [[nodiscard]]

@@ -238,6 +238,11 @@ void ChunkRegistry::SetRenderDistance(const uint8_t renderDistance)
     m_RenderDistance = renderDistance;
 }
 
+void ChunkRegistry::UpdateWaterTime(const float time)
+{
+    Chunk::SetWaterTime(time);
+}
+
 void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
 {
     SS_PROFILE_FUNCTION();

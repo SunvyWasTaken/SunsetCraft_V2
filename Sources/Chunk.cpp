@@ -17,6 +17,7 @@ namespace
 {
     std::weak_ptr<Sunset::Shader> shader;
     std::weak_ptr<Sunset::Shader> TransparentShader;
+    float WaterTime = 0.0f;
 
     constexpr std::array<glm::ivec3, 6> checkDir = {
         glm::ivec3 {-1,  0,  0},
@@ -70,7 +71,14 @@ Chunk::~Chunk()
 void Chunk::Draw() const
 {
     Sunset::RenderCommande::Submit(*m_Drawable);
+    if (m_TransparentDrawable->m_Material->m_Shader)
+        m_TransparentDrawable->m_Material->Set("u_Time", WaterTime);
 	Sunset::RenderCommande::Submit(*m_TransparentDrawable);
+}
+
+void Chunk::SetWaterTime(const float time)
+{
+    WaterTime = time;
 }
 
 BlockId Chunk::GetBlock(const glm::vec3 &position) const

@@ -26,6 +26,8 @@ public:
 
     BlockId GetBlock(const glm::vec3& position) const;
 
+    static void SetWaterTime(float time);
+
     void BuildMesh();
 
     glm::ivec2 m_Position;

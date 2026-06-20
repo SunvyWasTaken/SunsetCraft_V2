@@ -116,6 +116,24 @@ uint8_t TextureBlockRegistry::GetUvBlock(BlockId block, uint8_t side)
     return blockIt->second[side].UV;
 }
 
+std::string TextureBlockRegistry::GetTextureBlock(BlockId block, uint8_t side)
+{
+    if (side >= 6)
+    {
+        LOG("SunsetCraft", warn, "Invalid side {} for block {}", side, block);
+        return "";
+    }
+
+    const auto blockIt = m_UvList.find(block);
+    if (blockIt == m_UvList.end())
+    {
+        LOG("SunsetCraft", warn, "No texture registered for block {}", block);
+        return "";
+    }
+
+    return blockIt->second[side].name;
+}
+
 std::shared_ptr<Sunset::Textures>& TextureBlockRegistry::GetTexture()
 {
     return m_Texture;

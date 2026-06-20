@@ -11,10 +11,15 @@
 #include "ChunkRegistry.h"
 #include "Noise.h"
 #include "TextureRegistry.h"
+#include "Core/Application.h"
+#include "Core/ApplicationSetting.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
 #include "Render/Texture.h"
+#include "Slate/HorizontalBox.h"
+#include "Slate/SlateImage.h"
+#include "Slate/Square.h"
 
 namespace
 {
@@ -23,6 +28,22 @@ namespace
 
     Sunset::Entity player;
 
+    constexpr size_t ToolbarSize = 9;
+    std::unique_ptr<Sunset::HorizontalBox> ToolbarBox = nullptr;
+
+    std::unique_ptr<Sunset::Square> crossTop = nullptr;
+    std::unique_ptr<Sunset::Square> crossDown = nullptr;
+    std::unique_ptr<Sunset::Square> crossLeft = nullptr;
+    std::unique_ptr<Sunset::Square> crossRight = nullptr;
+
+    std::array<BlockId, 9> m_ToolBar;
+
+}
+
+#pragma region NoiseConfig
+
+namespace
+{
     int CurrentSelectedNoise = 0;
 
     bool LastNoiseSaveSucceeded = true;
@@ -309,6 +330,8 @@ void GameOverlay::OnDraw()
     ImGui::End();
 }
 
+#pragma endregion // NoiseConfig
+
 GameLayer::GameLayer()
 {
     world = std::make_unique<Sunset::World>();
@@ -316,10 +339,54 @@ GameLayer::GameLayer()
     BlockRegistry::Init();
     ChunkRegistry::Init(seed, 12);
     player = world->GetController(0).GetEntity();
+
+    m_ToolBar = {BlockRegistry::DIRT, BlockRegistry::GRASS, BlockRegistry::STONE, BlockRegistry::Get("diamond_ore"), BlockRegistry::AIR, BlockRegistry::AIR, BlockRegistry::AIR, BlockRegistry::AIR};
+
+    ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
+    ToolbarBox->SetPosition({1280/2, 720});
+    ToolbarBox->SetPadding({5, 0});
+    ToolbarBox->Reserve(ToolbarSize);
+    ToolbarBox->SetAnchor({0, -1});
+    for (std::uint8_t i = 0; i < ToolbarSize; ++i)
+    {
+        BlockId block = m_ToolBar[i];
+        std::shared_ptr<Sunset::Slate> Square = std::make_shared<Sunset::Square>(glm::ivec2{0,0}, glm::ivec2{74, 74}, glm::vec4{1.0, 0.3, 0.3, 1.0}, 15.f);
+        ToolbarBox->AddChild(Square);
+
+        if (block != BlockRegistry::AIR)
+        {
+            std::shared_ptr<Sunset::Slate> img = std::make_shared<Sunset::SlateImage>();
+            std::static_pointer_cast<Sunset::SlateImage>(img)->LoadImage(RESOURCES "Textures/" + TextureBlockRegistry::GetTextureBlock(block, 0));
+            std::static_pointer_cast<Sunset::Square>(Square)->AddChild(img);
+        }
+    }
+
+    int length = 15;
+    int width = 5;
+    int radius = 2;
+    glm::vec4 color{1.0, 0.2, 0.2, 0.5};
+    int spacecing = 2;
+
+    glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
+
+    crossTop = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 - spacecing}, glm::ivec2{width, length}, color, radius);
+    crossTop->SetAnchor({0, -1});
+    crossDown = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 + spacecing}, glm::ivec2{width, length}, color, radius);
+    crossDown->SetAnchor({0, 1});
+    crossLeft = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 - spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
+    crossLeft->SetAnchor({-1, 0});
+    crossRight = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 + spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
+    crossRight->SetAnchor({1, 0});
 }
 
 GameLayer::~GameLayer()
 {
+    ToolbarBox.reset();
+    crossTop.reset();
+    crossDown.reset();
+    crossLeft.reset();
+    crossRight.reset();
+
     ChunkRegistry::Destroy();
     TextureBlockRegistry::Destroy();
 }
@@ -328,6 +395,11 @@ void GameLayer::OnUpdate(float dt)
 {
     SS_PROFILE_FUNCTION();
     Sunset::NetworkService::Get().Update(dt);
+
+    static float waterTime = 0.0f;
+    waterTime += dt;
+    ChunkRegistry::UpdateWaterTime(waterTime);
+
     world->Update(dt);
     glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
     ChunkRegistry::UpdatePlayerPosition(loc);
@@ -336,5 +408,10 @@ void GameLayer::OnUpdate(float dt)
 void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
+    ToolbarBox->Draw();
     ChunkRegistry::DrawChunk(player.GetComponent<Sunset::CameraComponent>()->camera);
+    crossTop->Draw();
+    crossDown->Draw();
+    crossLeft->Draw();
+    crossRight->Draw();
 }

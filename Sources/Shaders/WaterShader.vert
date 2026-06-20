@@ -5,9 +5,11 @@ layout(location = 0) in uint data;
 uniform mat4 model;
 uniform mat4 projection;
 uniform mat4 view;
+uniform float u_Time;
 
 out vec3 FragNormal;
 out vec2 FragUv;
+out vec3 FragWorldPos;
 flat out uint UVSide;
 
 vec3 DecodePos(uint v)
@@ -58,6 +60,15 @@ int faceOffset(uint side)
     return 30;
 }
 
+float WaveHeight(vec2 worldXZ)
+{
+    float wave = 0.0;
+    wave += sin(worldXZ.x * 0.75 + u_Time * 1.35) * 0.025;
+    wave += sin(worldXZ.y * 0.55 + u_Time * 1.05) * 0.018;
+    wave += sin((worldXZ.x + worldXZ.y) * 0.35 + u_Time * 0.80) * 0.012;
+    return wave;
+}
+
 void main()
 {
     vec3 blockPos = DecodePos(data);
@@ -70,8 +81,15 @@ void main()
     vec3 vertPos = faceVerts[offset + vertIndex];
 
     vec3 position = blockPos + vertPos - vec3(0.0, 255.0, 0.0);
+    vec3 worldPosition = vec3(model * vec4(position, 1.0));
 
-    gl_Position = projection * view * model * vec4(position, 1.0);
+    float topInfluence = smoothstep(0.15, y, vertPos.y);
+    position.y += WaveHeight(worldPosition.xz) * topInfluence;
+    worldPosition = vec3(model * vec4(position, 1.0));
+
+    gl_Position = projection * view * vec4(worldPosition, 1.0);
     FragNormal = faceNormals[int(side)];
     FragUv = faceUVs[vertIndex];
+
+    FragWorldPos = worldPosition;
 }
