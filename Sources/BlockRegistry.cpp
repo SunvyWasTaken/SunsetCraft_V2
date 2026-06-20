@@ -89,6 +89,8 @@ void BlockRegistry::Init()
     FillRegistry(blockJson);
 
     AIR = Get("air");
+    GRASS = Get("grass");
+    DIRT = Get("dirt");
     STONE = Get("stone");
     WATER = Get("water");
 }
@@ -107,5 +109,7 @@ bool BlockRegistry::IsTransparent(BlockId id)
 }
 
 BlockId BlockRegistry::AIR = 0;
+BlockId BlockRegistry::GRASS = 0;
+BlockId BlockRegistry::DIRT = 0;
 BlockId BlockRegistry::WATER = 1;
 BlockId BlockRegistry::STONE = 3;

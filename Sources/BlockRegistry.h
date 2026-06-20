@@ -18,6 +18,8 @@ struct BlockRegistry
     static BlockId Get(const std::string& name);
     static bool IsTransparent(BlockId id);
     static BlockId AIR;
+    static BlockId GRASS;
+    static BlockId DIRT;
     static BlockId STONE;
     static BlockId WATER;
 };

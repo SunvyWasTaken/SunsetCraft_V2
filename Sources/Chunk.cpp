@@ -37,13 +37,14 @@ namespace
         return x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z;
     }
 
-    uint32_t EncodePoint(const int x, const int y, const int z, const int dir, const int blockType)
+    uint32_t EncodePoint(const int x, const int y, const int z, const int dir, const int blockType, const int color)
     {
         return   (static_cast<uint32_t>(x) & 0xFu)                  |
                 ((static_cast<uint32_t>(y) & 0x1FFu) << 4)          |
                 ((static_cast<uint32_t>(z) & 0xFu) << 13)           |
                 ((static_cast<uint32_t>(dir) & 0x7u) << 17)         |
-                ((static_cast<uint32_t>(blockType) & 0xFFu) << 20);
+                ((static_cast<uint32_t>(blockType) & 0xFFu) << 20)  |
+                ((static_cast<uint32_t>(color) & 0x1u) << 28);
     }
 
     glm::ivec3 WorldToChunk(const glm::ivec2& ChunkPos, const glm::ivec3& pos)
@@ -107,14 +108,16 @@ void Chunk::BuildMesh()
                         if (b == BlockRegistry::AIR)
                             continue;
 
+                        bool IsGrass = (b == BlockRegistry::GRASS) && side == 3;
+
                         if (BlockRegistry::IsTransparent(b))
                         {
                             if (b != testBlock)
-                                TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
+                                TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
                         }
                         else if (BlockRegistry::IsTransparent(testBlock))
                         {
-                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
+                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
                         }
                     }
                     else if (const BlockId testBlock = m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)]; BlockRegistry::IsTransparent(testBlock))
@@ -122,14 +125,16 @@ void Chunk::BuildMesh()
                         if (b == BlockRegistry::AIR)
                             continue;
 
+                        bool IsGrass = (b == BlockRegistry::GRASS) && side == 3;
+
                         if (BlockRegistry::IsTransparent(b))
                         {
                             if (b != testBlock)
-                                TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
+                                TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
                         }
                         else if (BlockRegistry::IsTransparent(testBlock))
                         {
-                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side)));
+                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
                         }
                     }
                 }
@@ -166,7 +171,6 @@ void Chunk::BuildMesh()
         m_TransparentDrawable->m_RenderState.nbrInstance = 6;
         m_TransparentDrawable->m_RenderState.HasIndice = false;
         m_TransparentDrawable->m_RenderState.blending = true;
-        // Todo check pourquoi est ce que lorsque la transparence est la le tous devient noir check dans l'engine.
         m_TransparentDrawable->m_RenderState.src = Sunset::BlendFactor::SrcAlpha;
         m_TransparentDrawable->m_RenderState.dest = Sunset::BlendFactor::OneMinusSrcAlpha;
         m_TransparentDrawable->m_RenderState.depthWrite = false;

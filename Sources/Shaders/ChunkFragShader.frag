@@ -3,6 +3,7 @@
 in vec3 FragNormal;
 in vec2 FragUv;
 flat in uint UVSide;
+flat in uint IsGrass;
 
 uniform sampler2D BlockTextures;
 
@@ -19,6 +20,10 @@ vec2 ProcessUV(uint index, vec2 localUV)
 void main()
 {
     vec4 color = vec4(1.0);
+    if (IsGrass != 0u)
+    {
+        color = vec4(0.47, 0.675, 0.188, 1.0);
+    }
     vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
     float diffuse = max(dot(normalize(FragNormal), lightDir), 0.55);
 

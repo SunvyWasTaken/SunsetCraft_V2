@@ -8,10 +8,20 @@
 
 struct NoiseData;
 
+inline size_t Index(int x, int y)
+{
+    return x + (y * SIZE_X);
+}
+
+inline size_t Index(int x, int y, int z)
+{
+    return x + (z * SIZE_X) + ((y + SIZE_Y) * SIZE_X * SIZE_Z);
+}
+
 struct GenerationData
 {
     int seed = 0;
-    std::vector<float> NoiseValue;
+    std::vector<float> NoiseValue{};
 };
 
 struct GeneratedChunk

@@ -9,6 +9,7 @@ uniform mat4 view;
 out vec3 FragNormal;
 out vec2 FragUv;
 flat out uint UVSide;
+flat out uint IsGrass;
 
 vec3 DecodePos(uint v)
 {
@@ -26,7 +27,7 @@ uint DecodeSide(uint v)
 
 uint DecodeUV(uint v)
 {
-    return (v >> 20) & uint(0xFFu);
+    return (v >> 20) & 0xFFu;
 }
 
 const vec3 faceVerts[36] = vec3[](
@@ -72,4 +73,5 @@ void main()
     gl_Position = projection * view * model * vec4(position, 1.0);
     FragNormal = faceNormals[int(side)];
     FragUv = faceUVs[vertIndex];
+    IsGrass = (data >> 28) & 0x1u;
 }
