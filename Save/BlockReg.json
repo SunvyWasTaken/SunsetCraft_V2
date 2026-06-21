@@ -56,7 +56,7 @@
     }
   },
   {
-    "name": "charcoal_ore",
+    "name": "coal_ore",
     "transparent": false,
     "textures":
     {
