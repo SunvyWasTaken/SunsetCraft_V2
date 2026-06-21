@@ -90,6 +90,13 @@ BlockId Chunk::GetBlock(const glm::vec3 &position) const
     return m_Blocks[GetIndex(pos.x, pos.y, pos.z)];
 }
 
+void Chunk::SetBlock(const glm::vec3 &position, BlockId block)
+{
+    const glm::ivec3 i = WorldToChunk(m_Position, position);
+    m_Blocks[GetIndex(i.x, i.y, i.z)] = block;
+    bIsDirty = true;
+}
+
 void Chunk::BuildMesh()
 {
     SS_PROFILE_FUNCTION();

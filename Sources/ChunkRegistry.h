@@ -26,5 +26,7 @@ struct ChunkRegistry
     [[nodiscard]]
     static BlockId GetBlock(const glm::vec3& position);
 
+    static void SetBlock(const glm::vec3& position, BlockId blockId);
+
     static void DrawChunk(const Sunset::Camera& camera);
 };

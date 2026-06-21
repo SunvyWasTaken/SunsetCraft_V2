@@ -269,6 +269,19 @@ BlockId ChunkRegistry::GetBlock(const glm::vec3 &position)
     return it->second.GetBlock(position);
 }
 
+void ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
+{
+    const glm::ivec2 positionInChunk{
+        WorldToChunk(position.x, SIZE_X),
+        WorldToChunk(position.z, SIZE_Z)};
+
+    const auto it = chunks.find(positionInChunk);
+    if (it == chunks.end())
+        return;
+
+    it->second.SetBlock(position, blockId);
+}
+
 void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
 {
     SS_PROFILE_FUNCTION();

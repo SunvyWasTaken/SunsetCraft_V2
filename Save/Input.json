@@ -1,0 +1,42 @@
+[
+  {
+    "name" : "Forward",
+    "key" : "W"
+  },
+  {
+    "name" : "Backward",
+    "key" : "S"
+  },
+  {
+    "name" : "Left",
+    "key" : "A"
+  },
+  {
+    "name" : "Right",
+    "key" : "D"
+  },
+  {
+    "name" : "Up",
+    "key" : "E"
+  },
+  {
+    "name" : "Down",
+    "key" : "Q"
+  },
+  {
+    "name" : "MainAction",
+    "key" : "F"
+  },
+  {
+    "name" : "OpenInventory",
+    "key" : "C"
+  },
+  {
+    "name" : "Shift",
+    "key" : 340
+  },
+  {
+    "name": "Escape",
+    "key": 256
+  }
+]

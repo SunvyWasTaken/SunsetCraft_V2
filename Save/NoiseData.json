@@ -1,0 +1,140 @@
+[
+    {
+        "name": "Continental",
+        "noiseType": 5,
+        "frequency": 0.00012,
+        "amplitude": 120,
+        "fractalOctaves": 5,
+        "points": [
+            { "x": -1.0, "y": -0.85 },
+            { "x": -0.70, "y": -0.75 },
+            { "x": -0.45, "y": -0.55 },
+            { "x": -0.25, "y": -0.25 },
+            { "x": -0.08, "y": -0.05 },
+            { "x": 0.05, "y": 0.10 },
+            { "x": 0.35, "y": 0.45 },
+            { "x": 0.70, "y": 0.75 },
+            { "x": 1.0, "y": 1.0 }
+        ]
+    },
+    {
+        "name": "OceanBasins",
+        "noiseType": 9,
+        "frequency": 0.00075,
+        "amplitude": 85,
+        "fractalOctaves": 3,
+        "points": [
+            { "x": -1.0, "y": -1.0 },
+            { "x": -0.60, "y": -0.85 },
+            { "x": -0.30, "y": -0.45 },
+            { "x": -0.10, "y": -0.10 },
+            { "x": 0.20, "y": 0.02 },
+            { "x": 0.60, "y": 0.05 },
+            { "x": 1.0, "y": 0.08 }
+        ]
+    },
+    {
+        "name": "PlateauShape",
+        "noiseType": 9,
+        "frequency": 0.00045,
+        "amplitude": 42,
+        "fractalOctaves": 3,
+        "points": [
+            { "x": -1.0, "y": -0.15 },
+            { "x": -0.45, "y": -0.05 },
+            { "x": -0.10, "y": 0.08 },
+            { "x": 0.35, "y": 0.16 },
+            { "x": 0.70, "y": 0.22 },
+            { "x": 1.0, "y": 0.35 }
+        ]
+    },
+    {
+        "name": "MountainAggregation",
+        "noiseType": 5,
+        "frequency": 0.00065,
+        "amplitude": 90,
+        "fractalOctaves": 4,
+        "points": [
+            { "x": -1.0, "y": -0.10 },
+            { "x": -0.35, "y": -0.08 },
+            { "x": 0.05, "y": 0.00 },
+            { "x": 0.35, "y": 0.25 },
+            { "x": 0.65, "y": 0.75 },
+            { "x": 1.0, "y": 1.0 }
+        ]
+    },
+    {
+        "name": "MountainDetail",
+        "noiseType": 3,
+        "frequency": 0.018,
+        "amplitude": 38,
+        "fractalOctaves": 5,
+        "points": [
+            { "x": -1.0, "y": -0.05 },
+            { "x": -0.20, "y": -0.02 },
+            { "x": 0.15, "y": 0.05 },
+            { "x": 0.45, "y": 0.35 },
+            { "x": 0.75, "y": 0.75 },
+            { "x": 1.0, "y": 1.0 }
+        ]
+    },
+    {
+        "name": "Erosion",
+        "noiseType": 5,
+        "frequency": 0.009,
+        "amplitude": 32,
+        "fractalOctaves": 4,
+        "points": [
+            { "x": -1.0, "y": -0.45 },
+            { "x": -0.50, "y": -0.20 },
+            { "x": 0.0, "y": 0.08 },
+            { "x": 0.50, "y": -0.20 },
+            { "x": 1.0, "y": -0.45 }
+        ]
+    },
+    {
+        "name": "ValleyCarving",
+        "noiseType": 8,
+        "frequency": 0.012,
+        "amplitude": 28,
+        "fractalOctaves": 1,
+        "points": [
+            { "x": -1.0, "y": -0.65 },
+            { "x": -0.65, "y": -0.35 },
+            { "x": -0.25, "y": 0.05 },
+            { "x": 0.0, "y": 0.12 },
+            { "x": 0.25, "y": 0.05 },
+            { "x": 0.65, "y": -0.35 },
+            { "x": 1.0, "y": -0.65 }
+        ]
+    },
+    {
+        "name": "PlainFlatten",
+        "noiseType": 4,
+        "frequency": 0.00028,
+        "amplitude": 24,
+        "fractalOctaves": 1,
+        "points": [
+            { "x": -1.0, "y": -0.05 },
+            { "x": -0.40, "y": 0.00 },
+            { "x": -0.10, "y": 0.03 },
+            { "x": 0.25, "y": 0.04 },
+            { "x": 0.60, "y": 0.08 },
+            { "x": 1.0, "y": 0.12 }
+        ]
+    },
+    {
+        "name": "MicroVariation",
+        "noiseType": 3,
+        "frequency": 0.055,
+        "amplitude": 7,
+        "fractalOctaves": 3,
+        "points": [
+            { "x": -1.0, "y": -0.20 },
+            { "x": -0.50, "y": -0.08 },
+            { "x": 0.0, "y": 0.00 },
+            { "x": 0.50, "y": 0.08 },
+            { "x": 1.0, "y": 0.20 }
+        ]
+    }
+]

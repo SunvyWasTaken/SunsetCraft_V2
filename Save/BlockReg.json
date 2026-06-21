@@ -1,0 +1,82 @@
+[
+  {
+    "name": "air",
+    "transparent": true
+  },
+  {
+    "name": "water",
+    "transparent": true,
+    "textures":
+    {
+      "all": "water_still.png"
+    }
+  },
+  {
+    "name": "grass",
+    "transparent": false,
+    "textures":
+    {
+      "all" : "grass_block_side.png",
+      "top": "grass_block_top.png",
+      "bottom": "dirt.png"
+    }
+  },
+  {
+    "name": "dirt",
+    "transparent": false,
+    "textures":
+    {
+      "all" : "dirt.png"
+    }
+  },
+  {
+    "name": "stone",
+    "transparent": false,
+    "textures":
+    {
+      "all" : "stone.png"
+    }
+  },
+  {
+    "name" : "wood",
+    "transparent": false,
+    "textures":
+    {
+      "all": "oak_log.png",
+      "top": "oak_log_top.png",
+      "bottom": "oak_log_top.png"
+    }
+  },
+  {
+    "name" : "diamond_ore",
+    "transparent": false,
+    "textures" :
+    {
+      "all" : "diamond_ore.png"
+    }
+  },
+  {
+    "name": "charcoal_ore",
+    "transparent": false,
+    "textures":
+    {
+      "all" : "coal_ore.png"
+    }
+  },
+  {
+    "name" : "oak_leaf",
+    "transparent": false,
+    "textures":
+    {
+      "all": "oak_leaf.png"
+    }
+  },
+  {
+    "name": "sand",
+    "transparent": false,
+    "textures":
+    {
+      "all": "sand.png"
+    }
+  }
+]

@@ -11,8 +11,8 @@
 #include "BlockRegistry.h"
 #include "ChunkRegistry.h"
 #include "Noise.h"
+#include "RaycastHit.h"
 #include "TextureRegistry.h"
-#include "BaseObject/BaseCube.h"
 #include "Core/Application.h"
 #include "Core/ApplicationSetting.h"
 #include "GameFramework/Components/CameraComponent.h"
@@ -46,6 +46,96 @@ namespace
 
     std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
+    void LineTrace(RaycastHit& hit, const glm::vec3& start, const glm::vec3& forward, float distance)
+    {
+        hit.Clear();
+
+        // Direction du rayon
+        glm::vec3 dir = glm::normalize(forward);
+
+        // Position voxel courante
+        glm::ivec3 voxelPos = glm::floor(start);
+
+        // Sens de progression
+        glm::ivec3 step;
+        step.x = (dir.x > 0) ? 1 : (dir.x < 0 ? -1 : 0);
+        step.y = (dir.y > 0) ? 1 : (dir.y < 0 ? -1 : 0);
+        step.z = (dir.z > 0) ? 1 : (dir.z < 0 ? -1 : 0);
+
+        // Distance en t pour traverser un voxel
+        glm::vec3 tDelta;
+        tDelta.x = (dir.x != 0.0f) ? std::abs(1.0f / dir.x) : FLT_MAX;
+        tDelta.y = (dir.y != 0.0f) ? std::abs(1.0f / dir.y) : FLT_MAX;
+        tDelta.z = (dir.z != 0.0f) ? std::abs(1.0f / dir.z) : FLT_MAX;
+
+        // Distance jusqu'à la première frontière
+        glm::vec3 tMax;
+        tMax.x = (dir.x > 0)
+            ? (voxelPos.x + 1 - start.x) * tDelta.x
+            : (start.x - voxelPos.x) * tDelta.x;
+
+        tMax.y = (dir.y > 0)
+            ? (voxelPos.y + 1 - start.y) * tDelta.y
+            : (start.y - voxelPos.y) * tDelta.y;
+
+        tMax.z = (dir.z > 0)
+            ? (voxelPos.z + 1 - start.z) * tDelta.z
+            : (start.z - voxelPos.z) * tDelta.z;
+
+        float t = 0.0f;
+        glm::ivec3 hitNormal(0);
+
+        // Boucle DDA
+        while (t <= distance)
+        {
+            // Récupération du chunk / bloc
+            BlockId blockId = ChunkRegistry::GetBlock(voxelPos);
+            if (blockId != BlockRegistry::AIR)
+            {
+                hit.Hit = true;
+                hit.blockPose = voxelPos;
+                hit.BlockType = blockId;
+                hit.hitNormal = hitNormal;
+                return;
+            }
+
+            // Avancer vers la frontière la plus proche
+            if (tMax.x < tMax.y)
+            {
+                if (tMax.x < tMax.z)
+                {
+                    voxelPos.x += step.x;
+                    t = tMax.x;
+                    tMax.x += tDelta.x;
+                    hitNormal = glm::ivec3(-step.x, 0, 0);
+                }
+                else
+                {
+                    voxelPos.z += step.z;
+                    t = tMax.z;
+                    tMax.z += tDelta.z;
+                    hitNormal = glm::ivec3(0, 0, -step.z);
+                }
+            }
+            else
+            {
+                if (tMax.y < tMax.z)
+                {
+                    voxelPos.y += step.y;
+                    t = tMax.y;
+                    tMax.y += tDelta.y;
+                    hitNormal = glm::ivec3(0, -step.y, 0);
+                }
+                else
+                {
+                    voxelPos.z += step.z;
+                    t = tMax.z;
+                    tMax.z += tDelta.z;
+                    hitNormal = glm::ivec3(0, 0, -step.z);
+                }
+            }
+        }
+    }
 }
 
 #pragma region NoiseConfig
@@ -386,6 +476,18 @@ GameLayer::GameLayer()
     crossLeft->SetAnchor({-1, 0});
     crossRight = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 + spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
     crossRight->SetAnchor({1, 0});
+
+    Sunset::InputRegister::RegisterAction("Escape", [](const Sunset::Event::Action& action)->bool
+    {
+        if (action == Sunset::Event::Action::Press)
+        {
+            static bool ShowCursor = false;
+            ShowCursor = !ShowCursor;
+            Sunset::RenderCommande::ShowCursor(ShowCursor);
+            return true;
+        }
+        return false;
+    });
 }
 
 GameLayer::~GameLayer()
@@ -442,11 +544,37 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
 {
     if (auto* mouseEvent = std::get_if<Sunset::Event::MouseEvent>(&event))
     {
-        currentSelectItem -= mouseEvent->Scroll;
-        if (currentSelectItem < 0)
-            currentSelectItem = 8;
-        else if (currentSelectItem >= 9)
-            currentSelectItem = 0;
+        if (mouseEvent->Scroll != 0)
+        {
+            currentSelectItem -= mouseEvent->Scroll;
+            if (currentSelectItem < 0)
+                currentSelectItem = 8;
+            else if (currentSelectItem >= 9)
+                currentSelectItem = 0;
+            return true;
+        }
+
+        if (mouseEvent->action == Sunset::Event::Action::Press)
+        {
+            RaycastHit hit;
+            if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
+            {
+                glm::vec3 start = cam->camera.GetPosition();
+                glm::vec3 forward = cam->camera.GetForward();
+
+                LineTrace(hit, start, forward, 10);
+                if (!hit)
+                    return false;
+
+                const glm::vec3 target = hit.blockPose + hit.hitNormal;
+
+                if (mouseEvent->button == 1)
+                    ChunkRegistry::SetBlock(target, m_ToolBar[currentSelectItem]);
+                else if (mouseEvent->button == 0)
+                    ChunkRegistry::SetBlock(hit.blockPose, BlockRegistry::AIR);
+            }
+            return true;
+        }
     }
     return Layer::OnEvent(event);
 }
