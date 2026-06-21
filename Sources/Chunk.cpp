@@ -121,7 +121,8 @@ void Chunk::BuildMesh()
                         if (BlockRegistry::IsTransparent(b))
                         {
                             if (b != testBlock)
-                                TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
+                                if (BlockRegistry::IsTransparent(testBlock))
+                                    TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
                         }
                         else if (BlockRegistry::IsTransparent(testBlock))
                         {

@@ -11,6 +11,7 @@ out vec3 FragNormal;
 out vec2 FragUv;
 out vec3 FragWorldPos;
 flat out uint UVSide;
+flat out uint FaceSide;
 
 vec3 DecodePos(uint v)
 {
@@ -60,13 +61,31 @@ int faceOffset(uint side)
     return 30;
 }
 
-float WaveHeight(vec2 worldXZ)
+float Wave(vec2 p, vec2 dir, float freq, float speed, float amp)
 {
-    float wave = 0.0;
-    wave += sin(worldXZ.x * 0.75 + u_Time * 1.35) * 0.025;
-    wave += sin(worldXZ.y * 0.55 + u_Time * 1.05) * 0.018;
-    wave += sin((worldXZ.x + worldXZ.y) * 0.35 + u_Time * 0.80) * 0.012;
-    return wave;
+    return sin(dot(p, normalize(dir)) * freq + u_Time * speed) * amp;
+}
+
+float WaterHeight(vec2 p)
+{
+    float h = 0.0;
+
+    h += Wave(p, vec2( 1.0,  0.3), 1.20, 1.40, 0.025);
+    h += Wave(p, vec2(-0.4,  1.0), 0.85, 1.05, 0.018);
+    h += Wave(p, vec2( 0.7, -0.6), 1.75, 1.90, 0.010);
+    h += Wave(p, vec2(-1.0, -0.2), 2.40, 2.30, 0.006);
+
+    return h;
+}
+
+vec2 WaterFlow(vec2 p)
+{
+    vec2 flow = vec2(0.0);
+
+    flow.x += sin(p.y * 0.75 + u_Time * 0.9) * 0.008;
+    flow.y += cos(p.x * 0.70 + u_Time * 0.8) * 0.008;
+
+    return flow;
 }
 
 void main()
@@ -83,13 +102,21 @@ void main()
     vec3 position = blockPos + vertPos - vec3(0.0, 255.0, 0.0);
     vec3 worldPosition = vec3(model * vec4(position, 1.0));
 
-    float topInfluence = smoothstep(0.15, y, vertPos.y);
-    position.y += WaveHeight(worldPosition.xz) * topInfluence;
+    float topInfluence = smoothstep(0.05, y, vertPos.y);
+
+    float h = WaterHeight(worldPosition.xz);
+    vec2 flow = WaterFlow(worldPosition.xz);
+
+    position.y += h * topInfluence;
+
+    // Très léger déplacement horizontal, sinon ça devient caoutchouc.
+    position.xz += flow * topInfluence;
+
     worldPosition = vec3(model * vec4(position, 1.0));
 
     gl_Position = projection * view * vec4(worldPosition, 1.0);
     FragNormal = faceNormals[int(side)];
     FragUv = faceUVs[vertIndex];
-
     FragWorldPos = worldPosition;
+    FaceSide = side;
 }

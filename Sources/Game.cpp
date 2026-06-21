@@ -8,14 +8,17 @@
 #include <random>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "BlockRegistry.h"
 #include "ChunkRegistry.h"
 #include "Noise.h"
 #include "TextureRegistry.h"
+#include "BaseObject/BaseCube.h"
 #include "Core/Application.h"
 #include "Core/ApplicationSetting.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
+#include "Render/RenderCommande.h"
 #include "Render/Texture.h"
 #include "Slate/HorizontalBox.h"
 #include "Slate/SlateImage.h"
@@ -31,12 +34,17 @@ namespace
     constexpr size_t ToolbarSize = 9;
     std::unique_ptr<Sunset::HorizontalBox> ToolbarBox = nullptr;
 
+    int currentSelectItem = 0;
+    int prevSelectItem = 1;
+
     std::unique_ptr<Sunset::Square> crossTop = nullptr;
     std::unique_ptr<Sunset::Square> crossDown = nullptr;
     std::unique_ptr<Sunset::Square> crossLeft = nullptr;
     std::unique_ptr<Sunset::Square> crossRight = nullptr;
 
     std::array<BlockId, 9> m_ToolBar;
+
+    std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
 }
 
@@ -338,19 +346,23 @@ GameLayer::GameLayer()
     TextureBlockRegistry::Init();
     BlockRegistry::Init();
     ChunkRegistry::Init(seed, 12);
+    BlockHandDrawable = std::make_unique<Sunset::Drawable>();
     player = world->GetController(0).GetEntity();
+
+    constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
+    const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
 
     m_ToolBar = {BlockRegistry::DIRT, BlockRegistry::GRASS, BlockRegistry::STONE, BlockRegistry::Get("diamond_ore"), BlockRegistry::AIR, BlockRegistry::AIR, BlockRegistry::AIR, BlockRegistry::AIR};
 
     ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
-    ToolbarBox->SetPosition({1280/2, 720});
+    ToolbarBox->SetPosition({WinSize.x/2, WinSize.y-10});
     ToolbarBox->SetPadding({5, 0});
     ToolbarBox->Reserve(ToolbarSize);
     ToolbarBox->SetAnchor({0, -1});
     for (std::uint8_t i = 0; i < ToolbarSize; ++i)
     {
         BlockId block = m_ToolBar[i];
-        std::shared_ptr<Sunset::Slate> Square = std::make_shared<Sunset::Square>(glm::ivec2{0,0}, glm::ivec2{74, 74}, glm::vec4{1.0, 0.3, 0.3, 1.0}, 15.f);
+        std::shared_ptr<Sunset::Slate> Square = std::make_shared<Sunset::Square>(glm::ivec2{0,0}, glm::ivec2{74, 74}, color, 15.f);
         ToolbarBox->AddChild(Square);
 
         if (block != BlockRegistry::AIR)
@@ -361,13 +373,10 @@ GameLayer::GameLayer()
         }
     }
 
-    int length = 15;
-    int width = 5;
+    int length = 10;
+    int width = 4;
     int radius = 2;
-    glm::vec4 color{1.0, 0.2, 0.2, 0.5};
     int spacecing = 2;
-
-    glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
 
     crossTop = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 - spacecing}, glm::ivec2{width, length}, color, radius);
     crossTop->SetAnchor({0, -1});
@@ -403,15 +412,41 @@ void GameLayer::OnUpdate(float dt)
     world->Update(dt);
     glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
     ChunkRegistry::UpdatePlayerPosition(loc);
+
+    if (prevSelectItem != currentSelectItem)
+    {
+        (*ToolbarBox)[prevSelectItem]->SetSize({75.f, 75.f});
+        (*ToolbarBox)[currentSelectItem]->SetSize({85.f, 85.f});
+        prevSelectItem = currentSelectItem;
+    }
 }
 
 void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
+    m_Sky.Draw();
+    if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
+    {
+        ChunkRegistry::DrawChunk(cam->camera);
+        Sunset::RenderCommande::Submit(*BlockHandDrawable);
+    }
+
     ToolbarBox->Draw();
-    ChunkRegistry::DrawChunk(player.GetComponent<Sunset::CameraComponent>()->camera);
     crossTop->Draw();
     crossDown->Draw();
     crossLeft->Draw();
     crossRight->Draw();
+}
+
+bool GameLayer::OnEvent(Sunset::Event::Type &event)
+{
+    if (auto* mouseEvent = std::get_if<Sunset::Event::MouseEvent>(&event))
+    {
+        currentSelectItem -= mouseEvent->Scroll;
+        if (currentSelectItem < 0)
+            currentSelectItem = 8;
+        else if (currentSelectItem >= 9)
+            currentSelectItem = 0;
+    }
+    return Layer::OnEvent(event);
 }

@@ -9,7 +9,11 @@
 
 ---
 
+![Game screenshot](Resources/ScreenShot/Game_10.06.26.png)
+![Game screenshot](Resources/ScreenShot/Game_18.06.26.png)
+![Game screenshot](Resources/ScreenShot/Game_19.06.26.png)
 ![Game screenshot](Resources/ScreenShot/Game_20.06.26.png)
+![Game screenshot](Resources/ScreenShot/Game_21.06.26.png)
 
 ---
 
@@ -163,28 +167,6 @@ From the main menu:
 2. start a second game instance;
 3. click `Join Server` to join the local session;
 4. use the `Parameter` window to create, edit, generate, save, or load generation settings.
-
----
-
-## Project structure
-
-```text
-.
-├── CMakeLists.txt              # CMake configuration for the executable
-├── README.md                   # Project documentation
-├── vcpkg.json                  # vcpkg manifest dependencies
-├── Ressources/
-│   └── ScreenShot/             # Game screenshots
-├── Sources/
-│   ├── main.cpp                # Application entry point
-│   ├── MainMenu.*              # Main menu
-│   ├── Game.*                  # Main prototype layer
-│   ├── Chunk.*                 # Chunk representation and rendering
-│   ├── Noise.*                 # Noise generation, saving, and loading
-│   ├── NetworkLayer.*          # Legacy network/chat test layer
-│   └── Shaders/                # OpenGL shaders
-└── SunsetEngine/               # Engine submodule
-```
 
 ---
 

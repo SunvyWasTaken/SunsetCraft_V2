@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Sky.h"
 #include "Core/Layer.h"
 
 class GameOverlay : public Sunset::Layer
@@ -23,6 +24,8 @@ public:
     ~GameLayer() override;
     void OnUpdate(float dt) override;
     void OnDraw() override;
+    bool OnEvent(Sunset::Event::Type& event) override;
 private:
     std::unique_ptr<Sunset::World> world = nullptr;
+    SkyCubed m_Sky;
 };
