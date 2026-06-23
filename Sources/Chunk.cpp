@@ -5,7 +5,7 @@
 #include "Chunk.h"
 
 #include "ChunkRegistry.h"
-#include "TextureRegistry.h"
+#include "Registry/TextureRegistry.h"
 #include "Render/Drawable.h"
 #include "Render/Material.h"
 #include "Render/RenderCommande.h"

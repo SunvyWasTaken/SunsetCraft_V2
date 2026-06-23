@@ -6,6 +6,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "BlockRegistry.h"
 #include "Utility/UtilityFunction.h"
 
 namespace
@@ -30,19 +31,22 @@ namespace
 
         const auto& items = file["items"];
 
-        Item::Id currentItemId = 0;
+        Item::Id currentItemId = Item::null;
 
         for (const auto& [name, blockJson] : items.items())
         {
-            ItemDef itemDef;
-            itemDef.name = name;
+            ItemDef item;
+            item.name = name;
             // itemDef.type = blockJson["type"];
-            if (blockJson.contains("Stack"))
-                itemDef.maxStack = blockJson["Stack"];
+            if (blockJson.contains("stack"))
+                item.maxStack = blockJson["stack"];
             else
-                itemDef.maxStack = 64;
+                item.maxStack = 64;
 
-            itemDef.blockId = BlockRegistry::Get(blockJson["block"]);
+            if (blockJson.contains("block"))
+                item.blockId = BlockRegistry::Get(blockJson["block"]);
+
+            itemDefs.emplace(++currentItemId, item);
         }
     }
 }
@@ -66,4 +70,9 @@ ItemDef & ItemRegistry::Get(const std::string &name)
 ItemDef & ItemRegistry::Get(const Item::Id id)
 {
     return itemDefs[id];
+}
+
+Item::Id ItemRegistry::GetId(const std::string &name)
+{
+    return itemsName[name];
 }

@@ -4,7 +4,7 @@
 
 #include "HandRender.h"
 
-#include "../BlockRegistry.h"
+#include "../Registry/BlockRegistry.h"
 #include "Render/Drawable.h"
 
 namespace

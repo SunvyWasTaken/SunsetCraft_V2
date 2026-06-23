@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "BlockRegistry.h"
+#include "Registry/BlockRegistry.h"
 
 #define SIZE_X 16
 #define SIZE_Y 255

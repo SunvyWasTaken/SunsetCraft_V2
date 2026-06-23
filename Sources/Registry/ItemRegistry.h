@@ -5,7 +5,6 @@
 #pragma once
 
 #include "../Items/Item.h"
-#include "../BlockRegistry.h"
 
 struct ItemRegistry
 {
@@ -13,4 +12,5 @@ struct ItemRegistry
     static void Destroy();
     static ItemDef& Get(const std::string& name);
     static ItemDef& Get(Item::Id id);
+    static Item::Id GetId(const std::string& name);
 };

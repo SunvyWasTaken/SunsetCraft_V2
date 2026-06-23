@@ -5,8 +5,8 @@
 #include "RegistryLoader.h"
 
 #include "ItemRegistry.h"
-#include "../BlockRegistry.h"
-#include "../TextureRegistry.h"
+#include "BlockRegistry.h"
+#include "TextureRegistry.h"
 
 void RegistryLoader::Init()
 {

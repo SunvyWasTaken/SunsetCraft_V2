@@ -8,16 +8,17 @@
 #include <random>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "BlockRegistry.h"
+#include "Registry/BlockRegistry.h"
 #include "ChunkRegistry.h"
 #include "Noise.h"
 #include "RaycastHit.h"
-#include "TextureRegistry.h"
+#include "Registry/TextureRegistry.h"
 #include "Core/Application.h"
 #include "Core/ApplicationSetting.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
+#include "Registry/ItemRegistry.h"
 #include "Registry/RegistryLoader.h"
 #include "Render/RenderCommande.h"
 #include "Render/Texture.h"
@@ -43,7 +44,7 @@ namespace
     std::unique_ptr<Sunset::Square> crossLeft = nullptr;
     std::unique_ptr<Sunset::Square> crossRight = nullptr;
 
-    std::array<BlockId, 9> m_ToolBar;
+    std::array<ItemStack, 9> m_ToolBar;
 
     std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
@@ -444,7 +445,7 @@ GameLayer::GameLayer()
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
     const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
 
-    m_ToolBar = {BlockRegistry::DIRT, BlockRegistry::GRASS, BlockRegistry::STONE, BlockRegistry::Get("diamond_ore"), BlockRegistry::AIR, BlockRegistry::AIR, BlockRegistry::AIR, BlockRegistry::AIR};
+    m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
 
     ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
     ToolbarBox->SetPosition({WinSize.x/2, WinSize.y-10});
@@ -453,14 +454,14 @@ GameLayer::GameLayer()
     ToolbarBox->SetAnchor({0, -1});
     for (std::uint8_t i = 0; i < ToolbarSize; ++i)
     {
-        BlockId block = m_ToolBar[i];
+        ItemStack block = m_ToolBar[i];
         std::shared_ptr<Sunset::Slate> Square = std::make_shared<Sunset::Square>(glm::ivec2{0,0}, glm::ivec2{74, 74}, color, 15.f);
         ToolbarBox->AddChild(Square);
 
-        if (block != BlockRegistry::AIR)
+        if (block.id != Item::null)
         {
             std::shared_ptr<Sunset::Slate> img = std::make_shared<Sunset::SlateImage>();
-            std::static_pointer_cast<Sunset::SlateImage>(img)->LoadImage(RESOURCES "Textures/" + TextureBlockRegistry::GetTextureBlock(block, 0));
+            std::static_pointer_cast<Sunset::SlateImage>(img)->LoadImage(RESOURCES "Textures/" + TextureBlockRegistry::GetTextureBlock(ItemRegistry::Get(block.id).blockId, 0));
             std::static_pointer_cast<Sunset::Square>(Square)->AddChild(img);
         }
     }
@@ -500,6 +501,7 @@ GameLayer::~GameLayer()
     crossLeft.reset();
     crossRight.reset();
 
+    ChunkRegistry::Destroy();
     RegistryLoader::Destroy();
 }
 
@@ -570,7 +572,14 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
                 const glm::vec3 target = hit.blockPose + hit.hitNormal;
 
                 if (mouseEvent->button == 1)
-                    ChunkRegistry::SetBlock(target, m_ToolBar[currentSelectItem]);
+                {
+                    ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_ToolBar[currentSelectItem].id).blockId);
+                    m_ToolBar[currentSelectItem].count--;
+                    if (m_ToolBar[currentSelectItem].count <= 0)
+                    {
+                        m_ToolBar[currentSelectItem] = {};
+                    }
+                }
                 else if (mouseEvent->button == 0)
                     ChunkRegistry::SetBlock(hit.blockPose, BlockRegistry::AIR);
             }
