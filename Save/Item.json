@@ -8,13 +8,17 @@
       "type": "block",
       "block": "stone"
     },
+    "grass block": {
+      "type": "block",
+      "block": "grass"
+    },
     "sword": {
       "type": "tool",
       "stack": 1
     },
-    "grass block": {
-      "type": "block",
-      "block": "grass"
+    "pickaxe": {
+      "type": "tool",
+      "stack": 1
     }
   }
 }

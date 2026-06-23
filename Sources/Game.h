@@ -28,6 +28,6 @@ public:
     bool OnEvent(Sunset::Event::Type& event) override;
 private:
     std::unique_ptr<Sunset::World> world = nullptr;
-    Inventaire m_Inventaire;
+    Inventaire m_Inventory;
     SkyCubed m_Sky;
 };

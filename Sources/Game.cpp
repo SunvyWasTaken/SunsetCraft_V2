@@ -48,6 +48,8 @@ namespace
 
     std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
+    bool ShowInventory = false;
+
     void LineTrace(RaycastHit& hit, const glm::vec3& start, const glm::vec3& forward, float distance)
     {
         hit.Clear();
@@ -439,7 +441,7 @@ GameLayer::GameLayer()
     RegistryLoader::Init();
 
     ChunkRegistry::Init(seed, 12);
-    BlockHandDrawable = std::make_unique<Sunset::Drawable>();
+    // BlockHandDrawable = std::make_unique<Sunset::Drawable>();
     player = world->GetController(0).GetEntity();
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
@@ -491,6 +493,13 @@ GameLayer::GameLayer()
         }
         return false;
     });
+
+    Sunset::InputRegister::RegisterAction("Inventory", [](const Sunset::Event::Action& action)->bool
+    {
+        if (action == Sunset::Event::Action::Press)
+            ShowInventory = !ShowInventory;
+        return true;
+    });
 }
 
 GameLayer::~GameLayer()
@@ -533,8 +542,11 @@ void GameLayer::OnDraw()
     if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
     {
         ChunkRegistry::DrawChunk(cam->camera);
-        Sunset::RenderCommande::Submit(*BlockHandDrawable);
+        // Sunset::RenderCommande::Submit(*BlockHandDrawable);
     }
+
+    if (ShowInventory)
+        m_Inventory.Draw();
 
     ToolbarBox->Draw();
     crossTop->Draw();

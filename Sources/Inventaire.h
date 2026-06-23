@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Items/Item.h"
+#include "Slate/Square.h"
 
 class Inventaire
 {
@@ -16,6 +17,9 @@ public:
 
     bool Add(Item::Id id, uint16_t& amount);
     ItemStack& getSlot(size_t index);
+
+    void Draw() const;
 private:
     std::array<ItemStack, SlotCount> m_Slots;
+    Sunset::Square m_Drawable;
 };
