@@ -15,6 +15,7 @@ struct BlockType
 struct BlockRegistry
 {
     static void Init();
+    static void Destroy();
     static BlockId Get(const std::string& name);
     static bool IsTransparent(BlockId id);
     static BlockId AIR;

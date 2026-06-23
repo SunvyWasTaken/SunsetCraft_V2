@@ -18,6 +18,7 @@
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
+#include "Registry/RegistryLoader.h"
 #include "Render/RenderCommande.h"
 #include "Render/Texture.h"
 #include "Slate/HorizontalBox.h"
@@ -433,8 +434,9 @@ void GameOverlay::OnDraw()
 GameLayer::GameLayer()
 {
     world = std::make_unique<Sunset::World>();
-    TextureBlockRegistry::Init();
-    BlockRegistry::Init();
+
+    RegistryLoader::Init();
+
     ChunkRegistry::Init(seed, 12);
     BlockHandDrawable = std::make_unique<Sunset::Drawable>();
     player = world->GetController(0).GetEntity();
@@ -498,8 +500,7 @@ GameLayer::~GameLayer()
     crossLeft.reset();
     crossRight.reset();
 
-    ChunkRegistry::Destroy();
-    TextureBlockRegistry::Destroy();
+    RegistryLoader::Destroy();
 }
 
 void GameLayer::OnUpdate(float dt)

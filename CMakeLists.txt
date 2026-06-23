@@ -36,25 +36,25 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 
 ## SunsetCraft Server
 
-project(SunsetCraftV2_Server)
+# project(SunsetCraftV2_Server)
 
-add_executable(${PROJECT_NAME} ${MY_SOURCES})
+add_executable(SunsetCraftV2_Server ${MY_SOURCES})
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE SUNSET_HEADLESS)
+target_compile_definitions(SunsetCraftV2_Server PRIVATE SUNSET_HEADLESS)
 
 if(PRODUCTION_BUILD)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"./Sources/Shaders/\")
+    target_compile_definitions(SunsetCraftV2_Server PUBLIC SHADERS_PATH=\"./Sources/Shaders/\")
 else()
-    target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"${CMAKE_SOURCE_DIR}/Sources/Shaders/\")
+    target_compile_definitions(SunsetCraftV2_Server PUBLIC SHADERS_PATH=\"${CMAKE_SOURCE_DIR}/Sources/Shaders/\")
 endif()
 
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+    target_compile_options(SunsetCraftV2_Server PRIVATE /utf-8)
 endif()
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32 winmm)
+    target_link_libraries(SunsetCraftV2_Server PRIVATE ws2_32 winmm)
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC
+target_link_libraries(SunsetCraftV2_Server PUBLIC
         SunsetEngine
 )

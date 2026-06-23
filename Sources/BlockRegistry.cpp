@@ -95,6 +95,12 @@ void BlockRegistry::Init()
     WATER = Get("water");
 }
 
+void BlockRegistry::Destroy()
+{
+    m_BlockRegistry.clear();
+    m_TransparentBlocks.clear();
+}
+
 BlockId BlockRegistry::Get(const std::string &name)
 {
     if (!bIsInitialized)

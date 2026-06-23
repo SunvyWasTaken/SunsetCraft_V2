@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Inventaire.h"
 #include "Sky.h"
 #include "Core/Layer.h"
 
@@ -27,5 +28,6 @@ public:
     bool OnEvent(Sunset::Event::Type& event) override;
 private:
     std::unique_ptr<Sunset::World> world = nullptr;
+    Inventaire m_Inventaire;
     SkyCubed m_Sky;
 };

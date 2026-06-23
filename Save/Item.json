@@ -1,0 +1,20 @@
+{
+  "items": {
+    "dirt": {
+      "type": "block",
+      "block": "dirt"
+    },
+    "stone": {
+      "type": "block",
+      "block": "stone"
+    },
+    "sword": {
+      "type": "tool",
+      "stack": 1
+    },
+    "grass block": {
+      "type": "block",
+      "block": "grass"
+    }
+  }
+}
