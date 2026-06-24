@@ -517,6 +517,7 @@ GameLayer::~GameLayer()
 void GameLayer::OnUpdate(float dt)
 {
     SS_PROFILE_FUNCTION();
+    Layer::OnUpdate(dt);
     Sunset::NetworkService::Get().Update(dt);
 
     static float waterTime = 0.0f;
@@ -538,6 +539,7 @@ void GameLayer::OnUpdate(float dt)
 void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
+    Layer::OnDraw();
     m_Sky.Draw();
     if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
     {

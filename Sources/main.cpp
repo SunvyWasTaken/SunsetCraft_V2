@@ -10,13 +10,13 @@
 int main()
 {
 #ifdef SUNSET_HEADLESS
-    const Sunset::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2", true, 30.f};
+    const Sunset::ApplicationSetting setting{"SunsetCraft V2", {1280, 720}, 30.f, true};
     Sunset::Application app{setting};
     Sunset::NetworkService::Init();
     Sunset::NetworkService::Get().Host(7777, 2);
     app.PushLayer<GameLayer>();
 #else
-    const Sunset::ApplicationSetting setting{{1280, 720}, "SunsetCraft V2"};
+    const Sunset::ApplicationSetting setting{"SunsetCraft V2", {1280, 720}};
     Sunset::Application app{setting};
 
     INITLOG("SunsetCraft")
