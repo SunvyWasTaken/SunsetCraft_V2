@@ -22,9 +22,9 @@
 #include "Registry/RegistryLoader.h"
 #include "Render/RenderCommande.h"
 #include "Render/Texture.h"
-#include "Slate/HorizontalBox.h"
-#include "Slate/SlateImage.h"
-#include "Slate/Square.h"
+#include "Widget/Button.h"
+#include "Widget/PanelWidget.h"
+#include "Widget/UIImage.h"
 
 namespace
 {
@@ -34,17 +34,17 @@ namespace
     Sunset::Entity player;
 
     constexpr size_t ToolbarSize = 9;
-    std::unique_ptr<Sunset::HorizontalBox> ToolbarBox = nullptr;
 
     int currentSelectItem = 0;
     int prevSelectItem = 1;
 
-    std::unique_ptr<Sunset::Square> crossTop = nullptr;
-    std::unique_ptr<Sunset::Square> crossDown = nullptr;
-    std::unique_ptr<Sunset::Square> crossLeft = nullptr;
-    std::unique_ptr<Sunset::Square> crossRight = nullptr;
-
-    std::array<ItemStack, 9> m_ToolBar;
+    // std::unique_ptr<Sunset::HorizontalBox> ToolbarBox = nullptr;
+    // std::unique_ptr<Sunset::Square> crossTop = nullptr;
+    // std::unique_ptr<Sunset::Square> crossDown = nullptr;
+    // std::unique_ptr<Sunset::Square> crossLeft = nullptr;
+    // std::unique_ptr<Sunset::Square> crossRight = nullptr;
+    //
+    // std::array<ItemStack, 9> m_ToolBar;
 
     std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
@@ -140,6 +140,29 @@ namespace
             }
         }
     }
+
+    class MenuButton final : public Sunset::Button
+    {
+    public:
+        explicit MenuButton(Callback callback)
+            : Button(std::move(callback))
+        {
+            SetDesiredSize({220, 56});
+            SetRadius(8); // Attention : actuellement stocké, mais pas rendu en arrondi.
+        }
+
+        void Arrange(const Sunset::Rectangle& parentRect) override
+        {
+            const glm::ivec2 size = GetDesiredSize();
+
+            m_Bounds.position = {
+                parentRect.position.x + 40,
+                parentRect.position.y + 40
+            };
+
+            m_Bounds.size = size;
+        }
+    };
 }
 
 #pragma region NoiseConfig
@@ -447,40 +470,54 @@ GameLayer::GameLayer()
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
     const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
 
-    m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
+    auto playButton = std::make_shared<MenuButton>([]()
+       {
+           // Action au clic.
+           // Exemple :
+           // Sunset::Application::CloseApplication();
+       });
 
-    ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
-    ToolbarBox->SetPosition({WinSize.x/2, WinSize.y-10});
-    ToolbarBox->SetPadding({5, 0});
-    ToolbarBox->Reserve(ToolbarSize);
-    ToolbarBox->SetAnchor({0, -1});
-    for (std::uint8_t i = 0; i < ToolbarSize; ++i)
-    {
-        ItemStack block = m_ToolBar[i];
-        std::shared_ptr<Sunset::Slate> Square = std::make_shared<Sunset::Square>(glm::ivec2{0,0}, glm::ivec2{74, 74}, color, 15.f);
-        ToolbarBox->AddChild(Square);
+    playButton->SetColors(
+        {0.18f, 0.20f, 0.24f, 1.0f}, // normal
+        {0.28f, 0.32f, 0.38f, 1.0f}, // hover
+        {0.10f, 0.12f, 0.16f, 1.0f}  // pressed
+    );
+    AddToViewport(playButton);
 
-        if (block.id != Item::null)
-        {
-            std::shared_ptr<Sunset::Slate> img = std::make_shared<Sunset::SlateImage>();
-            std::static_pointer_cast<Sunset::SlateImage>(img)->LoadImage(RESOURCES "Textures/" + TextureBlockRegistry::GetTextureBlock(ItemRegistry::Get(block.id).blockId, 0));
-            std::static_pointer_cast<Sunset::Square>(Square)->AddChild(img);
-        }
-    }
-
-    int length = 10;
-    int width = 4;
-    int radius = 2;
-    int spacecing = 2;
-
-    crossTop = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 - spacecing}, glm::ivec2{width, length}, color, radius);
-    crossTop->SetAnchor({0, -1});
-    crossDown = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 + spacecing}, glm::ivec2{width, length}, color, radius);
-    crossDown->SetAnchor({0, 1});
-    crossLeft = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 - spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
-    crossLeft->SetAnchor({-1, 0});
-    crossRight = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 + spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
-    crossRight->SetAnchor({1, 0});
+    // m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
+    //
+    // ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
+    // ToolbarBox->SetPosition({WinSize.x/2, WinSize.y-10});
+    // ToolbarBox->SetPadding({5, 0});
+    // ToolbarBox->Reserve(ToolbarSize);
+    // ToolbarBox->SetAnchor({0, -1});
+    // for (std::uint8_t i = 0; i < ToolbarSize; ++i)
+    // {
+    //     ItemStack block = m_ToolBar[i];
+    //     std::shared_ptr<Sunset::Slate> Square = std::make_shared<Sunset::Square>(glm::ivec2{0,0}, glm::ivec2{74, 74}, color, 15.f);
+    //     ToolbarBox->AddChild(Square);
+    //
+    //     if (block.id != Item::null)
+    //     {
+    //         std::shared_ptr<Sunset::Slate> img = std::make_shared<Sunset::SlateImage>();
+    //         std::static_pointer_cast<Sunset::SlateImage>(img)->LoadImage(RESOURCES "Textures/" + TextureBlockRegistry::GetTextureBlock(ItemRegistry::Get(block.id).blockId, 0));
+    //         std::static_pointer_cast<Sunset::Square>(Square)->AddChild(img);
+    //     }
+    // }
+    //
+    // int length = 10;
+    // int width = 4;
+    // int radius = 2;
+    // int spacecing = 2;
+    //
+    // crossTop = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 - spacecing}, glm::ivec2{width, length}, color, radius);
+    // crossTop->SetAnchor({0, -1});
+    // crossDown = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 + spacecing}, glm::ivec2{width, length}, color, radius);
+    // crossDown->SetAnchor({0, 1});
+    // crossLeft = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 - spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
+    // crossLeft->SetAnchor({-1, 0});
+    // crossRight = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 + spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
+    // crossRight->SetAnchor({1, 0});
 
     Sunset::InputRegister::RegisterAction("Escape", [](const Sunset::Event::Action& action)->bool
     {
@@ -504,11 +541,11 @@ GameLayer::GameLayer()
 
 GameLayer::~GameLayer()
 {
-    ToolbarBox.reset();
-    crossTop.reset();
-    crossDown.reset();
-    crossLeft.reset();
-    crossRight.reset();
+    // ToolbarBox.reset();
+    // crossTop.reset();
+    // crossDown.reset();
+    // crossLeft.reset();
+    // crossRight.reset();
 
     ChunkRegistry::Destroy();
     RegistryLoader::Destroy();
@@ -530,8 +567,8 @@ void GameLayer::OnUpdate(float dt)
 
     if (prevSelectItem != currentSelectItem)
     {
-        (*ToolbarBox)[prevSelectItem]->SetSize({75.f, 75.f});
-        (*ToolbarBox)[currentSelectItem]->SetSize({85.f, 85.f});
+        // (*ToolbarBox)[prevSelectItem]->SetSize({75.f, 75.f});
+        // (*ToolbarBox)[currentSelectItem]->SetSize({85.f, 85.f});
         prevSelectItem = currentSelectItem;
     }
 }
@@ -550,11 +587,11 @@ void GameLayer::OnDraw()
     if (ShowInventory)
         m_Inventory.Draw();
 
-    ToolbarBox->Draw();
-    crossTop->Draw();
-    crossDown->Draw();
-    crossLeft->Draw();
-    crossRight->Draw();
+    // ToolbarBox->Draw();
+    // crossTop->Draw();
+    // crossDown->Draw();
+    // crossLeft->Draw();
+    // crossRight->Draw();
 }
 
 bool GameLayer::OnEvent(Sunset::Event::Type &event)
@@ -587,12 +624,12 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
 
                 if (mouseEvent->button == 1)
                 {
-                    ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_ToolBar[currentSelectItem].id).blockId);
-                    m_ToolBar[currentSelectItem].count--;
-                    if (m_ToolBar[currentSelectItem].count <= 0)
-                    {
-                        m_ToolBar[currentSelectItem] = {};
-                    }
+                    // ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_ToolBar[currentSelectItem].id).blockId);
+                    // m_ToolBar[currentSelectItem].count--;
+                    // if (m_ToolBar[currentSelectItem].count <= 0)
+                    // {
+                    //      m_ToolBar[currentSelectItem] = {};
+                    // }
                 }
                 else if (mouseEvent->button == 0)
                     ChunkRegistry::SetBlock(hit.blockPose, BlockRegistry::AIR);
