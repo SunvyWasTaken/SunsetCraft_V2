@@ -7,9 +7,19 @@
 #include <imgui.h>
 
 #include "Game.h"
-#include "Sandbox.h"
 #include "Core/Application.h"
+#include "Core/ApplicationSetting.h"
 #include "Network/NetworkService.h"
+#include "Widget/UIImage.h"
+
+MainMenu::MainMenu()
+{
+    std::shared_ptr<Sunset::UIImage> image = std::make_shared<Sunset::UIImage>();
+    image->LoadImage(RESOURCES "Logo/Logo.png");
+    image->m_Bounds.position = Sunset::Application::GetSetting().WindowSize / 2;
+    image->SetDesiredSize({2172, 724});
+    AddToViewport(image);
+}
 
 void MainMenu::OnUpdate(float dt)
 {
