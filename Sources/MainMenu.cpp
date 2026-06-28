@@ -11,47 +11,41 @@
 #include "Core/ApplicationSetting.h"
 #include "Network/NetworkService.h"
 #include "Render/Texture.h"
-#include "Widget/UIImage.h"
+#include "Sources/Image.h"
+#include "Sources/Overlay.h"
 
-class LogoImage final : public Sunset::UIImage
+namespace
 {
-public:
-    explicit LogoImage()
-        : UIImage()
-    {
-        SetDesiredSize({220, 56});
-        m_Texture = std::make_shared<Sunset::Texture>();
-        m_Texture->LoadImage(RESOURCES "Logo/Logo.png");
-    }
-
-    void Arrange(const Sunset::Rectangle& parentRect) override
-    {
-        const glm::ivec2 size = GetDesiredSize();
-
-        m_Bounds.position = {
-            parentRect.position.x + 40,
-            parentRect.position.y + 40
-        };
-
-        m_Bounds.size = size;
-    }
-};
+    std::unique_ptr<Sunset::Texture> m_Image = nullptr;
+}
 
 MainMenu::MainMenu()
+    : Layer()
 {
-    std::shared_ptr<LogoImage> image = std::make_shared<LogoImage>();
-    // image->LoadImage(RESOURCES "Logo/Logo.png");
-    image->m_Bounds.position = Sunset::Application::GetSetting().WindowSize / 2;
-    image->SetDesiredSize({250, 50});
-    AddToViewport(image);
+    m_Image = std::make_unique<Sunset::Texture>();
+    m_Image->LoadImage(RESOURCES "Logo/Logo.png");
+
+    const auto& setting = Sunset::Application::GetSetting();
+    std::shared_ptr<SRmGUI::Image> overlay = std::make_shared<SRmGUI::Image>();
+    overlay->SetPosition((setting.WindowSize/2) - (glm::ivec2{2172/2, 724/2} / 2));
+    overlay->SetSize({2172/2, 724/2});
+    overlay->SetImage(m_Image->GetId());
+    AddToViewport(overlay);
+}
+
+MainMenu::~MainMenu()
+{
+    m_Image.reset();
 }
 
 void MainMenu::OnUpdate(float dt)
 {
+    Layer::OnUpdate(dt);
 }
 
 void MainMenu::OnDraw()
 {
+    Layer::OnDraw();
     ImGui::Begin("Menu");
 
     if (ImGui::Button("Start Server"))

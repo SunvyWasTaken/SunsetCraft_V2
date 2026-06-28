@@ -9,6 +9,7 @@ class MainMenu : public Sunset::Layer
 {
 public:
     MainMenu();
+    ~MainMenu() override;
     void OnUpdate(float dt) override;
     void OnDraw() override;
 };

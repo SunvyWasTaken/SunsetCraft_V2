@@ -22,9 +22,6 @@
 #include "Registry/RegistryLoader.h"
 #include "Render/RenderCommande.h"
 #include "Render/Texture.h"
-#include "Widget/Button.h"
-#include "Widget/PanelWidget.h"
-#include "Widget/UIImage.h"
 
 namespace
 {
@@ -140,29 +137,6 @@ namespace
             }
         }
     }
-
-    class MenuButton final : public Sunset::Button
-    {
-    public:
-        explicit MenuButton(Callback callback)
-            : Button(std::move(callback))
-        {
-            SetDesiredSize({220, 56});
-            SetRadius(8); // Attention : actuellement stocké, mais pas rendu en arrondi.
-        }
-
-        void Arrange(const Sunset::Rectangle& parentRect) override
-        {
-            const glm::ivec2 size = GetDesiredSize();
-
-            m_Bounds.position = {
-                parentRect.position.x + 40,
-                parentRect.position.y + 40
-            };
-
-            m_Bounds.size = size;
-        }
-    };
 }
 
 #pragma region NoiseConfig
@@ -458,6 +432,7 @@ void GameOverlay::OnDraw()
 #pragma endregion // NoiseConfig
 
 GameLayer::GameLayer()
+    : Layer()
 {
     world = std::make_unique<Sunset::World>();
 
@@ -469,20 +444,6 @@ GameLayer::GameLayer()
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
     const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
-
-    auto playButton = std::make_shared<MenuButton>([]()
-       {
-           // Action au clic.
-           // Exemple :
-           // Sunset::Application::CloseApplication();
-       });
-
-    playButton->SetColors(
-        {0.18f, 0.20f, 0.24f, 1.0f}, // normal
-        {0.28f, 0.32f, 0.38f, 1.0f}, // hover
-        {0.10f, 0.12f, 0.16f, 1.0f}  // pressed
-    );
-    AddToViewport(playButton);
 
     // m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
     //
@@ -596,6 +557,8 @@ void GameLayer::OnDraw()
 
 bool GameLayer::OnEvent(Sunset::Event::Type &event)
 {
+    SS_PROFILE_FUNCTION();
+    Layer::OnEvent(event);
     if (auto* mouseEvent = std::get_if<Sunset::Event::MouseEvent>(&event))
     {
         if (mouseEvent->Scroll != 0)
@@ -637,5 +600,5 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
             return true;
         }
     }
-    return Layer::OnEvent(event);
+    return false;
 }
