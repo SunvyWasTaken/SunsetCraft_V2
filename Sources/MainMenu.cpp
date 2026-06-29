@@ -16,6 +16,7 @@
 #include "Image.h"
 #include "Overlay.h"
 #include "Panel.h"
+#include "Text.h"
 #include "VerticalBox.h"
 
 namespace
@@ -46,15 +47,23 @@ MainMenu::MainMenu()
         Sunset::NetworkService::Init();
         Sunset::NetworkService::Get().Host(7777, 2);
         Sunset::Application::GetApplication().ClearLayer();
-        Sunset::Application::GetApplication().LoadOverlay<GameOverlay>();
+        //Sunset::Application::GetApplication().LoadOverlay<GameOverlay>();
         Sunset::Application::GetApplication().LoadLayer<GameLayer>();
     });
+    auto PlayText = std::make_shared<SRmGUI::Text>();
+    PlayText->SetColor({0.1f, 0.1, 0.1, 1.f});
+    PlayText->SetText("Play");
+    Play->AddChild(PlayText);
     // std::shared_ptr<SRmGUI::Button> Opt = std::make_shared<SRmGUI::Button>();
     std::shared_ptr<SRmGUI::Button> Quit = std::make_shared<SRmGUI::Button>();
     Quit->SetCallback([&]()
     {
         Sunset::Application::CloseApplication();
     });
+    auto QuitText = std::make_shared<SRmGUI::Text>();
+    QuitText->SetColor({0.1f, 0.1, 0.1, 1.f});
+    QuitText->SetText("Quit");
+    Quit->AddChild(QuitText);
 
     box->AddChild(Play);
     // box->AddChild(Opt);
@@ -63,6 +72,7 @@ MainMenu::MainMenu()
     std::shared_ptr<SRmGUI::Panel> panel = std::make_shared<SRmGUI::Panel>();
     panel->AddChild(overlay);
     panel->AddChild(box);
+
     AddToViewport(panel);
 }
 

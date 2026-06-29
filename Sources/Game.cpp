@@ -38,15 +38,11 @@ namespace
     int currentSelectItem = 0;
     int prevSelectItem = 1;
 
-    // std::unique_ptr<Sunset::HorizontalBox> ToolbarBox = nullptr;
-    // std::unique_ptr<Sunset::Square> crossTop = nullptr;
-    // std::unique_ptr<Sunset::Square> crossDown = nullptr;
-    // std::unique_ptr<Sunset::Square> crossLeft = nullptr;
-    // std::unique_ptr<Sunset::Square> crossRight = nullptr;
-
-    std::array<ItemStack, 9> m_ToolBar;
+    std::array<ItemStack, ToolbarSize> m_ToolBar;
 
     std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
+
+    std::unique_ptr<Sunset::Texture> HotBarTexture = nullptr;
 
     bool ShowInventory = false;
 
@@ -450,18 +446,25 @@ GameLayer::GameLayer()
 
     m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
 
-    std::shared_ptr<SRmGUI::HorizontalBox> box = std::make_shared<SRmGUI::HorizontalBox>();
+    auto panel = std::make_shared<SRmGUI::Panel>();
+    auto box = std::make_shared<SRmGUI::Overlay>();
+    HotBarTexture = std::make_unique<Sunset::Texture>();
+    HotBarTexture->LoadImage(RESOURCES "Textures/gui/hotbar.png");
+    auto HotBarImage = std::make_shared<SRmGUI::Image>();
+    HotBarImage->SetImage(HotBarTexture->GetId());
+    box->AddChild(HotBarImage);
 
     for (const auto& item : m_ToolBar)
     {
-        std::shared_ptr<SRmGUI::Overlay> overlay = std::make_shared<SRmGUI::Overlay>();
+        auto overlay = std::make_shared<SRmGUI::Overlay>();
         box->AddChild(overlay);
     }
 
-    box->SetPosition({WinSize.x/2, WinSize.y-80});
-    box->SetSize({74, 666});
+    box->SetPosition({(WinSize.x/2)-364, WinSize.y-88});
+    box->SetSize({728, 88});
+    panel->AddChild(box);
 
-    AddToViewport(box);
+    AddToViewport(panel);
 
     // ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
     // ToolbarBox->SetPosition({WinSize.x/2, WinSize.y-10});
@@ -518,12 +521,7 @@ GameLayer::GameLayer()
 
 GameLayer::~GameLayer()
 {
-    // ToolbarBox.reset();
-    // crossTop.reset();
-    // crossDown.reset();
-    // crossLeft.reset();
-    // crossRight.reset();
-
+    HotBarTexture.reset();
     ChunkRegistry::Destroy();
     RegistryLoader::Destroy();
 }
@@ -544,8 +542,6 @@ void GameLayer::OnUpdate(float dt)
 
     if (prevSelectItem != currentSelectItem)
     {
-        // (*ToolbarBox)[prevSelectItem]->SetSize({75.f, 75.f});
-        // (*ToolbarBox)[currentSelectItem]->SetSize({85.f, 85.f});
         prevSelectItem = currentSelectItem;
     }
 }
@@ -563,12 +559,6 @@ void GameLayer::OnDraw()
 
     if (ShowInventory)
         m_Inventory.Draw();
-
-    // ToolbarBox->Draw();
-    // crossTop->Draw();
-    // crossDown->Draw();
-    // crossLeft->Draw();
-    // crossRight->Draw();
 }
 
 bool GameLayer::OnEvent(Sunset::Event::Type &event)
@@ -603,12 +593,12 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
 
                 if (mouseEvent->button == 1)
                 {
-                    // ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_ToolBar[currentSelectItem].id).blockId);
-                    // m_ToolBar[currentSelectItem].count--;
-                    // if (m_ToolBar[currentSelectItem].count <= 0)
-                    // {
-                    //      m_ToolBar[currentSelectItem] = {};
-                    // }
+                    ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_ToolBar[currentSelectItem].id).blockId);
+                    m_ToolBar[currentSelectItem].count--;
+                    if (m_ToolBar[currentSelectItem].count <= 0)
+                    {
+                         m_ToolBar[currentSelectItem] = {};
+                    }
                 }
                 else if (mouseEvent->button == 0)
                     ChunkRegistry::SetBlock(hit.blockPose, BlockRegistry::AIR);

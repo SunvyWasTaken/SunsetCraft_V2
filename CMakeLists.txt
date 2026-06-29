@@ -17,7 +17,7 @@ add_executable(${PROJECT_NAME} ${MY_SOURCES})
 
 if(PRODUCTION_BUILD)
     target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"./Sources/Shaders/\")
-    target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES_PATH=\"./Resources/\")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES=\"./Resources/\")
 else()
     target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"${CMAKE_SOURCE_DIR}/Sources/Shaders/\")
     target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES=\"${CMAKE_SOURCE_DIR}/Resources/\")

@@ -22,7 +22,7 @@ namespace
     std::vector<Vertex> GenerateSkyDome(float radius, int sectors, int stacks)
     {
         std::vector<Vertex> vertices;
-        float PI = M_PI;
+        constexpr float PI = std::numbers::pi_v<float>;
 
         for (int i = 0; i <= stacks; ++i)  // vertical (stack)
         {
