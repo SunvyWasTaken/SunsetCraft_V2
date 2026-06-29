@@ -6,13 +6,16 @@
 
 #include <imgui.h>
 
+#include "Button.h"
 #include "Game.h"
+#include "HorizontalBox.h"
 #include "Core/Application.h"
 #include "Core/ApplicationSetting.h"
 #include "Network/NetworkService.h"
 #include "Render/Texture.h"
 #include "Image.h"
 #include "Overlay.h"
+#include "Panel.h"
 
 namespace
 {
@@ -30,7 +33,19 @@ MainMenu::MainMenu()
     overlay->SetPosition((setting.WindowSize/2) - (glm::ivec2{2172/3, 724/3} / 2) - glm::ivec2{0, 120});
     overlay->SetSize({2172/3, 724/3});
     overlay->SetImage(m_Image->GetId());
-    AddToViewport(overlay);
+
+
+    std::shared_ptr<SRmGUI::HorizontalBox> box = std::make_shared<SRmGUI::HorizontalBox>();
+    box->SetPosition((setting.WindowSize/2) - glm::ivec2{75, -50});
+    box->SetSize(glm::ivec2{150, 50});
+
+    std::shared_ptr<SRmGUI::Button> Play = std::make_shared<SRmGUI::Button>();
+    box->AddChild(Play);
+
+    std::shared_ptr<SRmGUI::Panel> panel = std::make_shared<SRmGUI::Panel>();
+    panel->AddChild(overlay);
+    panel->AddChild(box);
+    AddToViewport(panel);
 }
 
 MainMenu::~MainMenu()
