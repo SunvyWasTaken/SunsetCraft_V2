@@ -11,6 +11,7 @@
 #include "Registry/BlockRegistry.h"
 #include "ChunkRegistry.h"
 #include "HorizontalBox.h"
+#include "Image.h"
 #include "Noise.h"
 #include "Overlay.h"
 #include "RaycastHit.h"
@@ -42,8 +43,8 @@ namespace
     // std::unique_ptr<Sunset::Square> crossDown = nullptr;
     // std::unique_ptr<Sunset::Square> crossLeft = nullptr;
     // std::unique_ptr<Sunset::Square> crossRight = nullptr;
-    //
-    // std::array<ItemStack, 9> m_ToolBar;
+
+    std::array<ItemStack, 9> m_ToolBar;
 
     std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
@@ -447,9 +448,11 @@ GameLayer::GameLayer()
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
     const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
 
+    m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
+
     std::shared_ptr<SRmGUI::HorizontalBox> box = std::make_shared<SRmGUI::HorizontalBox>();
 
-    for (int i = 0; i < 9; ++i)
+    for (const auto& item : m_ToolBar)
     {
         std::shared_ptr<SRmGUI::Overlay> overlay = std::make_shared<SRmGUI::Overlay>();
         box->AddChild(overlay);
@@ -460,8 +463,6 @@ GameLayer::GameLayer()
 
     AddToViewport(box);
 
-    // m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
-    //
     // ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
     // ToolbarBox->SetPosition({WinSize.x/2, WinSize.y-10});
     // ToolbarBox->SetPadding({5, 0});

@@ -13,7 +13,6 @@
       "features" : [ "glfw-binding", "opengl3-binding", "docking-experimental" ]
     },
     "nlohmann-json",
-    "spdlog",
-    "stb"
+    "spdlog"
   ]
 }
