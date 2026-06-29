@@ -16,6 +16,7 @@
 #include "Image.h"
 #include "Overlay.h"
 #include "Panel.h"
+#include "VerticalBox.h"
 
 namespace
 {
@@ -35,12 +36,29 @@ MainMenu::MainMenu()
     overlay->SetImage(m_Image->GetId());
 
 
-    std::shared_ptr<SRmGUI::HorizontalBox> box = std::make_shared<SRmGUI::HorizontalBox>();
-    box->SetPosition((setting.WindowSize/2) - glm::ivec2{75, -50});
-    box->SetSize(glm::ivec2{150, 50});
+    auto box = std::make_shared<SRmGUI::VerticalBox>();
+    box->SetPosition((setting.WindowSize/2) - glm::ivec2{75, -85});
+    box->SetSize(glm::ivec2{150, 150});
 
     std::shared_ptr<SRmGUI::Button> Play = std::make_shared<SRmGUI::Button>();
+    Play->SetCallback([&]()
+    {
+        Sunset::NetworkService::Init();
+        Sunset::NetworkService::Get().Host(7777, 2);
+        Sunset::Application::GetApplication().ClearLayer();
+        Sunset::Application::GetApplication().LoadOverlay<GameOverlay>();
+        Sunset::Application::GetApplication().LoadLayer<GameLayer>();
+    });
+    // std::shared_ptr<SRmGUI::Button> Opt = std::make_shared<SRmGUI::Button>();
+    std::shared_ptr<SRmGUI::Button> Quit = std::make_shared<SRmGUI::Button>();
+    Quit->SetCallback([&]()
+    {
+        Sunset::Application::CloseApplication();
+    });
+
     box->AddChild(Play);
+    // box->AddChild(Opt);
+    box->AddChild(Quit);
 
     std::shared_ptr<SRmGUI::Panel> panel = std::make_shared<SRmGUI::Panel>();
     panel->AddChild(overlay);
@@ -61,27 +79,4 @@ void MainMenu::OnUpdate(float dt)
 void MainMenu::OnDraw()
 {
     Layer::OnDraw();
-    ImGui::Begin("Menu");
-
-    if (ImGui::Button("Start Server"))
-    {
-        Sunset::NetworkService::Init();
-        Sunset::NetworkService::Get().Host(7777, 2);
-        Sunset::Application::GetApplication().ClearLayer();
-        Sunset::Application::GetApplication().LoadOverlay<GameOverlay>();
-        Sunset::Application::GetApplication().LoadLayer<GameLayer>();
-    }
-    if (ImGui::Button("Join Server"))
-    {
-        Sunset::NetworkService::Init();
-        Sunset::NetworkService::Get().Join({});
-        Sunset::Application::GetApplication().ClearLayer();
-        Sunset::Application::GetApplication().LoadOverlay<GameOverlay>();
-        Sunset::Application::GetApplication().LoadLayer<GameLayer>();
-    }
-    if (ImGui::Button("Quit"))
-    {
-        Sunset::Application::CloseApplication();
-    }
-    ImGui::End();
 }
