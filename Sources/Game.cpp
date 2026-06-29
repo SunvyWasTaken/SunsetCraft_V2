@@ -46,6 +46,11 @@ namespace
 
     bool ShowInventory = false;
 
+    std::shared_ptr<SRmGUI::Overlay> Inventory = nullptr;
+
+    std::unique_ptr<Sunset::Texture> InventoryTexture = nullptr;
+
+#pragma region LineTrace
     void LineTrace(RaycastHit& hit, const glm::vec3& start, const glm::vec3& forward, float distance)
     {
         hit.Clear();
@@ -136,6 +141,8 @@ namespace
             }
         }
     }
+#pragma endregion
+
 }
 
 #pragma region NoiseConfig
@@ -464,6 +471,21 @@ GameLayer::GameLayer()
     box->SetSize({728, 88});
     panel->AddChild(box);
 
+    InventoryTexture = std::make_unique<Sunset::Texture>();
+    InventoryTexture->LoadImage(RESOURCES "Textures/Sunset.png");
+
+    auto inv = SRmGUI::SNew<SRmGUI::Overlay>()
+        .Position({WinSize.x/2 - 500, WinSize.y/2 - 500})
+        .Size({500, 500})
+        .Child(
+            SRmGUI::SNew<SRmGUI::Image>()
+            .Image(InventoryTexture->GetId())
+        );
+
+    Inventory = inv.ToShared();
+
+    panel->AddChild(inv.ToShared());
+
     AddToViewport(panel);
 
     // ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
@@ -514,13 +536,17 @@ GameLayer::GameLayer()
     Sunset::InputRegister::RegisterAction("Inventory", [](const Sunset::Event::Action& action)->bool
     {
         if (action == Sunset::Event::Action::Press)
+        {
             ShowInventory = !ShowInventory;
+            Inventory->SetVisibility(ShowInventory);
+        }
         return true;
     });
 }
 
 GameLayer::~GameLayer()
 {
+    InventoryTexture.reset();
     HotBarTexture.reset();
     ChunkRegistry::Destroy();
     RegistryLoader::Destroy();
