@@ -31,49 +31,52 @@ MainMenu::MainMenu()
     m_Image->LoadImage(RESOURCES "Logo/Logo.png");
 
     const auto& setting = Sunset::Application::GetSetting();
-    std::shared_ptr<SRmGUI::Image> overlay = std::make_shared<SRmGUI::Image>();
-    overlay->SetPosition((setting.WindowSize/2) - (glm::ivec2{2172/3, 724/3} / 2) - glm::ivec2{0, 120});
-    overlay->SetSize({2172/3, 724/3});
-    overlay->SetImage(m_Image->GetId());
 
+    const glm::ivec2 LogoSize = {2172/3, 724/3};
 
-    auto box = std::make_shared<SRmGUI::VerticalBox>();
-    box->SetPosition((setting.WindowSize/2) - glm::ivec2{75, -85});
-    box->SetSize(glm::ivec2{150, 150});
+    auto panel = SRmGUI::SNew<SRmGUI::Panel>()
+        .Child(
+            SRmGUI::SNew<SRmGUI::Image>()
+            .Position((setting.WindowSize/2) - (LogoSize / 2) - glm::ivec2{0, 120})
+            .Size(LogoSize)
+            .Image(m_Image->GetId())
+            )
+        .Child(
+            SRmGUI::SNew<SRmGUI::VerticalBox>()
+            .Position((setting.WindowSize / 2) - glm::ivec2{75, -85})
+            .Size({150, 150})
+            .Child(
+                SRmGUI::SNew<SRmGUI::Button>()
+                .OnClicked([&]()
+                {
+                    Sunset::NetworkService::Init();
+                    Sunset::NetworkService::Get().Host(7777, 2);
 
-    std::shared_ptr<SRmGUI::Button> Play = std::make_shared<SRmGUI::Button>();
-    Play->SetCallback([&]()
-    {
-        Sunset::NetworkService::Init();
-        Sunset::NetworkService::Get().Host(7777, 2);
-        Sunset::Application::GetApplication().ClearLayer();
-        //Sunset::Application::GetApplication().LoadOverlay<GameOverlay>();
-        Sunset::Application::GetApplication().LoadLayer<GameLayer>();
-    });
-    auto PlayText = std::make_shared<SRmGUI::Text>();
-    PlayText->SetColor({0.1f, 0.1, 0.1, 1.f});
-    PlayText->SetText("Play");
-    Play->AddChild(PlayText);
-    // std::shared_ptr<SRmGUI::Button> Opt = std::make_shared<SRmGUI::Button>();
-    std::shared_ptr<SRmGUI::Button> Quit = std::make_shared<SRmGUI::Button>();
-    Quit->SetCallback([&]()
-    {
-        Sunset::Application::CloseApplication();
-    });
-    auto QuitText = std::make_shared<SRmGUI::Text>();
-    QuitText->SetColor({0.1f, 0.1, 0.1, 1.f});
-    QuitText->SetText("Quit");
-    Quit->AddChild(QuitText);
+                    auto& app = Sunset::Application::GetApplication();
+                    app.ClearLayer();
+                    app.LoadLayer<GameLayer>();
+                })
+                .Child(
+                    SRmGUI::SNew<SRmGUI::Text>()
+                    .Text("Play")
+                    .Color({0.1f, 0.1f, 0.1f, 1.f})
+                )
+            )
+            .Child(
+                SRmGUI::SNew<SRmGUI::Button>()
+                .OnClicked([&]()
+                {
+                    Sunset::Application::CloseApplication();
+                })
+                .Child(
+                    SRmGUI::SNew<SRmGUI::Text>()
+                    .Text("Quit")
+                    .Color({0.1f, 0.1f, 0.1f, 1.f})
+                )
+            )
+        );
 
-    box->AddChild(Play);
-    // box->AddChild(Opt);
-    box->AddChild(Quit);
-
-    std::shared_ptr<SRmGUI::Panel> panel = std::make_shared<SRmGUI::Panel>();
-    panel->AddChild(overlay);
-    panel->AddChild(box);
-
-    AddToViewport(panel);
+    AddToViewport(panel.ToShared());
 }
 
 MainMenu::~MainMenu()
