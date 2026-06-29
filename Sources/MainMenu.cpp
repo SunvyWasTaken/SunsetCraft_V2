@@ -11,8 +11,8 @@
 #include "Core/ApplicationSetting.h"
 #include "Network/NetworkService.h"
 #include "Render/Texture.h"
-#include "Sources/Image.h"
-#include "Sources/Overlay.h"
+#include "Image.h"
+#include "Overlay.h"
 
 namespace
 {
@@ -27,8 +27,8 @@ MainMenu::MainMenu()
 
     const auto& setting = Sunset::Application::GetSetting();
     std::shared_ptr<SRmGUI::Image> overlay = std::make_shared<SRmGUI::Image>();
-    overlay->SetPosition((setting.WindowSize/2) - (glm::ivec2{2172/2, 724/2} / 2));
-    overlay->SetSize({2172/2, 724/2});
+    overlay->SetPosition((setting.WindowSize/2) - (glm::ivec2{2172/3, 724/3} / 2) - glm::ivec2{0, 120});
+    overlay->SetSize({2172/3, 724/3});
     overlay->SetImage(m_Image->GetId());
     AddToViewport(overlay);
 }

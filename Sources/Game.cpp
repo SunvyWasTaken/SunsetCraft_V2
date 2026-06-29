@@ -10,7 +10,9 @@
 
 #include "Registry/BlockRegistry.h"
 #include "ChunkRegistry.h"
+#include "HorizontalBox.h"
 #include "Noise.h"
+#include "Overlay.h"
 #include "RaycastHit.h"
 #include "Registry/TextureRegistry.h"
 #include "Core/Application.h"
@@ -444,6 +446,19 @@ GameLayer::GameLayer()
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
     const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
+
+    std::shared_ptr<SRmGUI::HorizontalBox> box = std::make_shared<SRmGUI::HorizontalBox>();
+
+    for (int i = 0; i < 9; ++i)
+    {
+        std::shared_ptr<SRmGUI::Overlay> overlay = std::make_shared<SRmGUI::Overlay>();
+        box->AddChild(overlay);
+    }
+
+    box->SetPosition({WinSize.x/2, WinSize.y-80});
+    box->SetSize({74, 666});
+
+    AddToViewport(box);
 
     // m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
     //
