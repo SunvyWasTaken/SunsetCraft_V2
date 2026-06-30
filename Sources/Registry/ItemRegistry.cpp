@@ -47,6 +47,7 @@ namespace
                 item.blockId = BlockRegistry::Get(blockJson["block"]);
 
             itemDefs.emplace(++currentItemId, item);
+            itemsName.emplace(item.name, currentItemId);
         }
     }
 }

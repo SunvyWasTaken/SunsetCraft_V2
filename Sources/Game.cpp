@@ -10,7 +10,6 @@
 
 #include "Registry/BlockRegistry.h"
 #include "ChunkRegistry.h"
-#include "HorizontalBox.h"
 #include "Image.h"
 #include "Noise.h"
 #include "Overlay.h"
@@ -40,15 +39,9 @@ namespace
 
     std::array<ItemStack, ToolbarSize> m_ToolBar;
 
-    std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
+    // std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
     std::unique_ptr<Sunset::Texture> HotBarTexture = nullptr;
-
-    bool ShowInventory = false;
-
-    std::shared_ptr<SRmGUI::Overlay> Inventory = nullptr;
-
-    std::unique_ptr<Sunset::Texture> InventoryTexture = nullptr;
 
 #pragma region LineTrace
     void LineTrace(RaycastHit& hit, const glm::vec3& start, const glm::vec3& forward, float distance)
@@ -451,75 +444,26 @@ GameLayer::GameLayer()
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
     const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
 
-    m_ToolBar = {ItemStack{ItemRegistry::GetId("Dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
+    m_ToolBar = {ItemStack{ItemRegistry::GetId("dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
 
-    auto panel = std::make_shared<SRmGUI::Panel>();
-    auto box = std::make_shared<SRmGUI::Overlay>();
     HotBarTexture = std::make_unique<Sunset::Texture>();
     HotBarTexture->LoadImage(RESOURCES "Textures/gui/hotbar.png");
-    auto HotBarImage = std::make_shared<SRmGUI::Image>();
-    HotBarImage->SetImage(HotBarTexture->GetId());
-    box->AddChild(HotBarImage);
 
-    for (const auto& item : m_ToolBar)
-    {
-        auto overlay = std::make_shared<SRmGUI::Overlay>();
-        box->AddChild(overlay);
-    }
-
-    box->SetPosition({(WinSize.x/2)-364, WinSize.y-88});
-    box->SetSize({728, 88});
-    panel->AddChild(box);
-
-    InventoryTexture = std::make_unique<Sunset::Texture>();
-    InventoryTexture->LoadImage(RESOURCES "Textures/Sunset.png");
-
-    auto inv = SRmGUI::SNew<SRmGUI::Overlay>()
-        .Position({WinSize.x/2 - 500, WinSize.y/2 - 500})
-        .Size({500, 500})
+    std::shared_ptr<SRmGUI::Panel> panel = nullptr;
+    SRmGUI::SNewAssign(panel)
+    .Child(
+        SRmGUI::SNew<SRmGUI::Overlay>()
+        .Position({(WinSize.x/2)-364, WinSize.y-88})
+        .Size({728, 88})
         .Child(
             SRmGUI::SNew<SRmGUI::Image>()
-            .Image(InventoryTexture->GetId())
-        );
+            .Image(HotBarTexture->GetId())
+        )
+    );
 
-    Inventory = inv.ToShared();
-
-    panel->AddChild(inv.ToShared());
+    panel->AddChild(m_Inventory.GetDraw());
 
     AddToViewport(panel);
-
-    // ToolbarBox = std::make_unique<Sunset::HorizontalBox>();
-    // ToolbarBox->SetPosition({WinSize.x/2, WinSize.y-10});
-    // ToolbarBox->SetPadding({5, 0});
-    // ToolbarBox->Reserve(ToolbarSize);
-    // ToolbarBox->SetAnchor({0, -1});
-    // for (std::uint8_t i = 0; i < ToolbarSize; ++i)
-    // {
-    //     ItemStack block = m_ToolBar[i];
-    //     std::shared_ptr<Sunset::Slate> Square = std::make_shared<Sunset::Square>(glm::ivec2{0,0}, glm::ivec2{74, 74}, color, 15.f);
-    //     ToolbarBox->AddChild(Square);
-    //
-    //     if (block.id != Item::null)
-    //     {
-    //         std::shared_ptr<Sunset::Slate> img = std::make_shared<Sunset::SlateImage>();
-    //         std::static_pointer_cast<Sunset::SlateImage>(img)->LoadImage(RESOURCES "Textures/" + TextureBlockRegistry::GetTextureBlock(ItemRegistry::Get(block.id).blockId, 0));
-    //         std::static_pointer_cast<Sunset::Square>(Square)->AddChild(img);
-    //     }
-    // }
-    //
-    // int length = 10;
-    // int width = 4;
-    // int radius = 2;
-    // int spacecing = 2;
-    //
-    // crossTop = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 - spacecing}, glm::ivec2{width, length}, color, radius);
-    // crossTop->SetAnchor({0, -1});
-    // crossDown = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2, WinSize.y / 2 + spacecing}, glm::ivec2{width, length}, color, radius);
-    // crossDown->SetAnchor({0, 1});
-    // crossLeft = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 - spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
-    // crossLeft->SetAnchor({-1, 0});
-    // crossRight = std::make_unique<Sunset::Square>(glm::ivec2{WinSize.x / 2 + spacecing, WinSize.y / 2}, glm::ivec2{length, width}, color, radius);
-    // crossRight->SetAnchor({1, 0});
 
     Sunset::InputRegister::RegisterAction("Escape", [](const Sunset::Event::Action& action)->bool
     {
@@ -533,12 +477,11 @@ GameLayer::GameLayer()
         return false;
     });
 
-    Sunset::InputRegister::RegisterAction("Inventory", [](const Sunset::Event::Action& action)->bool
+    Sunset::InputRegister::RegisterAction("Inventory", [&](const Sunset::Event::Action& action)->bool
     {
         if (action == Sunset::Event::Action::Press)
         {
-            ShowInventory = !ShowInventory;
-            Inventory->SetVisibility(ShowInventory);
+            m_Inventory.ToggleShowInventory();
         }
         return true;
     });
@@ -546,7 +489,6 @@ GameLayer::GameLayer()
 
 GameLayer::~GameLayer()
 {
-    InventoryTexture.reset();
     HotBarTexture.reset();
     ChunkRegistry::Destroy();
     RegistryLoader::Destroy();
@@ -563,6 +505,9 @@ void GameLayer::OnUpdate(float dt)
     ChunkRegistry::UpdateWaterTime(waterTime);
 
     world->Update(dt);
+
+    m_Inventory.Update(dt);
+
     glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
     ChunkRegistry::UpdatePlayerPosition(loc);
 
@@ -580,11 +525,7 @@ void GameLayer::OnDraw()
     if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
     {
         ChunkRegistry::DrawChunk(cam->camera);
-        // Sunset::RenderCommande::Submit(*BlockHandDrawable);
     }
-
-    if (ShowInventory)
-        m_Inventory.Draw();
 }
 
 bool GameLayer::OnEvent(Sunset::Event::Type &event)

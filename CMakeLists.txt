@@ -15,6 +15,10 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/Sour
 
 add_executable(${PROJECT_NAME} ${MY_SOURCES})
 
+target_include_directories(${PROJECT_NAME} PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/Sources
+)
+
 if(PRODUCTION_BUILD)
     target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"./Sources/Shaders/\")
     target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES=\"./Resources/\")
