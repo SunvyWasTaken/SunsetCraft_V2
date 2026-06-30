@@ -37,7 +37,12 @@ namespace
         {
             ItemDef item;
             item.name = name;
-            // itemDef.type = blockJson["type"];
+            const std::string type = blockJson.value("type", "");
+            if (type == "block")
+                item.type = ItemType::Block;
+            else if (type == "tool")
+                item.type = ItemType::Tool;
+
             if (blockJson.contains("stack"))
                 item.maxStack = blockJson["stack"];
             else
@@ -76,4 +81,9 @@ ItemDef & ItemRegistry::Get(const Item::Id id)
 Item::Id ItemRegistry::GetId(const std::string &name)
 {
     return itemsName[name];
+}
+
+const ItemRegistry::ItemDefs& ItemRegistry::GetAll()
+{
+    return itemDefs;
 }

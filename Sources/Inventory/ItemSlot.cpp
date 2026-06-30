@@ -16,6 +16,7 @@ ItemSlot::ItemSlot()
         .Child(
             SRmGUI::SNew<SRmGUI::Image>()
             .Image(BlockIconRender::GetTexture())
+            .Uv(BlockIconRender::GetIconUv(items.id))
         )
         .Child(
             SRmGUI::SNew<SRmGUI::Text>()

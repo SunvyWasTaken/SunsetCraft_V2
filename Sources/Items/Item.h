@@ -3,7 +3,8 @@
 //
 
 #pragma once
-#include "../Registry/BlockRegistry.h"
+
+#include "Registry/BlockRegistry.h"
 
 namespace Item
 {

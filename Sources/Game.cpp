@@ -10,6 +10,7 @@
 
 #include "Registry/BlockRegistry.h"
 #include "ChunkRegistry.h"
+#include "HorizontalBox.h"
 #include "Image.h"
 #include "Noise.h"
 #include "Overlay.h"
@@ -19,6 +20,7 @@
 #include "Core/ApplicationSetting.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
+#include "Inventory/BlockIconRender.h"
 #include "Network/NetworkService.h"
 #include "Registry/ItemRegistry.h"
 #include "Registry/RegistryLoader.h"
@@ -458,6 +460,14 @@ GameLayer::GameLayer()
         .Child(
             SRmGUI::SNew<SRmGUI::Image>()
             .Image(HotBarTexture->GetId())
+        )
+        .Child(
+            SRmGUI::SNew<SRmGUI::HorizontalBox>()
+            .Child(
+                SRmGUI::SNew<SRmGUI::Image>()
+                .Image(BlockIconRender::GetTexture())
+                .Uv(BlockIconRender::GetIconUv(ItemRegistry::GetId("dirt")))
+            )
         )
     );
 
