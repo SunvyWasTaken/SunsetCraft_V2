@@ -9,5 +9,6 @@ struct BlockIconRender
 {
     static void Init();
     static void Destroy();
-    static std::uint32_t GetIconId(Item::Id id);
+    static std::uint32_t GetTexture();
+    static glm::vec4 GetIconUv(Item::Id id);
 };

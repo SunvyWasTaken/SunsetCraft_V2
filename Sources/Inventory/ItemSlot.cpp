@@ -15,7 +15,7 @@ ItemSlot::ItemSlot()
     SRmGUI::SNewAssign<SRmGUI::Overlay>(overlay)
         .Child(
             SRmGUI::SNew<SRmGUI::Image>()
-            .Image(BlockIconRender::GetIconId(items.id))
+            .Image(BlockIconRender::GetTexture())
         )
         .Child(
             SRmGUI::SNew<SRmGUI::Text>()
