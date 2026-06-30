@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string>
-
 using BlockId = uint8_t;
 
 struct BlockType

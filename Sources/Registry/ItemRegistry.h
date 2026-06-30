@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include "../Items/Item.h"
-
-#include <unordered_map>
+#include "Items/Item.h"
 
 struct ItemRegistry
 {

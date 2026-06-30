@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include <cstdint>
-#include <limits>
-#include <string>
-#include "../Registry/BlockRegistry.h"
+#include "Registry/BlockRegistry.h"
 
 namespace Item
 {

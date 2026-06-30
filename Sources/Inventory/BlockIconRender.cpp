@@ -4,16 +4,11 @@
 
 #include "BlockIconRender.h"
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-
 #include "Registry/ItemRegistry.h"
 #include "Registry/TextureRegistry.h"
 #include "Render/Image.h"
 #include "Log/Logger.h"
 
-#include <glm/vec2.hpp>
 #include "Render/Texture.h"
 
 namespace

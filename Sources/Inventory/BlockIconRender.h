@@ -3,9 +3,8 @@
 //
 
 #pragma once
-#include "Items/Item.h"
 
-#include <glm/vec4.hpp>
+#include "Items/Item.h"
 
 struct BlockIconRender
 {
