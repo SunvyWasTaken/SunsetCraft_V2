@@ -5,6 +5,8 @@
 #pragma once
 #include "Items/Item.h"
 
+#include <glm/vec4.hpp>
+
 struct BlockIconRender
 {
     static void Init();
