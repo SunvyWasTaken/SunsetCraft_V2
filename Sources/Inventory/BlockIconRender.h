@@ -7,5 +7,7 @@
 
 struct BlockIconRender
 {
+    static void Init();
+    static void Destroy();
     static std::uint32_t GetIconId(Item::Id id);
 };
