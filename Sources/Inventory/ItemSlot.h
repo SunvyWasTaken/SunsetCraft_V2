@@ -16,27 +16,27 @@ namespace SRmGUI
 class ItemSlot
 {
 public:
-    ItemSlot();
+    explicit ItemSlot(ItemStack* item = nullptr);
     ~ItemSlot();
 
     void Update(float dt);
 
     bool Empty() const
     {
-        return items.Empty();
+        return items;
     }
 
     Item::Id& Id()
     {
-        return items.id;
+        return items->id;
     }
 
     uint8_t& Count()
     {
-        return items.count;
+        return items->count;
     }
 
-    ItemStack& operator()()
+    ItemStack* operator()()
     {
         return items;
     }
@@ -44,7 +44,7 @@ public:
     std::shared_ptr<SRmGUI::Overlay> GetDraw();
 
 private:
-    ItemStack items;
+    ItemStack* items;
     std::shared_ptr<SRmGUI::Overlay> overlay;
     std::shared_ptr<SRmGUI::Image> m_Image;
     std::shared_ptr<SRmGUI::Text> m_Text;

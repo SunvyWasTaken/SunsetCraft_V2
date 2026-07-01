@@ -43,6 +43,7 @@ MainMenu::MainMenu()
             .Size({150, 150})
             .Child(
                 SRmGUI::SNew<SRmGUI::Button>()
+                .Padding({5.f, 5.f, 5.f, 5.f})
                 .OnClicked([&]()
                 {
                     Sunset::NetworkService::Init();
@@ -61,6 +62,7 @@ MainMenu::MainMenu()
             )
             .Child(
                 SRmGUI::SNew<SRmGUI::Button>()
+                .Padding({5.f, 5.f, 5.f, 5.f})
                 .OnClicked([&]()
                 {
                     Sunset::Application::CloseApplication();

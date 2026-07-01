@@ -430,6 +430,7 @@ GameLayer::GameLayer()
     : Layer()
 {
     world = std::make_unique<Sunset::World>();
+    Sunset::RenderCommande::ShowCursor(false);
 
     RegistryLoader::Init();
 
@@ -464,7 +465,7 @@ GameLayer::GameLayer()
         .Image(crosshairTex->GetId());
 
     panel->AddChild(cross);
-    panel->AddChild(m_Inventory.m_Overlay);
+    panel->AddChild(m_Inventory.m_Inventory);
     panel->AddChild(m_Inventory.m_Toolbar);
 
     AddToViewport(panel);
@@ -485,7 +486,7 @@ GameLayer::GameLayer()
     {
         if (action == Sunset::Event::Action::Press)
         {
-            m_Inventory.ToggleShowInventory();
+            // m_Inventory.ToggleShowInventory();
         }
         return true;
     });

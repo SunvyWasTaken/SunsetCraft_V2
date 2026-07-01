@@ -32,7 +32,7 @@ public:
     ItemStack& getSlot(size_t index);
 
 public:
-    std::shared_ptr<SRmGUI::Overlay> m_Overlay;
+    std::shared_ptr<SRmGUI::Overlay> m_Inventory;
     std::shared_ptr<SRmGUI::Overlay> m_Toolbar;
     std::shared_ptr<SRmGUI::Image> m_Indicator;
 private:
@@ -40,5 +40,7 @@ private:
     std::unique_ptr<Sunset::Texture> InventoryTexture;
     std::unique_ptr<Sunset::Texture> HotBarTexture;
     std::unique_ptr<Sunset::Texture> IndicatorTexture;
-    std::array<ItemSlot, SlotCount> m_Slots;
+    std::vector<ItemSlot> invSlots;
+    std::vector<ItemSlot> crossbarSlots;
+    std::array<ItemStack, SlotCount> m_Slots;
 };
