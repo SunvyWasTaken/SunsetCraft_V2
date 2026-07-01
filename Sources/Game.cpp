@@ -486,7 +486,7 @@ GameLayer::GameLayer()
     {
         if (action == Sunset::Event::Action::Press)
         {
-            // m_Inventory.ToggleShowInventory();
+            m_Inventory.ToggleShowInventory();
         }
         return true;
     });

@@ -19,6 +19,11 @@ ItemSlot::ItemSlot(ItemStack* item)
             SRmGUI::SNewAssign<SRmGUI::Image>(m_Image)
             .Image(BlockIconRender::GetTexture())
             .Uv(BlockIconRender::GetIconUv(items ? items->id : 0))
+            .OnDragDetect([](SRmGUI::DragDropPayload& payload)->bool
+            {
+                LOG("SunsetCraft", info, "On Drag detected!!!");
+                return true;
+            })
         )
         .Child(
             SRmGUI::SNewAssign<SRmGUI::Text>(m_Text)
