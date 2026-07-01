@@ -10,17 +10,14 @@
 
 #include "Registry/BlockRegistry.h"
 #include "ChunkRegistry.h"
-#include "HorizontalBox.h"
 #include "Image.h"
 #include "Noise.h"
 #include "Overlay.h"
 #include "RaycastHit.h"
 #include "Registry/TextureRegistry.h"
 #include "Core/Application.h"
-#include "Core/ApplicationSetting.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
-#include "Inventory/BlockIconRender.h"
 #include "Network/NetworkService.h"
 #include "Registry/ItemRegistry.h"
 #include "Registry/RegistryLoader.h"
@@ -34,16 +31,10 @@ namespace
 
     Sunset::Entity player;
 
-    constexpr size_t ToolbarSize = 9;
-
     int currentSelectItem = 0;
     int prevSelectItem = 1;
 
-    std::array<ItemStack, ToolbarSize> m_ToolBar;
-
     // std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
-
-    std::unique_ptr<Sunset::Texture> HotBarTexture = nullptr;
 
 #pragma region LineTrace
     void LineTrace(RaycastHit& hit, const glm::vec3& start, const glm::vec3& forward, float distance)
@@ -444,34 +435,19 @@ GameLayer::GameLayer()
     player = world->GetController(0).GetEntity();
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
-    const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
 
-    m_ToolBar = {ItemStack{ItemRegistry::GetId("dirt"), 64}, {}, {}, {}, {}, {}, {}, {}, {}};
-
-    HotBarTexture = std::make_unique<Sunset::Texture>();
-    HotBarTexture->LoadImage(RESOURCES "Textures/gui/hotbar.png");
+    std::uint16_t count = 64;
+    std::uint16_t count1 = 64;
+    std::uint16_t count2 = 64;
+    m_Inventory.Add(ItemRegistry::GetId("grass block"), count);
+    m_Inventory.Add(ItemRegistry::GetId("dirt"), count1);
+    m_Inventory.Add(ItemRegistry::GetId("stone"), count2);
 
     std::shared_ptr<SRmGUI::Panel> panel = nullptr;
-    SRmGUI::SNewAssign(panel)
-    .Child(
-        SRmGUI::SNew<SRmGUI::Overlay>()
-        .Position({(WinSize.x/2)-364, WinSize.y-88})
-        .Size({728, 88})
-        .Child(
-            SRmGUI::SNew<SRmGUI::Image>()
-            .Image(HotBarTexture->GetId())
-        )
-        .Child(
-            SRmGUI::SNew<SRmGUI::HorizontalBox>()
-            .Child(
-                SRmGUI::SNew<SRmGUI::Image>()
-                .Image(BlockIconRender::GetTexture())
-                .Uv(BlockIconRender::GetIconUv(ItemRegistry::GetId("dirt")))
-            )
-        )
-    );
+    SRmGUI::SNewAssign(panel);
 
-    panel->AddChild(m_Inventory.GetDraw());
+    panel->AddChild(m_Inventory.m_Overlay);
+    panel->AddChild(m_Inventory.m_Toolbar);
 
     AddToViewport(panel);
 
@@ -499,7 +475,6 @@ GameLayer::GameLayer()
 
 GameLayer::~GameLayer()
 {
-    HotBarTexture.reset();
     ChunkRegistry::Destroy();
     RegistryLoader::Destroy();
 }
@@ -570,11 +545,14 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
 
                 if (mouseEvent->button == 1)
                 {
-                    ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_ToolBar[currentSelectItem].id).blockId);
-                    m_ToolBar[currentSelectItem].count--;
-                    if (m_ToolBar[currentSelectItem].count <= 0)
+                    if (!m_Inventory.getSlot(currentSelectItem).Empty())
                     {
-                         m_ToolBar[currentSelectItem] = {};
+                        ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_Inventory.getSlot(currentSelectItem).id).blockId);
+                        m_Inventory.getSlot(currentSelectItem).count--;
+                        if (m_Inventory.getSlot(currentSelectItem).count <= 0)
+                        {
+                            m_Inventory.getSlot(currentSelectItem) = {Item::null, 0};
+                        }
                     }
                 }
                 else if (mouseEvent->button == 0)

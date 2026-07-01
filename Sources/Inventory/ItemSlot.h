@@ -8,6 +8,8 @@
 
 namespace SRmGUI
 {
+    class Text;
+    class Image;
     class Overlay;
 }
 
@@ -16,6 +18,8 @@ class ItemSlot
 public:
     ItemSlot();
     ~ItemSlot();
+
+    void Update(float dt);
 
     bool Empty() const
     {
@@ -36,7 +40,12 @@ public:
     {
         return items;
     }
+
+    std::shared_ptr<SRmGUI::Overlay> GetDraw();
+
 private:
     ItemStack items;
     std::shared_ptr<SRmGUI::Overlay> overlay;
+    std::shared_ptr<SRmGUI::Image> m_Image;
+    std::shared_ptr<SRmGUI::Text> m_Text;
 };

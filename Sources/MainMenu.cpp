@@ -4,17 +4,13 @@
 
 #include "MainMenu.h"
 
-#include <imgui.h>
-
 #include "Button.h"
 #include "Game.h"
-#include "HorizontalBox.h"
 #include "Core/Application.h"
 #include "Core/ApplicationSetting.h"
 #include "Network/NetworkService.h"
 #include "Render/Texture.h"
 #include "Image.h"
-#include "Overlay.h"
 #include "Panel.h"
 #include "Text.h"
 #include "VerticalBox.h"
@@ -60,6 +56,7 @@ MainMenu::MainMenu()
                     SRmGUI::SNew<SRmGUI::Text>()
                     .Text("Play")
                     .Color({0.1f, 0.1f, 0.1f, 1.f})
+                    .Padding({0.f, 0.f, 0.f, 40.f})
                 )
             )
             .Child(
@@ -72,6 +69,7 @@ MainMenu::MainMenu()
                     SRmGUI::SNew<SRmGUI::Text>()
                     .Text("Quit")
                     .Color({0.1f, 0.1f, 0.1f, 1.f})
+                    .Padding({0.f, 0.f, 0.f, 40.f})
                 )
             )
         );

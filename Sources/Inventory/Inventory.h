@@ -29,10 +29,12 @@ public:
 
     ItemStack& getSlot(size_t index);
 
-    std::shared_ptr<SRmGUI::Overlay> GetDraw();
+public:
+    std::shared_ptr<SRmGUI::Overlay> m_Overlay;
+    std::shared_ptr<SRmGUI::Overlay> m_Toolbar;
 private:
     bool ShowInventory;
     std::unique_ptr<Sunset::Texture> InventoryTexture;
-    std::shared_ptr<SRmGUI::Overlay> m_Overlay;
+    std::unique_ptr<Sunset::Texture> HotBarTexture;
     std::array<ItemSlot, SlotCount> m_Slots;
 };
