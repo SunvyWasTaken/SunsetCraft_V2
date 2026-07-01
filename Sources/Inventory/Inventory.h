@@ -14,7 +14,6 @@ namespace Sunset
 class Inventory
 {
 public:
-    static constexpr int SlotCount = 36;
 
     Inventory();
     virtual ~Inventory();

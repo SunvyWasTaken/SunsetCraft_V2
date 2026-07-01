@@ -6,6 +6,8 @@
 
 #include "Items/Item.h"
 
+static constexpr int SlotCount = 36;
+
 namespace SRmGUI
 {
     class Text;
@@ -16,35 +18,16 @@ namespace SRmGUI
 class ItemSlot
 {
 public:
-    explicit ItemSlot(ItemStack* item = nullptr);
+    explicit ItemSlot(std::array<ItemStack, SlotCount>* slot, size_t index);
     ~ItemSlot();
 
     void Update(float dt);
 
-    bool Empty() const
-    {
-        return items;
-    }
-
-    Item::Id& Id()
-    {
-        return items->id;
-    }
-
-    uint8_t& Count()
-    {
-        return items->count;
-    }
-
-    ItemStack* operator()()
-    {
-        return items;
-    }
-
     std::shared_ptr<SRmGUI::Overlay> GetDraw();
 
 private:
-    ItemStack* items;
+    size_t itemSlot;
+    std::array<ItemStack, SlotCount>* m_Slots;
     std::shared_ptr<SRmGUI::Overlay> overlay;
     std::shared_ptr<SRmGUI::Image> m_Image;
     std::shared_ptr<SRmGUI::Text> m_Text;

@@ -22,7 +22,6 @@ Inventory::Inventory()
     , InventoryTexture(nullptr)
     , HotBarTexture(nullptr)
     , IndicatorTexture(nullptr)
-    , m_Slots()
 {
     glm::ivec2 winSize = Sunset::Application::GetSetting().WindowSize;
 
@@ -41,25 +40,25 @@ Inventory::Inventory()
         .Child(
             SRmGUI::SNew<SRmGUI::Image>()
                 .Image(InventoryTexture->GetId())
-        ).Child(
-            SRmGUI::SNewAssign<SRmGUI::GridPanel>(inv)
-                .Column(9)
-                .Row(3)
+        // ).Child(
+        //     SRmGUI::SNewAssign<SRmGUI::GridPanel>(inv)
+        //         .Column(9)
+        //         .Row(3)
         ).Child(
             SRmGUI::SNewAssign(barInv)
                 .Offset({85, 417})
                 .Size({inventorySize.x - 175, 45})
         );
 
-    for (int i = 9; i < SlotCount; ++i)
+    // for (size_t i = 9; i < SlotCount; ++i)
+    // {
+    //     ItemSlot item{&m_Slots, i};
+    //     invSlots.emplace_back(item);
+    //     inv->AddChild(item.GetDraw());
+    // }
+    for (size_t i = 0; i < 9; ++i)
     {
-        ItemSlot item{&m_Slots[i]};
-        invSlots.emplace_back(item);
-        inv->AddChild(item.GetDraw());
-    }
-    for (int i = 0; i < 9; ++i)
-    {
-        ItemSlot item{&m_Slots[i]};
+        ItemSlot item{&m_Slots, i};
         crossbarSlots.emplace_back(item);
         barInv->AddChild(item.GetDraw());
     }
@@ -89,9 +88,9 @@ Inventory::Inventory()
             .Padding({-5.f, -5.f, -5.f, -5.f})
         );
 
-    for (int i = 0; i < 9; ++i)
+    for (size_t i = 0; i < 9; ++i)
     {
-        ItemSlot item{&m_Slots[i]};
+        ItemSlot item{&m_Slots, i};
         crossbarSlots.emplace_back(item);
         HotBar->AddChild(item.GetDraw());
     }
