@@ -16,6 +16,7 @@
 #include "RaycastHit.h"
 #include "Registry/TextureRegistry.h"
 #include "Core/Application.h"
+#include "Core/ApplicationSetting.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Network/NetworkService.h"
@@ -35,6 +36,8 @@ namespace
     int prevSelectItem = 1;
 
     // std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
+
+    std::unique_ptr<Sunset::Texture> crosshairTex = nullptr;
 
 #pragma region LineTrace
     void LineTrace(RaycastHit& hit, const glm::vec3& start, const glm::vec3& forward, float distance)
@@ -446,6 +449,21 @@ GameLayer::GameLayer()
     std::shared_ptr<SRmGUI::Panel> panel = nullptr;
     SRmGUI::SNewAssign(panel);
 
+    glm::ivec2 winSize = Sunset::Application::GetSetting().WindowSize;
+
+    constexpr glm::ivec2 crossSize{25, 25};
+    constexpr glm::ivec2 crossHalfSize = crossSize / 2;
+
+    crosshairTex = std::make_unique<Sunset::Texture>();
+    crosshairTex->LoadImage(RESOURCES "Textures/gui/crosshair.png");
+
+    std::shared_ptr<SRmGUI::Image> cross = nullptr;
+    SRmGUI::SNewAssign(cross)
+        .Position(glm::vec2{winSize.x / 2 - crossHalfSize.x, winSize.y / 2 - crossHalfSize.y})
+        .Size(crossSize)
+        .Image(crosshairTex->GetId());
+
+    panel->AddChild(cross);
     panel->AddChild(m_Inventory.m_Overlay);
     panel->AddChild(m_Inventory.m_Toolbar);
 
@@ -475,6 +493,7 @@ GameLayer::GameLayer()
 
 GameLayer::~GameLayer()
 {
+    crosshairTex.reset();
     ChunkRegistry::Destroy();
     RegistryLoader::Destroy();
 }
@@ -526,6 +545,8 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
                 currentSelectItem = 8;
             else if (currentSelectItem >= 9)
                 currentSelectItem = 0;
+
+            m_Inventory.SetSelectedSlot(currentSelectItem);
             return true;
         }
 
