@@ -15,14 +15,13 @@ ItemSlot::ItemSlot(std::array<ItemStack, SlotCount>* slot, const size_t index)
     , overlay(nullptr)
 {
     SRmGUI::SNewAssign<SRmGUI::Overlay>(overlay)
-        .Padding({5.f, 11.f, 9.f, 5.f})
+        .Padding({5.f, 5.f, 5.f, 5.f})
         .Child(
             SRmGUI::SNewAssign<SRmGUI::Image>(m_Image)
             .Image(BlockIconRender::GetTexture())
             .Uv(BlockIconRender::GetIconUv((*m_Slots)[itemSlot].id))
             .OnDragDetect([this](SRmGUI::DragDropPayload& payload)->bool
             {
-                LOG("SunsetCraft", info, "On Drag detected!!!");
                 payload.Type = "ItemSlot";
                 payload.Data = this;
                 return true;
@@ -33,12 +32,12 @@ ItemSlot::ItemSlot(std::array<ItemStack, SlotCount>* slot, const size_t index)
             })
             .OnDrop([this](const SRmGUI::DragDropPayload& payload)->bool
             {
-                LOG("SunsetCraft", info, "On Drop detected!!!");
                 if (auto* source = static_cast<ItemSlot*>(payload.Data))
                 {
-                    const size_t trans = source->itemSlot;
-                    source->itemSlot = itemSlot;
-                    itemSlot = trans;
+                    if (source->m_Slots != m_Slots || source->itemSlot >= SlotCount || itemSlot >= SlotCount)
+                        return false;
+
+                    std::swap((*m_Slots)[source->itemSlot], (*m_Slots)[itemSlot]);
                 }
                 return true;
             })

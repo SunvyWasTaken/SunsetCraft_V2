@@ -39,7 +39,7 @@ private:
     std::unique_ptr<Sunset::Texture> InventoryTexture;
     std::unique_ptr<Sunset::Texture> HotBarTexture;
     std::unique_ptr<Sunset::Texture> IndicatorTexture;
-    std::vector<ItemSlot> invSlots;
-    std::vector<ItemSlot> crossbarSlots;
+    std::vector<std::unique_ptr<ItemSlot>> invSlots;
+    std::vector<std::unique_ptr<ItemSlot>> crossbarSlots;
     std::array<ItemStack, SlotCount> m_Slots;
 };

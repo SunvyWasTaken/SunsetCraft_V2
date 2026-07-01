@@ -12,6 +12,7 @@
 #include "Core/ApplicationSetting.h"
 #include "Overlay.h"
 #include "Registry/ItemRegistry.h"
+#include "Render/RenderCommande.h"
 #include "Render/Texture.h"
 
 Inventory::Inventory()
@@ -31,36 +32,36 @@ Inventory::Inventory()
     constexpr glm::ivec2 inventorySize{650, 488};
     constexpr glm::ivec2 halfInvSize = inventorySize / 2;
 
-    std::shared_ptr<SRmGUI::GridPanel> inv = nullptr;
     std::shared_ptr<SRmGUI::HorizontalBox> barInv = nullptr;
+    std::shared_ptr<SRmGUI::GridPanel> inv = nullptr;
     SRmGUI::SNewAssign<SRmGUI::Overlay>(m_Inventory)
-        .Position({winSize.x/2 - halfInvSize.x, winSize.y/2 - halfInvSize.y})
-        .Size(inventorySize)
-        .Visibility(ShowInventory)
-        .Child(
-            SRmGUI::SNew<SRmGUI::Image>()
-                .Image(InventoryTexture->GetId())
-        // ).Child(
-        //     SRmGUI::SNewAssign<SRmGUI::GridPanel>(inv)
-        //         .Column(9)
-        //         .Row(3)
-        ).Child(
-            SRmGUI::SNewAssign(barInv)
-                .Offset({85, 417})
-                .Size({inventorySize.x - 175, 45})
-        );
+    .Position({winSize.x/2 - halfInvSize.x, winSize.y/2 - halfInvSize.y})
+    .Size(inventorySize)
+    .Visibility(ShowInventory)
+    .Child(
+        SRmGUI::SNew<SRmGUI::Image>()
+        .Image(InventoryTexture->GetId()))
+    .Child(
+        SRmGUI::SNewAssign<SRmGUI::GridPanel>(inv)
+        .Padding({261.f, 83.f, 83.f, 128.f})
+        .Column(9)
+        .Row(3))
+    .Child(
+        SRmGUI::SNewAssign(barInv)
+        .Padding({412, -89, -415, 82})
+        .Size({inventorySize.x - 175, 45}));
 
-    // for (size_t i = 9; i < SlotCount; ++i)
-    // {
-    //     ItemSlot item{&m_Slots, i};
-    //     invSlots.emplace_back(item);
-    //     inv->AddChild(item.GetDraw());
-    // }
+    invSlots.reserve(SlotCount - 9);
+    for (size_t i = 9; i < SlotCount; ++i)
+    {
+        invSlots.emplace_back(std::make_unique<ItemSlot>(&m_Slots, i));
+        inv->AddChild(invSlots.back()->GetDraw());
+    }
+    crossbarSlots.reserve(9);
     for (size_t i = 0; i < 9; ++i)
     {
-        ItemSlot item{&m_Slots, i};
-        crossbarSlots.emplace_back(item);
-        barInv->AddChild(item.GetDraw());
+        crossbarSlots.emplace_back(std::make_unique<ItemSlot>(&m_Slots, i));
+        barInv->AddChild(crossbarSlots.back()->GetDraw());
     }
 
     HotBarTexture = std::make_unique<Sunset::Texture>();
@@ -88,11 +89,11 @@ Inventory::Inventory()
             .Padding({-5.f, -5.f, -5.f, -5.f})
         );
 
+    crossbarSlots.reserve(9);
     for (size_t i = 0; i < 9; ++i)
     {
-        ItemSlot item{&m_Slots, i};
-        crossbarSlots.emplace_back(item);
-        HotBar->AddChild(item.GetDraw());
+        crossbarSlots.emplace_back(std::make_unique<ItemSlot>(&m_Slots, i));
+        HotBar->AddChild(crossbarSlots.back()->GetDraw());
     }
 }
 
@@ -104,10 +105,10 @@ void Inventory::Update(float dt)
 {
     if (ShowInventory)
         for (auto& slot : invSlots)
-            slot.Update(dt);
+            slot->Update(dt);
 
     for (auto& slot : crossbarSlots)
-        slot.Update(dt);
+        slot->Update(dt);
 }
 
 bool Inventory::Add(Item::Id id, uint16_t& amount)
@@ -155,6 +156,7 @@ void Inventory::SetShowInventory(bool show)
 void Inventory::ToggleShowInventory()
 {
     ShowInventory = !ShowInventory;
+    Sunset::RenderCommande::ShowCursor(ShowInventory);
     SetShowInventory(ShowInventory);
 }
 

@@ -470,18 +470,6 @@ GameLayer::GameLayer()
 
     AddToViewport(panel);
 
-    Sunset::InputRegister::RegisterAction("Escape", [](const Sunset::Event::Action& action)->bool
-    {
-        if (action == Sunset::Event::Action::Press)
-        {
-            static bool ShowCursor = false;
-            ShowCursor = !ShowCursor;
-            Sunset::RenderCommande::ShowCursor(ShowCursor);
-            return true;
-        }
-        return false;
-    });
-
     Sunset::InputRegister::RegisterAction("Inventory", [&](const Sunset::Event::Action& action)->bool
     {
         if (action == Sunset::Event::Action::Press)
