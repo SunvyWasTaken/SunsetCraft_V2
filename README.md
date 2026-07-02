@@ -1,6 +1,6 @@
 # SunsetCraft V2
 
-> A C++/OpenGL Minecraft-inspired prototype built to experiment. Because I need to continue practicing since I'm not a full developer.
+> Prototype voxel C++/OpenGL inspiré de Minecraft, développé pour expérimenter la génération de monde, le rendu et l'intégration progressive avec SunsetEngine.
 
 ![Status](https://img.shields.io/badge/status-prototype-orange)
 ![Language](https://img.shields.io/badge/C%2B%2B-20-blue)
@@ -17,42 +17,55 @@
 
 ---
 
-## Resume
+## Présentation
 
-SunsetCraft V2 is a rewrite of [SunsetCraft](https://github.com/SunvyWasTaken/SunsetCraft). The goal is to keep the first version untouched while starting again from a cleaner base to test:
+SunsetCraft V2 est une réécriture de [SunsetCraft](https://github.com/SunvyWasTaken/SunsetCraft). Le but est de repartir d'une base plus propre sans modifier la première version, puis de tester :
 
-- more expressive world generation, inspired by Henrik Kniberg's [Reinventing Minecraft world generation](https://youtu.be/ob3VwY4JyzE) talk;
-- an in-game ImGui noise-parameter editor;
-- a local networking layer based on ENet;
-- progressive integration with [`SunsetEngine`](https://github.com/SunvyWasTaken/SunsetEngine), the engine used by the project.
-
----
-
-## Current features
-
-- Main menu with `Start Server`, `Join Server`, and `Quit` actions.
-- Local session hosting on port `7777`.
-- Local connection to an existing session.
-- Chunk-grid generation around the origin.
-- Height generation with multiple `FastNoiseSIMD` noise layers.
-- ImGui editor for:
-    - changing the seed;
-    - randomizing the seed;
-    - adding and selecting noise layers;
-    - choosing the noise type;
-    - editing octaves, frequency, and amplitude;
-    - editing a noise-value remapping curve;
-    - saving and loading noise presets as JSON.
-- Legacy network test layer with a small chat UI kept in the codebase.
+- une génération de monde plus expressive, inspirée de la conférence de Henrik Kniberg [Reinventing Minecraft world generation](https://youtu.be/ob3VwY4JyzE) ;
+- un éditeur ImGui pour régler les paramètres de génération directement en jeu ;
+- un rendu voxel simple avec ciel, eau animée, inventaire et interaction bloc par bloc ;
+- une base réseau locale avec ENet, encore expérimentale ;
+- l'intégration progressive avec [`SunsetEngine`](https://github.com/SunvyWasTaken/SunsetEngine), utilisé comme sous-module Git.
 
 ---
 
-## Project status
+## Fonctionnalités actuelles
 
-- A world can be launched from the menu.
-- Server and client sessions can be started locally, but full world replication is not implemented yet.
-- Generation is currently centered on a few test chunks to make rendering and noise-parameter iteration easier.
-- The default noise configuration file is `NoiseData.json` when it is available in the save path configured by the engine.
+- Menu principal avec les actions `Play` et `Quit`.
+- Lancement d'une partie locale depuis le menu, avec hébergement ENet sur le port `7777`.
+- Exécutable serveur headless `SunsetCraftV2_Server` disponible via CMake.
+- Génération de chunks autour de la position du joueur, avec chargement/déchargement selon la distance de rendu.
+- Génération asynchrone des chunks sur plusieurs threads.
+- Génération de terrain à partir de plusieurs couches `FastNoiseSIMD`.
+- Passes de génération pour le relief, la surface, l'eau, les minerais et les caves.
+- Blocs et items chargés depuis les fichiers JSON du dossier `Save`.
+- Rendu OpenGL des chunks, du ciel, de l'eau transparente/animée et de l'interface.
+- Inventaire et barre rapide, avec sélection à la molette.
+- Placement et destruction de blocs avec le raycast caméra.
+- Éditeur ImGui `Parameter` pour :
+  - changer ou randomiser la seed ;
+  - modifier la distance de rendu ;
+  - ajouter et sélectionner des couches de bruit ;
+  - choisir le type de bruit ;
+  - régler les octaves, la fréquence et l'amplitude ;
+  - éditer une courbe de remapping des valeurs de bruit ;
+  - sauvegarder et charger des presets de bruit JSON.
+- Ancienne couche de test réseau avec chat ImGui conservée dans le code, mais non branchée sur le flux de jeu principal.
+
+---
+
+## État du projet
+
+Le projet est un prototype en développement actif. Une partie peut être lancée depuis le menu et le monde se génère autour du joueur, mais plusieurs systèmes restent incomplets.
+
+À savoir :
+
+- le bouton `Play` démarre une session locale et charge directement le jeu ;
+- il n'y a plus de boutons `Start Server` / `Join Server` dans le menu principal ;
+- la réplication complète du monde en multijoueur n'est pas encore implémentée ;
+- l'exécutable headless héberge une session locale, mais le gameplay reste orienté prototype ;
+- les arbres sont présents dans le code de génération, mais leur placement est actuellement désactivé ;
+- le fichier de bruit chargé par défaut est `NoiseData.json` dans le chemin de sauvegarde configuré par SunsetEngine.
 
 ---
 
@@ -63,93 +76,94 @@ SunsetCraft V2 is a rewrite of [SunsetCraft](https://github.com/SunvyWasTaken/Su
 - OpenGL
 - GLFW / GLAD
 - GLM
-- ImGui with experimental docking
+- ImGui avec docking expérimental
 - ENet
 - EnTT
 - nlohmann-json
 - spdlog
-- stb
-- vcpkg manifest mode
-- [`SunsetEngine`](https://github.com/SunvyWasTaken/SunsetEngine) as a Git submodule
+- assimp
+- stb, via SunsetEngine
+- vcpkg en mode manifest
+- [`SunsetEngine`](https://github.com/SunvyWasTaken/SunsetEngine) comme sous-module Git
 
 ---
 
-## Requirements
+## Prérequis
 
-Before building, install:
+Avant de compiler, installez :
 
-- a C++20-compatible compiler;
-- CMake `3.28` or newer;
-- Git;
-- vcpkg;
-- the graphics dependencies required for OpenGL on your system;
-- Visual Studio, CLion, or another CMake IDE if you prefer working with a graphical environment.
+- un compilateur compatible C++20 ;
+- CMake `3.28` ou plus récent ;
+- Git ;
+- vcpkg ;
+- les dépendances graphiques nécessaires à OpenGL sur votre système ;
+- Visual Studio, CLion ou un autre IDE CMake si vous préférez travailler avec une interface graphique.
 
-> On Windows, Visual Studio 2022 with the C++ workload is recommended. CLion also works well with CMake and vcpkg.
+> Sur Windows, Visual Studio 2022 avec la charge de travail C++ est recommandé. CLion fonctionne aussi correctement avec CMake et vcpkg.
 
 ---
 
 ## Installation
 
-### 1. Clone the project with its submodules
+### 1. Cloner le projet avec ses sous-modules
 
 ```bash
 git clone --recurse-submodules <repo-url> SunsetCraft_V2
 cd SunsetCraft_V2
 ```
 
-If the project was already cloned without the [`SunsetEngine`](https://github.com/SunvyWasTaken/SunsetEngine) submodule, run:
+Si le projet a été cloné sans le sous-module [`SunsetEngine`](https://github.com/SunvyWasTaken/SunsetEngine), lancez :
 
 ```bash
 git submodule update --init --recursive
 ```
 
-### 2. Install or prepare vcpkg
+### 2. Installer ou préparer vcpkg
 
-You can follow Microsoft's official documentation:
+Suivez la documentation officielle Microsoft :
 [Get started with vcpkg](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started-vs?pivots=shell-cmd).
 
-Example local installation next to the project:
+Exemple d'installation locale à côté du projet :
 
 ```bash
 git clone https://github.com/microsoft/vcpkg.git
 ```
 
-Windows:
+Windows :
 
 ```bat
 vcpkg\bootstrap-vcpkg.bat
 ```
 
-Linux / macOS:
+Linux / macOS :
 
 ```bash
 ./vcpkg/bootstrap-vcpkg.sh
 ```
 
-### 3. Configure CMake
+### 3. Configurer CMake
 
-Replace the vcpkg toolchain path with the one matching your installation.
+Remplacez le chemin du toolchain vcpkg par celui qui correspond à votre installation.
 
-Windows:
+Windows :
 
 ```bat
 cmake -S . -B Build -DCMAKE_TOOLCHAIN_FILE=%CD%\vcpkg\scripts\buildsystems\vcpkg.cmake
 ```
 
-Linux / macOS:
+Linux / macOS :
 
 ```bash
 cmake -S . -B Build -DCMAKE_TOOLCHAIN_FILE=$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake
 ```
 
-### 4. Build
+### 4. Compiler
 
 ```bash
 cmake --build Build --config Debug
 ```
 
-For a Release build:
+Pour une version Release :
 
 ```bash
 cmake --build Build --config Release
@@ -157,19 +171,33 @@ cmake --build Build --config Release
 
 ---
 
-## Running the game
+## Lancer le jeu
 
-After building, run the `SunsetCraftV2` executable generated in the `Build` directory.
+Après compilation, lancez l'exécutable `SunsetCraftV2` généré dans le dossier `Build`.
 
-From the main menu:
+Depuis le menu principal :
 
-1. click `Start Server` to host a local session;
-2. start a second game instance;
-3. click `Join Server` to join the local session;
-4. use the `Parameter` window to create, edit, generate, save, or load generation settings.
+1. cliquez sur `Play` pour démarrer une session locale ;
+2. utilisez la fenêtre `Parameter` pour ajuster la seed, la distance de rendu et les paramètres de génération ;
+3. utilisez l'inventaire et la barre rapide pour sélectionner un bloc ;
+4. cassez un bloc avec le clic gauche et placez le bloc sélectionné avec le clic droit.
+
+Pour lancer le serveur headless généré par CMake, utilisez l'exécutable `SunsetCraftV2_Server`.
 
 ---
 
-## License
+## Données modifiables
 
-This repository includes a `LICENSE` file. Review it before distributing or reusing the game.
+Les fichiers du dossier `Save` servent de configuration de prototype :
+
+- `NoiseData.json` : preset de génération chargé par défaut ;
+- `BlockReg.json` : registre des blocs et textures associées ;
+- `Item.json` : registre des items ;
+- `Inputs.json` / `Input.json` : exemples de mapping d'entrées selon la configuration moteur ;
+- `imgui.ini` : état des fenêtres ImGui.
+
+---
+
+## Licence
+
+Ce dépôt inclut un fichier `LICENSE`. Consultez-le avant de distribuer ou réutiliser le jeu.
