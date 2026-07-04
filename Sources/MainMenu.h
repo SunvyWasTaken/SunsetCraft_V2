@@ -8,8 +8,8 @@
 class MainMenu : public Sunset::Layer
 {
 public:
-    MainMenu();
     ~MainMenu() override;
+    void Init() override;
     void OnUpdate(float dt) override;
     void OnDraw() override;
 };

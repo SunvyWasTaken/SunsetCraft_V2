@@ -21,7 +21,7 @@ public:
 class GameLayer : public Sunset::Layer
 {
 public:
-    GameLayer();
+    explicit GameLayer(const std::string& WorldName);
     ~GameLayer() override;
     void OnUpdate(float dt) override;
     void OnDraw() override;

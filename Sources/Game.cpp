@@ -24,6 +24,7 @@
 #include "Registry/RegistryLoader.h"
 #include "Render/RenderCommande.h"
 #include "Render/Texture.h"
+#include "SaveSystem/SaveSystem.h"
 
 namespace
 {
@@ -131,6 +132,11 @@ namespace
         }
     }
 #pragma endregion
+
+    struct WorldSave
+    {
+
+    };
 
 }
 
@@ -426,11 +432,16 @@ void GameOverlay::OnDraw()
 
 #pragma endregion // NoiseConfig
 
-GameLayer::GameLayer()
+GameLayer::GameLayer(const std::string& WorldName)
     : Layer()
 {
     world = std::make_unique<Sunset::World>();
     Sunset::RenderCommande::ShowCursor(false);
+
+    if (Sunset::SaveSystem::Load(SAVE_PATH + WorldName, seed))
+    {
+        LOG("SunsetCraft", error, "Wesh normalement il devait le trouvé. lol");
+    }
 
     RegistryLoader::Init();
 
