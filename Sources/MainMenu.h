@@ -12,4 +12,5 @@ public:
     void Init() override;
     void OnUpdate(float dt) override;
     void OnDraw() override;
+    bool OnEvent(Sunset::Event::Type &event) override;
 };

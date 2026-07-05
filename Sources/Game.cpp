@@ -150,6 +150,10 @@ GameLayer::GameLayer(WorldParam param)
     ChunkRegistry::Init(param.seed, m_Param.Name, 12);
     // BlockHandDrawable = std::make_unique<Sunset::Drawable>();
     player = world->GetController(0).GetEntity();
+    if (glm::vec3 playerStartPosition; Sunset::SaveSystem::Load(SAVE_PATH + param.Name + "/PlayerData.bin", playerStartPosition))
+    {
+        player.GetComponent<Sunset::TransformComponent>()->SetLocation(playerStartPosition);
+    }
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
 
@@ -196,6 +200,9 @@ GameLayer::GameLayer(WorldParam param)
 
 GameLayer::~GameLayer()
 {
+    glm::vec3 playerStartPosition = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
+    Sunset::SaveSystem::Save(SAVE_PATH + m_Param.Name + "/PlayerData.bin", playerStartPosition);
+
     crosshairTex.reset();
     ChunkRegistry::Destroy();
     RegistryLoader::Destroy();
