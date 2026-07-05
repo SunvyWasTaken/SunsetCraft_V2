@@ -120,6 +120,7 @@ void MainMenu::OnDraw()
         if (Sunset::SaveSystem::Save(SAVE_PATH "GameSaved.bin", saves))
         {
             LOG("SunsetCraft", info, "Save {} Success", std::string(worldName));
+            Sunset::SaveSystem::CreateFolder(SAVE_PATH + saves.back().Name);
         }
     }
     for (const auto& save : saves)
