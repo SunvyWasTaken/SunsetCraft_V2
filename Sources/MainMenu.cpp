@@ -127,14 +127,14 @@ void MainMenu::OnDraw()
         std::uniform_int_distribution<int> dist(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
         seed = dist(rng);
     }
-    char worldName[50];
+    static char worldName[50] = {};
     ImGui::InputText("World Name", worldName, 50);
     if (ImGui::Button("Create World"))
     {
         saves.emplace_back(worldName);
         if (Sunset::SaveSystem::Save(SAVE_PATH "GameSaved.bin", saves))
         {
-            LOG("SunsetCraft", info, "Save Success");
+            LOG("SunsetCraft", info, "Save {} Success", std::string(worldName));
             Sunset::SaveSystem::Save(SAVE_PATH + std::string(worldName), seed);
         }
     }

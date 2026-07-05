@@ -438,10 +438,12 @@ GameLayer::GameLayer(const std::string& WorldName)
     world = std::make_unique<Sunset::World>();
     Sunset::RenderCommande::ShowCursor(false);
 
-    if (Sunset::SaveSystem::Load(SAVE_PATH + WorldName, seed))
+    if (!Sunset::SaveSystem::Load(SAVE_PATH + WorldName, seed))
     {
-        LOG("SunsetCraft", error, "Wesh normalement il devait le trouvé. lol");
+        LOG("SunsetCraft", error, "Wesh normalement il devait trouvé {}. lol", WorldName);
     }
+
+    LOG("SunsetCraft", info, "Seed {}", seed);
 
     RegistryLoader::Init();
 
