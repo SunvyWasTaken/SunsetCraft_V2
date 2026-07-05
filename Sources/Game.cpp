@@ -142,6 +142,9 @@ GameLayer::GameLayer(WorldParam param)
     : Layer()
 {
     m_Param = param;
+
+    Sunset::SaveSystem::CreateFolder(SAVE_PATH + param.Name);
+
     world = std::make_unique<Sunset::World>();
     Sunset::RenderCommande::ShowCursor(false);
 
