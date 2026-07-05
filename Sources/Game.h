@@ -8,6 +8,8 @@
 #include "Sky.h"
 #include "Core/Layer.h"
 
+struct WorldParam;
+
 class GameOverlay : public Sunset::Layer
 {
 public:
@@ -21,7 +23,7 @@ public:
 class GameLayer : public Sunset::Layer
 {
 public:
-    explicit GameLayer(const std::string& WorldName);
+    explicit GameLayer(WorldParam param);
     ~GameLayer() override;
     void OnUpdate(float dt) override;
     void OnDraw() override;

@@ -18,13 +18,14 @@
 #include "SunsetCraftInstance.h"
 #include "Text.h"
 #include "VerticalBox.h"
+#include "WorldParam.h"
 
 namespace
 {
     std::ranlux24_base rng{std::random_device{}()};
     int seed = 0;
     std::unique_ptr<Sunset::Texture> m_Image = nullptr;
-    std::vector<std::string> saves;
+    std::vector<WorldParam> saves;
 }
 
 MainMenu::~MainMenu()
@@ -36,21 +37,7 @@ void MainMenu::Init()
 {
     Layer::Init();
 
-    if (Sunset::SaveSystem::Load(SAVE_PATH "GameSaved.bin", saves))
-    {
-        for (const auto& save : saves)
-        {
-            LOG("SunsetCraft", info, "Save {} found", save);
-        }
-    }
-    else
-    {
-        if (Sunset::SaveSystem::Save(SAVE_PATH "GameSaved.bin", saves))
-        {
-
-        }
-    }
-
+    Sunset::SaveSystem::Load(SAVE_PATH "GameSaved.bin", saves);
 
     m_Image = std::make_unique<Sunset::Texture>();
     m_Image->LoadImage(RESOURCES "Logo/Logo.png");
@@ -75,14 +62,12 @@ void MainMenu::Init()
                 .Padding({5.f, 5.f, 5.f, 5.f})
                 .OnClicked([&]()
                 {
-                    Sunset::NetworkService::Init();
-                    Sunset::NetworkService::Get().Host(7777, 2);
-
-                    Sunset::SaveSystem::Save(SAVE_PATH "World1.bin", seed);
-
-                    auto& app = Sunset::Application::GetApplication();
-                    app.ClearLayer();
-                    app.LoadLayer<GameLayer>("World1");
+                    // Sunset::NetworkService::Init();
+                    // Sunset::NetworkService::Get().Host(7777, 2);
+                    //
+                    // auto& app = Sunset::Application::GetApplication();
+                    // app.ClearLayer();
+                    // app.LoadLayer<GameLayer>({});
                 })
                 .Child(
                     SRmGUI::SNew<SRmGUI::Text>()
@@ -131,23 +116,22 @@ void MainMenu::OnDraw()
     ImGui::InputText("World Name", worldName, 50);
     if (ImGui::Button("Create World"))
     {
-        saves.emplace_back(worldName);
+        saves.emplace_back(worldName, seed);
         if (Sunset::SaveSystem::Save(SAVE_PATH "GameSaved.bin", saves))
         {
             LOG("SunsetCraft", info, "Save {} Success", std::string(worldName));
-            Sunset::SaveSystem::Save(SAVE_PATH + std::string(worldName), seed);
         }
     }
     for (const auto& save : saves)
     {
-        if (ImGui::Button(save.c_str()))
+        if (ImGui::Button(save.Name.c_str()))
         {
             Sunset::NetworkService::Init();
             Sunset::NetworkService::Get().Host(7777, 2);
 
             auto& app = Sunset::Application::GetApplication();
             app.ClearLayer();
-            app.LoadLayer<GameLayer>(save);
+            app.LoadLayer<GameLayer>(WorldParam{save.Name, save.seed});
         }
     }
     ImGui::End();

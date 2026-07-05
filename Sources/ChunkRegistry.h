@@ -29,4 +29,6 @@ struct ChunkRegistry
     static void SetBlock(const glm::vec3& position, BlockId blockId);
 
     static void DrawChunk(const Sunset::Camera& camera);
+
+    static void SaveChunk(const std::string& folderName);
 };

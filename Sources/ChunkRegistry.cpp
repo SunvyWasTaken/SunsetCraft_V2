@@ -10,6 +10,7 @@
 #include "Chunk.h"
 #include "Math/AABB.h"
 #include "Render/Camera.h"
+#include "SaveSystem/SaveSystem.h"
 #include "WorldGen/WorldGen.h"
 
 namespace
@@ -27,6 +28,21 @@ namespace
 
     uint8_t m_RenderDistance = 0;
     std::unordered_map<glm::ivec2, Chunk, double_hash> chunks;
+
+    struct ChunkSave
+    {
+        glm::ivec2 position;
+        std::array<BlockId, SIZE_X * (SIZE_Y * 2) * SIZE_Z> blocks;
+    };
+
+    template <typename  Archive>
+    void Serialize(Archive& ar, ChunkSave& save)
+    {
+        ar(save.position);
+        ar(save.blocks);
+    }
+
+    std::vector<ChunkSave> chunkToSave;
 
 #pragma region THREAD
     struct ChunkJob
@@ -134,6 +150,8 @@ namespace
         return static_cast<int>(std::floor(value / chunkSize));
     }
 
+    std::string fName;
+
     void LoadChunk(const glm::ivec2& position)
     {
         SS_PROFILE_FUNCTION();
@@ -142,6 +160,16 @@ namespace
             for (int32_t y = position.y - m_RenderDistance; y <= position.y + m_RenderDistance; ++y)
             {
                 const glm::ivec2 key{x, y};
+                const std::string fileName = std::format("{}_{}", x, y);
+                if (ChunkSave cs; Sunset::SaveSystem::Load(SAVE_PATH + fName + "/" + fileName + ".bin", cs))
+                {
+                    chunks.try_emplace(cs.position, cs.position);
+                    Chunk& chunk = chunks.at(cs.position);
+                    chunk.m_Blocks = cs.blocks;
+                    chunk.bIsDirty = true;
+                    continue;
+                }
+
                 const glm::ivec2 delta = key - position;
                 const int dist2 = delta.x * delta.x + delta.y * delta.y;
 
@@ -206,6 +234,8 @@ void ChunkRegistry::Init(const int seed, const uint8_t renderDistance)
 void ChunkRegistry::Destroy()
 {
     LOG("ChunkRegistry", info, "ChunkRegistry destroy");
+
+    SaveChunk(fName);
 
     for (auto& worker : workers)
     {
@@ -280,6 +310,7 @@ void ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
         return;
 
     it->second.SetBlock(position, blockId);
+    chunkToSave.emplace_back(it->second.m_Position, it->second.m_Blocks);
 }
 
 void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
@@ -289,5 +320,21 @@ void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
     {
          if (camera.GetFrustum().IsVisible(Sunset::AABB{glm::vec3{c.m_Position.x * SIZE_X, -SIZE_Y, c.m_Position.y * SIZE_Z}, glm::vec3{c.m_Position.x * SIZE_X + SIZE_X, SIZE_Y, c.m_Position.y * SIZE_Z + SIZE_Z}}))
             c.Draw();
+    }
+}
+
+void ChunkRegistry::SaveChunk(const std::string& folderName)
+{
+    fName = folderName;
+    auto cs = std::move(chunkToSave);
+    chunkToSave.clear();
+
+    for (auto& c : cs)
+    {
+        std::string fileName = std::format("{}_{}", c.position.x, c.position.y);
+        if (!Sunset::SaveSystem::Save(SAVE_PATH + folderName + "/" + fileName + ".bin", c))
+        {
+            chunkToSave.emplace_back(c);
+        }
     }
 }
