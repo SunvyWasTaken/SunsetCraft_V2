@@ -147,18 +147,19 @@ GameLayer::GameLayer(WorldParam param)
 
     RegistryLoader::Init();
 
-    ChunkRegistry::Init(param.seed, 12);
+    ChunkRegistry::Init(param.seed, m_Param.Name, 12);
     // BlockHandDrawable = std::make_unique<Sunset::Drawable>();
     player = world->GetController(0).GetEntity();
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
 
     std::uint16_t count = 64;
-    std::uint16_t count1 = 64;
-    std::uint16_t count2 = 64;
-    m_Inventory.Add(ItemRegistry::GetId("grass block"), count);
-    m_Inventory.Add(ItemRegistry::GetId("dirt"), count1);
-    m_Inventory.Add(ItemRegistry::GetId("stone"), count2);
+    auto& item = ItemRegistry::GetAll();
+    for (auto& [id, item] : item)
+    {
+        std::uint16_t c = count;
+        m_Inventory.Add(id, c);
+    }
 
     std::shared_ptr<SRmGUI::Panel> panel = nullptr;
     SRmGUI::SNewAssign(panel);
@@ -225,7 +226,7 @@ void GameLayer::OnUpdate(float dt)
     LastTimeSaved += dt;
     if (TimeBtwSave <= LastTimeSaved)
     {
-        ChunkRegistry::SaveChunk(m_Param.Name);
+        ChunkRegistry::SaveChunk();
         LastTimeSaved = 0;
     }
 }
@@ -278,11 +279,11 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
                     if (!m_Inventory.getSlot(currentSelectItem).Empty())
                     {
                         ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_Inventory.getSlot(currentSelectItem).id).blockId);
-                        m_Inventory.getSlot(currentSelectItem).count--;
-                        if (m_Inventory.getSlot(currentSelectItem).count <= 0)
-                        {
-                            m_Inventory.getSlot(currentSelectItem) = {Item::null, 0};
-                        }
+                        // m_Inventory.getSlot(currentSelectItem).count--;
+                        // if (m_Inventory.getSlot(currentSelectItem).count <= 0)
+                        // {
+                        //     m_Inventory.getSlot(currentSelectItem) = {Item::null, 0};
+                        // }
                     }
                 }
                 else if (mouseEvent->button == 0)

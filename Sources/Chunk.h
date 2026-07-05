@@ -26,7 +26,7 @@ public:
 
     BlockId GetBlock(const glm::vec3& position) const;
 
-    void SetBlock(const glm::vec3& position, BlockId block);
+    bool SetBlock(const glm::vec3& position, BlockId block);
 
     static void SetWaterTime(float time);
 

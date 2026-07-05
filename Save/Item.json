@@ -12,13 +12,25 @@
       "type": "block",
       "block": "grass"
     },
-    "sword": {
-      "type": "tool",
-      "stack": 1
+    "Wood block": {
+      "type": "block",
+      "block": "wood"
     },
-    "pickaxe": {
-      "type": "tool",
-      "stack": 1
+    "diamond_ore": {
+      "type": "block",
+      "block": "diamond_ore"
+    },
+    "coal_ore":{
+      "type": "block",
+      "block": "coal_ore"
+    },
+    "oak_leaf": {
+      "type": "block",
+      "block": "oak_leaf"
+    },
+    "sand_block": {
+      "type": "sand",
+      "block": "sand"
     }
   }
 }

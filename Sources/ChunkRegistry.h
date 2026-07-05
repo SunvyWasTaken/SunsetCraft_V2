@@ -13,7 +13,7 @@ namespace Sunset
 
 struct ChunkRegistry
 {
-    static void Init(int seed, uint8_t renderDistance = 16);
+    static void Init(int seed, const std::string& folderName, uint8_t renderDistance = 16);
 
     static void Destroy();
 
@@ -26,9 +26,9 @@ struct ChunkRegistry
     [[nodiscard]]
     static BlockId GetBlock(const glm::vec3& position);
 
-    static void SetBlock(const glm::vec3& position, BlockId blockId);
+    static bool SetBlock(const glm::vec3& position, BlockId blockId);
 
     static void DrawChunk(const Sunset::Camera& camera);
 
-    static void SaveChunk(const std::string& folderName);
+    static void SaveChunk();
 };

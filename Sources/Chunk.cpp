@@ -90,11 +90,15 @@ BlockId Chunk::GetBlock(const glm::vec3 &position) const
     return m_Blocks[GetIndex(pos.x, pos.y, pos.z)];
 }
 
-void Chunk::SetBlock(const glm::vec3 &position, BlockId block)
+bool Chunk::SetBlock(const glm::vec3 &position, BlockId block)
 {
     const glm::ivec3 i = WorldToChunk(m_Position, position);
+    if (!IsInChunk(i.x, i.y, i.z))
+        return false;
+
     m_Blocks[GetIndex(i.x, i.y, i.z)] = block;
     bIsDirty = true;
+    return true;
 }
 
 void Chunk::BuildMesh()

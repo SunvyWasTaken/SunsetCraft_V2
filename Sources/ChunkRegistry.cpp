@@ -160,6 +160,12 @@ namespace
             for (int32_t y = position.y - m_RenderDistance; y <= position.y + m_RenderDistance; ++y)
             {
                 const glm::ivec2 key{x, y};
+                const glm::ivec2 delta = key - position;
+                const int dist2 = delta.x * delta.x + delta.y * delta.y;
+
+                if (chunks.contains(key))
+                    continue;
+
                 const std::string fileName = std::format("{}_{}", x, y);
                 if (ChunkSave cs; Sunset::SaveSystem::Load(SAVE_PATH + fName + "/" + fileName + ".bin", cs))
                 {
@@ -169,12 +175,6 @@ namespace
                     chunk.bIsDirty = true;
                     continue;
                 }
-
-                const glm::ivec2 delta = key - position;
-                const int dist2 = delta.x * delta.x + delta.y * delta.y;
-
-                if (chunks.contains(key))
-                    continue;
 
                 if (dist2 <= m_RenderDistance * m_RenderDistance)
                 {
@@ -214,10 +214,11 @@ namespace
     }
 }
 
-void ChunkRegistry::Init(const int seed, const uint8_t renderDistance)
+void ChunkRegistry::Init(const int seed, const std::string& folderName, const uint8_t renderDistance)
 {
     INITLOG("ChunkRegistry");
     LOG("ChunkRegistry", info, "ChunkRegistry init");
+    fName = folderName;
     m_RenderDistance = renderDistance;
     WorldGen::Init(seed);
 
@@ -235,7 +236,7 @@ void ChunkRegistry::Destroy()
 {
     LOG("ChunkRegistry", info, "ChunkRegistry destroy");
 
-    SaveChunk(fName);
+    SaveChunk();
 
     for (auto& worker : workers)
     {
@@ -299,7 +300,7 @@ BlockId ChunkRegistry::GetBlock(const glm::vec3 &position)
     return it->second.GetBlock(position);
 }
 
-void ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
+bool ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
 {
     const glm::ivec2 positionInChunk{
         WorldToChunk(position.x, SIZE_X),
@@ -307,10 +308,13 @@ void ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
 
     const auto it = chunks.find(positionInChunk);
     if (it == chunks.end())
-        return;
+        return false;
 
-    it->second.SetBlock(position, blockId);
+    if (!it->second.SetBlock(position, blockId))
+        return false;
+
     chunkToSave.emplace_back(it->second.m_Position, it->second.m_Blocks);
+    return true;
 }
 
 void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
@@ -323,16 +327,15 @@ void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
     }
 }
 
-void ChunkRegistry::SaveChunk(const std::string& folderName)
+void ChunkRegistry::SaveChunk()
 {
-    fName = folderName;
     auto cs = std::move(chunkToSave);
     chunkToSave.clear();
 
     for (auto& c : cs)
     {
         std::string fileName = std::format("{}_{}", c.position.x, c.position.y);
-        if (!Sunset::SaveSystem::Save(SAVE_PATH + folderName + "/" + fileName + ".bin", c))
+        if (!Sunset::SaveSystem::Save(SAVE_PATH + fName + "/" + fileName + ".bin", c))
         {
             chunkToSave.emplace_back(c);
         }
