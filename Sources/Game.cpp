@@ -21,6 +21,7 @@
 #include "GameFramework/Components/TransformComponent.h"
 #include "GameFramework/World/Entity.h"
 #include "Network/NetworkService.h"
+#include "Player/PlayerScript.h"
 #include "Registry/ItemRegistry.h"
 #include "Registry/RegistryLoader.h"
 #include "Render/RenderCommande.h"
@@ -146,7 +147,7 @@ GameLayer::GameLayer(WorldParam param)
 
     Sunset::SaveSystem::CreateFolder(SAVE_PATH + param.Name);
 
-    Sunset::RenderCommande::ShowCursor(false);
+    // Sunset::RenderCommande::ShowCursor(false);
 
     RegistryLoader::Init();
 
@@ -158,7 +159,7 @@ GameLayer::GameLayer(WorldParam param)
     {
         player.GetComponent<Sunset::TransformComponent>()->SetLocation(playerStartPosition);
     }
-    player.AddComponent<Sunset::NativeScriptComponent>();
+    player.AddComponent<Sunset::NativeScriptComponent>().Bind<PlayerScript>();
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
 
@@ -208,7 +209,8 @@ void GameLayer::OnUpdate(float dt)
 {
     SS_PROFILE_FUNCTION();
     Layer::OnUpdate(dt);
-    Sunset::NetworkService::Get().Update(dt);
+    if (Sunset::NetworkService::IsInitialized())
+        Sunset::NetworkService::Get().Update(dt);
 
     static float waterTime = 0.0f;
     waterTime += dt;

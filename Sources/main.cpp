@@ -4,7 +4,7 @@
 
 #include "Game.h"
 #include "MainMenu.h"
-#include "SunsetCraftInstance.h"
+#include "SunsetCraftModule.h"
 
 #include "SunsetEngine.h"
 
@@ -19,9 +19,7 @@ int main()
 #else
     const Sunset::ApplicationSetting setting{"SunsetCraft V2", {1280, 720}};
     Sunset::Application app{setting};
-    INITLOG("SunsetCraft")
-    app.SetGameInstance<SunsetCraftInstance>();
-    app.PushLayer<MainMenu>();
+    GameModule::InitGame(app);
 #endif
     app.Run();
 }

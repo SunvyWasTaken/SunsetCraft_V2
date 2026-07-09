@@ -15,11 +15,11 @@
 #include "Render/Texture.h"
 #include "Image.h"
 #include "Panel.h"
-#include "SunsetCraftInstance.h"
 #include "Text.h"
 #include "VerticalBox.h"
 #include "WidgetSwitch.h"
 #include "WorldParam.h"
+#include "SaveSystem/SaveSystem.h"
 
 namespace
 {
@@ -61,57 +61,30 @@ void MainMenu::Init()
             .Image(m_Image->GetId())
             )
         .Child(
-            SRmGUI::SNewAssign<SRmGUI::WidgetSwitch>(m_WidgetSwitch)
+            SRmGUI::SNew<SRmGUI::VerticalBox>()
+            .Position((setting.WindowSize / 2) - glm::ivec2{75, -85})
+            .Size({150, 350})
             .Child(
-                SRmGUI::SNew<SRmGUI::VerticalBox>()
-                .Position((setting.WindowSize / 2) - glm::ivec2{75, -85})
-                .Size({150, 350})
-                .Child(
-                    SRmGUI::SNewAssign<SRmGUI::Text>(m_Text)
-                    .Text(worldParam.Name)
-                    .Color({1.f, 1.f, 1.f, 1.f})
-                    )
-                .Child(
-                    SRmGUI::SNew<SRmGUI::Button>()
-                    .Padding({5.f, 5.f, 5.f, 5.f})
-                    .OnClicked([&]()
-                    {
-                        if (!saves.empty())
-                        {
-                            m_WidgetSwitch->SetActive(1);
-                            return;
-                        }
-
-                        Sunset::NetworkService::Init();
-                        Sunset::NetworkService::Get().Host(7777, 2);
-
-                        std::uniform_int_distribution<int> dist(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-                        worldParam.seed = dist(rng);
-                        saves.emplace_back(worldParam);
-                        Sunset::SaveSystem::Save(SAVE_PATH "GameSaved.bin", saves);
-
-                        auto& app = Sunset::Application::GetApplication();
-                        app.ClearLayer();
-                        app.LoadLayer<GameLayer>(worldParam);
-                    })
-                    .Child(
-                        SRmGUI::SNew<SRmGUI::Text>()
-                        .Text("Play")
-                        .Color({0.1f, 0.1f, 0.1f, 1.f})
-                        .Padding({0.f, 0.f, 0.f, 40.f})
-                    )
+                SRmGUI::SNewAssign<SRmGUI::Text>(m_Text)
+                .Text(worldParam.Name)
+                .Color({1.f, 1.f, 1.f, 1.f})
                 )
-                .Child(
+            .Child(
                 SRmGUI::SNew<SRmGUI::Button>()
                 .Padding({5.f, 5.f, 5.f, 5.f})
                 .OnClicked([&]()
                 {
+                    // if (!saves.empty())
+                    // {
+                    //     m_WidgetSwitch->SetActive(1);
+                    //     return;
+                    // }
+
                     Sunset::NetworkService::Init();
                     Sunset::NetworkService::Get().Host(7777, 2);
 
                     std::uniform_int_distribution<int> dist(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
                     worldParam.seed = dist(rng);
-
                     saves.emplace_back(worldParam);
                     Sunset::SaveSystem::Save(SAVE_PATH "GameSaved.bin", saves);
 
@@ -121,49 +94,50 @@ void MainMenu::Init()
                 })
                 .Child(
                     SRmGUI::SNew<SRmGUI::Text>()
-                    .Text("New World")
+                    .Text("Play")
                     .Color({0.1f, 0.1f, 0.1f, 1.f})
                     .Padding({0.f, 0.f, 0.f, 40.f})
-                ))
-                .Child(
-                    SRmGUI::SNew<SRmGUI::Button>()
-                    .Padding({5.f, 5.f, 5.f, 5.f})
-                    .OnClicked([&]()
-                    {
-                        Sunset::Application::CloseApplication();
-                    })
-                    .Child(
-                        SRmGUI::SNew<SRmGUI::Text>()
-                        .Text("Quit")
-                        .Color({0.1f, 0.1f, 0.1f, 1.f})
-                        .Padding({0.f, 0.f, 0.f, 40.f})
-                    )
                 )
             )
             .Child(
-                SRmGUI::SNewAssign<SRmGUI::VerticalBox>(m_WorldButtons)
-                .Position((setting.WindowSize / 2) - glm::ivec2{75, -85})
-                .Size({150, 250})
-            )
-        );
-
-    for (auto s : saves)
-    {
-        std::shared_ptr<SRmGUI::Button> button = SRmGUI::SNew<SRmGUI::Button>()
-            .Child(
-                SRmGUI::SNew<SRmGUI::Text>()
-                .Text(s.Name)
-                .Color({0.1f, 0.1f, 0.1f, 1.f})
-            ).OnClicked([=]()
+            SRmGUI::SNew<SRmGUI::Button>()
+            .Padding({5.f, 5.f, 5.f, 5.f})
+            .OnClicked([&]()
             {
                 Sunset::NetworkService::Init();
                 Sunset::NetworkService::Get().Host(7777, 2);
+
+                std::uniform_int_distribution<int> dist(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+                worldParam.seed = dist(rng);
+
+                saves.emplace_back(worldParam);
+                Sunset::SaveSystem::Save(SAVE_PATH "GameSaved.bin", saves);
+
                 auto& app = Sunset::Application::GetApplication();
                 app.ClearLayer();
-                app.LoadLayer<GameLayer>(s);
-            });
-        m_WorldButtons->AddChild(button);
-    }
+                app.LoadLayer<GameLayer>(worldParam);
+            })
+            .Child(
+                SRmGUI::SNew<SRmGUI::Text>()
+                .Text("New World")
+                .Color({0.1f, 0.1f, 0.1f, 1.f})
+                .Padding({0.f, 0.f, 0.f, 40.f})
+            ))
+            .Child(
+                SRmGUI::SNew<SRmGUI::Button>()
+                .Padding({5.f, 5.f, 5.f, 5.f})
+                .OnClicked([&]()
+                {
+                    Sunset::Application::CloseApplication();
+                })
+                .Child(
+                    SRmGUI::SNew<SRmGUI::Text>()
+                    .Text("Quit")
+                    .Color({0.1f, 0.1f, 0.1f, 1.f})
+                    .Padding({0.f, 0.f, 0.f, 40.f})
+                )
+            )
+        );
 
     AddToViewport(panel.ToShared());
 }
