@@ -211,26 +211,26 @@ void MainMenu::OnDraw()
     // ImGui::End();
 }
 
-bool MainMenu::OnEvent(Sunset::Event::Type &event)
+bool MainMenu::OnEvent(Sunset::Event::Type & event)
 {
     Layer::OnEvent(event);
 
-    if (std::holds_alternative<Sunset::Event::KeyEvent>(event))
-    {
-        const auto& key = std::get<Sunset::Event::KeyEvent>(event);
-        if (key.action == Sunset::Event::Action::Press)
-        {
-            if (key.key == 259)
-            {
-                if (!worldParam.Name.empty())
-                    worldParam.Name.pop_back();
-
-                return true;
-            }
-            worldParam.Name += key.key;
-        }
-        m_Text->SetText(worldParam.Name);
-        return true;
-    }
+    // if (std::holds_alternative<Sunset::Event::Key>(event))
+    // {
+    //     const auto& key = std::get<Sunset::Event::KeyEvent>(event);
+    //     if (key.action == Sunset::Event::Action::Press)
+    //     {
+    //         if (key.key == 259)
+    //         {
+    //             if (!worldParam.Name.empty())
+    //                 worldParam.Name.pop_back();
+    //
+    //             return true;
+    //         }
+    //         worldParam.Name += key.key;
+    //     }
+    //     m_Text->SetText(worldParam.Name);
+    //     return true;
+    // }
     return false;
 }

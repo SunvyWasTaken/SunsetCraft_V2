@@ -8,6 +8,11 @@
 #include "Sky.h"
 #include "Core/Layer.h"
 
+namespace Sunset
+{
+    class World;
+}
+
 struct WorldParam;
 
 class GameOverlay : public Sunset::Layer
@@ -29,7 +34,7 @@ public:
     void OnDraw() override;
     bool OnEvent(Sunset::Event::Type& event) override;
 private:
-    std::unique_ptr<Sunset::World> world = nullptr;
+    std::unique_ptr<Sunset::World> world;
     Inventory m_Inventory;
     SkyCubed m_Sky;
 };
