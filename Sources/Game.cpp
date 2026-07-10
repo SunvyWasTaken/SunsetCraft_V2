@@ -165,7 +165,7 @@ GameLayer::GameLayer(WorldParam param)
 
     std::uint16_t count = 64;
     auto& item = ItemRegistry::GetAll();
-    for (auto& [id, item] : item)
+    for (const auto& [id, item] : item)
     {
         std::uint16_t c = count;
         m_Inventory.Add(id, c);
@@ -240,6 +240,7 @@ void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
     Layer::OnDraw();
+
     m_Sky.Draw();
     if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
     {
