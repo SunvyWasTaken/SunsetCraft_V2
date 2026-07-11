@@ -16,6 +16,7 @@
 #include "WorldParam.h"
 #include "Core/Application.h"
 #include "Core/ApplicationSetting.h"
+#include "Core/GameInstance.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/NativeScriptComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
@@ -141,7 +142,6 @@ namespace
 
 GameLayer::GameLayer(WorldParam param)
     : Layer()
-    , world(std::make_unique<Sunset::World>())
 {
     m_Param = param;
 
@@ -150,16 +150,32 @@ GameLayer::GameLayer(WorldParam param)
     // Sunset::RenderCommande::ShowCursor(false);
 
     RegistryLoader::Init();
+}
 
-    ChunkRegistry::Init(param.seed, m_Param.Name, 12);
+GameLayer::~GameLayer()
+{
+    glm::vec3 playerStartPosition = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
+    Sunset::SaveSystem::Save(SAVE_PATH + m_Param.Name + "/PlayerData.bin", playerStartPosition);
+
+    crosshairTex.reset();
+    ChunkRegistry::Destroy();
+    RegistryLoader::Destroy();
+}
+
+void GameLayer::Init()
+{
+    Layer::Init();
+
+    ChunkRegistry::Init(m_Param.seed, m_Param.Name, 12);
     // BlockHandDrawable = std::make_unique<Sunset::Drawable>();
-    player = world->CreateEntity("Player");
+    player = GetGameInstance()->m_ActiveWorld->CreateEntity("Player");
     player.AddComponent<Sunset::TransformComponent>();
-    if (glm::vec3 playerStartPosition; Sunset::SaveSystem::Load(SAVE_PATH + param.Name + "/PlayerData.bin", playerStartPosition))
+    if (glm::vec3 playerStartPosition; Sunset::SaveSystem::Load(SAVE_PATH + m_Param.Name + "/PlayerData.bin", playerStartPosition))
     {
         player.GetComponent<Sunset::TransformComponent>()->SetLocation(playerStartPosition);
     }
     player.AddComponent<Sunset::NativeScriptComponent>().Bind<PlayerScript>();
+    player.AddComponent<Sunset::CameraComponent>();
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
 
@@ -195,16 +211,6 @@ GameLayer::GameLayer(WorldParam param)
     AddToViewport(panel);
 }
 
-GameLayer::~GameLayer()
-{
-    glm::vec3 playerStartPosition = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
-    Sunset::SaveSystem::Save(SAVE_PATH + m_Param.Name + "/PlayerData.bin", playerStartPosition);
-
-    crosshairTex.reset();
-    ChunkRegistry::Destroy();
-    RegistryLoader::Destroy();
-}
-
 void GameLayer::OnUpdate(float dt)
 {
     SS_PROFILE_FUNCTION();
@@ -216,7 +222,7 @@ void GameLayer::OnUpdate(float dt)
     waterTime += dt;
     ChunkRegistry::UpdateWaterTime(waterTime);
 
-    world->Update(dt);
+    GetGameInstance()->Update(dt);
 
     m_Inventory.Update(dt);
 
@@ -240,12 +246,11 @@ void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
     Layer::OnDraw();
-
     m_Sky.Draw();
-    if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
-    {
-        ChunkRegistry::DrawChunk(cam->camera);
-    }
+    auto* cam = player.GetComponent<Sunset::CameraComponent>();
+    glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
+    cam->camera.SetPosition(loc);
+    ChunkRegistry::DrawChunk(cam->camera);
 }
 
 bool GameLayer::OnEvent(Sunset::Event::Type &event)
@@ -253,7 +258,7 @@ bool GameLayer::OnEvent(Sunset::Event::Type &event)
     SS_PROFILE_FUNCTION();
     Layer::OnEvent(event);
 
-    world->OnEvent(event);
+    GetGameInstance()->m_ActiveWorld->OnEvent(event);
 
     // if (auto* mouseEvent = std::get_if<Sunset::Event::MouseEvent>(&event))
     // {

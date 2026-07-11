@@ -30,11 +30,11 @@ class GameLayer : public Sunset::Layer
 public:
     explicit GameLayer(WorldParam param);
     ~GameLayer() override;
+    void Init() override;
     void OnUpdate(float dt) override;
     void OnDraw() override;
     bool OnEvent(Sunset::Event::Type& event) override;
 private:
-    std::unique_ptr<Sunset::World> world;
     Inventory m_Inventory;
     SkyCubed m_Sky;
 };
