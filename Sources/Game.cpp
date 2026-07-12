@@ -174,14 +174,14 @@ void GameLayer::Init()
     {
         player.GetComponent<Sunset::TransformComponent>()->SetLocation(playerStartPosition);
     }
-    player.AddComponent<Sunset::NativeScriptComponent>().Bind<PlayerScript>();
     player.AddComponent<Sunset::CameraComponent>();
+    player.AddComponent<Sunset::NativeScriptComponent>().Bind<PlayerScript>();
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
 
     std::uint16_t count = 64;
-    auto& item = ItemRegistry::GetAll();
-    for (const auto& [id, item] : item)
+    auto& items = ItemRegistry::GetAll();
+    for (const auto &id: items | std::views::keys)
     {
         std::uint16_t c = count;
         m_Inventory.Add(id, c);

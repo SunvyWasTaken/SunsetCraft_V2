@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "GameFramework/World/ScriptEntity.h"
 #include "Registry/BlockRegistry.h"
 
 namespace Sunset
