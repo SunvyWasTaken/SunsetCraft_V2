@@ -18,6 +18,7 @@
 #include "Core/ApplicationSetting.h"
 #include "Core/GameInstance.h"
 #include "GameFramework/Components/CameraComponent.h"
+#include "GameFramework/Components/InputComponent.h"
 #include "GameFramework/Components/NativeScriptComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "GameFramework/World/Entity.h"
@@ -174,7 +175,8 @@ void GameLayer::Init()
     {
         player.GetComponent<Sunset::TransformComponent>()->SetLocation(playerStartPosition);
     }
-    player.AddComponent<Sunset::CameraComponent>();
+    player.AddComponent<Sunset::CameraComponent>().Activate(true);
+    player.AddComponent<Sunset::InputComponent>();
     player.AddComponent<Sunset::NativeScriptComponent>().Bind<PlayerScript>();
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
@@ -250,6 +252,7 @@ void GameLayer::OnDraw()
     auto* cam = player.GetComponent<Sunset::CameraComponent>();
     glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
     cam->camera.SetPosition(loc);
+    cam->camera.SetForward(player.GetComponent<Sunset::TransformComponent>()->GetForwardVector());
     ChunkRegistry::DrawChunk(cam->camera);
 }
 

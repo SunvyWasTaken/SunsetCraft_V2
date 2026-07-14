@@ -13,4 +13,6 @@ class PlayerScript : public Sunset::ScriptEntity
     void OnUpdate(float dt) override;
 
     void OnEndPlay() override;
+
+    float speed = 10.f;
 };
