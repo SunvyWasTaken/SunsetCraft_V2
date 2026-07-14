@@ -18,8 +18,6 @@ namespace
         MoveUp,
         MoveDown,
     };
-
-    glm::vec2 prevPos{0, 0};
 }
 
 void PlayerScript::OnBeginPlay()
@@ -61,14 +59,10 @@ void PlayerScript::OnUpdate(float dt)
         if (glm::length(deltaPos) > 0)
             deltaPos = glm::normalize(deltaPos);
 
-        transform->Position += deltaPos;
-        auto currPos = input->GetInputSystem().GetMousePosition();
-        auto delta = currPos - prevPos;
-        prevPos = currPos;
-        if (delta.x > 0)
-            transform->Rotate(transform->GetRightVector(), -delta.y * 0.05f);
-        if (input->MoveY() > 0)
-            transform->Rotate({0, 1, 0}, delta.x * 0.05f);
+        transform->AddLocation(deltaPos);
+
+        transform->Rotate(-transform->GetRightVector(), input->MoveY() * 0.05f);
+        transform->Rotate({0, -1, 0}, input->MoveX() * 0.05f);
     }
 }
 
