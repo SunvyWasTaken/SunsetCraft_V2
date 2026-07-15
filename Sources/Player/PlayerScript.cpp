@@ -20,6 +20,19 @@ namespace
     };
 }
 
+PlayerScript::PlayerScript()
+    : ScriptEntity()
+{
+    LOG("SunsetCraft", info, "Player Script Creation");
+}
+
+Sunset::ReflectionType PlayerScript::Properties()
+{
+    Sunset::ReflectionType properties;
+    properties.Field("Mouvement Speed", &PlayerScript::speed);
+    return properties;
+}
+
 void PlayerScript::OnBeginPlay()
 {
     ScriptEntity::OnBeginPlay();

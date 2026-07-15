@@ -8,6 +8,11 @@
 
 class PlayerScript : public Sunset::ScriptEntity
 {
+public:
+    PlayerScript();
+
+    Sunset::ReflectionType Properties() override;
+
     void OnBeginPlay() override;
 
     void OnUpdate(float dt) override;
