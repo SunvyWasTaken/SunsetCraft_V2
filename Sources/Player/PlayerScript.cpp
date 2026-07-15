@@ -57,22 +57,22 @@ void PlayerScript::OnUpdate(float dt)
     {
         glm::vec3 deltaPos{0, 0, 0};
         if (input->IsActionDown(PlayerAction::MoveForward))
-            deltaPos += transform->GetForwardVector() * speed * dt;
+            deltaPos += transform->GetForwardVector();
         if (input->IsActionDown(PlayerAction::MoveBackward))
-            deltaPos -= transform->GetForwardVector() * speed * dt;
+            deltaPos -= transform->GetForwardVector();
         if (input->IsActionDown(PlayerAction::MoveLeft))
-            deltaPos -= transform->GetRightVector() * speed * dt;
+            deltaPos -= transform->GetRightVector();
         if (input->IsActionDown(PlayerAction::MoveRight))
-            deltaPos += transform->GetRightVector() * speed * dt;
+            deltaPos += transform->GetRightVector();
         if (input->IsActionDown(PlayerAction::MoveUp))
-            deltaPos += glm::vec3(0, 1, 0) * speed * dt;
+            deltaPos += glm::vec3(0, 1, 0);
         if (input->IsActionDown(PlayerAction::MoveDown))
-            deltaPos += glm::vec3(0, -1, 0) * speed * dt;
+            deltaPos += glm::vec3(0, -1, 0);
 
         if (glm::length(deltaPos) > 0)
             deltaPos = glm::normalize(deltaPos);
 
-        transform->AddLocation(deltaPos);
+        transform->AddLocation(deltaPos * speed * dt);
 
         transform->Rotate(-transform->GetRightVector(), input->MoveY() * 0.05f);
         transform->Rotate({0, -1, 0}, input->MoveX() * 0.05f);
