@@ -11,6 +11,8 @@ class PlayerScript : public Sunset::ScriptEntity
 public:
     PlayerScript();
 
+    ~PlayerScript();
+
     Sunset::ReflectionType Properties() override;
 
     void OnBeginPlay() override;
@@ -20,4 +22,5 @@ public:
     void OnEndPlay() override;
 
     float speed = 10.f;
+    float MouseSpeed = 0.01f;
 };

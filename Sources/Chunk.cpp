@@ -123,7 +123,7 @@ void Chunk::BuildMesh()
                     {
                         glm::ivec3 worldPos{x + dir.x, y + dir.y, z + dir.z};
                         worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
-                        const BlockId testBlock = ChunkRegistry::GetBlock(worldPos);
+                        const BlockId testBlock = m_Registry->GetBlock(worldPos);
                         if (b == BlockRegistry::AIR)
                             continue;
 

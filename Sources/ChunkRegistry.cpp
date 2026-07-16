@@ -8,6 +8,9 @@
 #include <unordered_set>
 
 #include "Chunk.h"
+#include "RaycastHit.h"
+#include "GameFramework/Components/CameraComponent.h"
+#include "GameFramework/Components/TransformComponent.h"
 #include "Math/AABB.h"
 #include "Render/Camera.h"
 #include "SaveSystem/SaveSystem.h"
@@ -26,7 +29,6 @@ namespace
         }
     };
 
-    uint8_t m_RenderDistance = 0;
     std::unordered_map<glm::ivec2, Chunk, double_hash> chunks;
 
     struct ChunkSave
@@ -43,6 +45,9 @@ namespace
     }
 
     std::vector<ChunkSave> chunkToSave;
+
+    constexpr float TimeBtwSave = 10.f;
+    float LastTimeSaved = 0;
 
 #pragma region THREAD
     struct ChunkJob
@@ -152,12 +157,12 @@ namespace
 
     std::string fName;
 
-    void LoadChunk(const glm::ivec2& position)
+    void LoadChunk(const glm::ivec2& position, const std::uint8_t renderDistance, ChunkRegistry* registry)
     {
         SS_PROFILE_FUNCTION();
-        for (int32_t x = position.x - m_RenderDistance; x <= position.x + m_RenderDistance; ++x)
+        for (int32_t x = position.x - renderDistance; x <= position.x + renderDistance; ++x)
         {
-            for (int32_t y = position.y - m_RenderDistance; y <= position.y + m_RenderDistance; ++y)
+            for (int32_t y = position.y - renderDistance; y <= position.y + renderDistance; ++y)
             {
                 const glm::ivec2 key{x, y};
                 const glm::ivec2 delta = key - position;
@@ -173,10 +178,11 @@ namespace
                     Chunk& chunk = chunks.at(cs.position);
                     chunk.m_Blocks = cs.blocks;
                     chunk.bIsDirty = true;
+                    chunk.m_Registry = registry;
                     continue;
                 }
 
-                if (dist2 <= m_RenderDistance * m_RenderDistance)
+                if (dist2 <= renderDistance * renderDistance)
                 {
                     RequestChunkGeneration(key);
                 }
@@ -184,7 +190,7 @@ namespace
         }
     }
 
-    void UnloadChunk(const glm::ivec2& position)
+    void UnloadChunk(const glm::ivec2& position, const std::uint8_t renderDistance)
     {
         SS_PROFILE_FUNCTION();
         for (auto it = chunks.begin(); it != chunks.end(); )
@@ -192,7 +198,7 @@ namespace
             int dx = std::abs(it->first.x - position.x);
             int dy = std::abs(it->first.y - position.y);
 
-            if (dx > m_RenderDistance || dy > m_RenderDistance)
+            if (dx > renderDistance || dy > renderDistance)
             {
                 it = chunks.erase(it);
             }
@@ -212,9 +218,102 @@ namespace
                 c.BuildMesh();
         }
     }
+
+#pragma region LineTrace
+    // void LineTrace(RaycastHit& hit, const glm::vec3& start, const glm::vec3& forward, float distance)
+    // {
+    //     hit.Clear();
+    //
+    //     // Direction du rayon
+    //     glm::vec3 dir = glm::normalize(forward);
+    //
+    //     // Position voxel courante
+    //     glm::ivec3 voxelPos = glm::floor(start);
+    //
+    //     // Sens de progression
+    //     glm::ivec3 step;
+    //     step.x = (dir.x > 0) ? 1 : (dir.x < 0 ? -1 : 0);
+    //     step.y = (dir.y > 0) ? 1 : (dir.y < 0 ? -1 : 0);
+    //     step.z = (dir.z > 0) ? 1 : (dir.z < 0 ? -1 : 0);
+    //
+    //     // Distance en t pour traverser un voxel
+    //     glm::vec3 tDelta;
+    //     tDelta.x = (dir.x != 0.0f) ? std::abs(1.0f / dir.x) : FLT_MAX;
+    //     tDelta.y = (dir.y != 0.0f) ? std::abs(1.0f / dir.y) : FLT_MAX;
+    //     tDelta.z = (dir.z != 0.0f) ? std::abs(1.0f / dir.z) : FLT_MAX;
+    //
+    //     // Distance jusqu'à la première frontière
+    //     glm::vec3 tMax;
+    //     tMax.x = (dir.x > 0)
+    //         ? (voxelPos.x + 1 - start.x) * tDelta.x
+    //         : (start.x - voxelPos.x) * tDelta.x;
+    //
+    //     tMax.y = (dir.y > 0)
+    //         ? (voxelPos.y + 1 - start.y) * tDelta.y
+    //         : (start.y - voxelPos.y) * tDelta.y;
+    //
+    //     tMax.z = (dir.z > 0)
+    //         ? (voxelPos.z + 1 - start.z) * tDelta.z
+    //         : (start.z - voxelPos.z) * tDelta.z;
+    //
+    //     float t = 0.0f;
+    //     glm::ivec3 hitNormal(0);
+    //
+    //     // Boucle DDA
+    //     while (t <= distance)
+    //     {
+    //         // Récupération du chunk / bloc
+    //         BlockId blockId = ChunkRegistry::GetBlock(voxelPos);
+    //         if (blockId != BlockRegistry::AIR)
+    //         {
+    //             hit.Hit = true;
+    //             hit.blockPose = voxelPos;
+    //             hit.BlockType = blockId;
+    //             hit.hitNormal = hitNormal;
+    //             return;
+    //         }
+    //
+    //         // Avancer vers la frontière la plus proche
+    //         if (tMax.x < tMax.y)
+    //         {
+    //             if (tMax.x < tMax.z)
+    //             {
+    //                 voxelPos.x += step.x;
+    //                 t = tMax.x;
+    //                 tMax.x += tDelta.x;
+    //                 hitNormal = glm::ivec3(-step.x, 0, 0);
+    //             }
+    //             else
+    //             {
+    //                 voxelPos.z += step.z;
+    //                 t = tMax.z;
+    //                 tMax.z += tDelta.z;
+    //                 hitNormal = glm::ivec3(0, 0, -step.z);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             if (tMax.y < tMax.z)
+    //             {
+    //                 voxelPos.y += step.y;
+    //                 t = tMax.y;
+    //                 tMax.y += tDelta.y;
+    //                 hitNormal = glm::ivec3(0, -step.y, 0);
+    //             }
+    //             else
+    //             {
+    //                 voxelPos.z += step.z;
+    //                 t = tMax.z;
+    //                 tMax.z += tDelta.z;
+    //                 hitNormal = glm::ivec3(0, 0, -step.z);
+    //             }
+    //         }
+    //     }
+    // }
+#pragma endregion
 }
 
-void ChunkRegistry::Init(const int seed, const std::string& folderName, const uint8_t renderDistance)
+ChunkRegistry::ChunkRegistry(int seed, const std::string &folderName, uint8_t renderDistance)
 {
     INITLOG("ChunkRegistry");
     LOG("ChunkRegistry", info, "ChunkRegistry init");
@@ -232,8 +331,49 @@ void ChunkRegistry::Init(const int seed, const std::string& folderName, const ui
     }
 }
 
-void ChunkRegistry::Destroy()
+Sunset::ReflectionType ChunkRegistry::Properties()
 {
+    Sunset::ReflectionType type;
+    type.Name = "Chunk";
+    type.Field("Render Distance", &ChunkRegistry::m_RenderDistance);
+    return type;
+}
+
+void ChunkRegistry::OnUpdate(float dt)
+{
+    ScriptEntity::OnUpdate(dt);
+
+    static float waterTime = 0.0f;
+    waterTime += dt;
+    UpdateWaterTime(waterTime);
+
+    if (const auto* tc = GetComponent<Sunset::TransformComponent>())
+        UpdatePlayerPosition(tc->GetLocation());
+
+    LastTimeSaved += dt;
+    if (TimeBtwSave <= LastTimeSaved)
+    {
+        SaveChunk();
+        LastTimeSaved = 0;
+    }
+}
+
+void ChunkRegistry::OnDraw()
+{
+    ScriptEntity::OnDraw();
+
+    // todo : this is a temporary solution.
+    auto* cam = GetComponent<Sunset::CameraComponent>();
+    glm::vec3 loc = GetComponent<Sunset::TransformComponent>()->GetLocation();
+    cam->camera.SetPosition(loc);
+    cam->camera.SetForward(GetComponent<Sunset::TransformComponent>()->GetForwardVector());
+
+    DrawChunk(cam->camera);
+}
+
+void ChunkRegistry::OnEndPlay()
+{
+    ScriptEntity::OnEndPlay();
     LOG("ChunkRegistry", info, "ChunkRegistry destroy");
 
     SaveChunk();
@@ -264,11 +404,6 @@ void ChunkRegistry::Destroy()
     WorldGen::Destroy();
 }
 
-void ChunkRegistry::SetRenderDistance(const uint8_t renderDistance)
-{
-    m_RenderDistance = renderDistance;
-}
-
 void ChunkRegistry::UpdateWaterTime(const float time)
 {
     Chunk::SetWaterTime(time);
@@ -281,8 +416,8 @@ void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
         WorldToChunk(position.x, SIZE_X),
         WorldToChunk(position.z, SIZE_Z)};
 
-    UnloadChunk(positionInChunk);
-    LoadChunk(positionInChunk);
+    UnloadChunk(positionInChunk, m_RenderDistance);
+    LoadChunk(positionInChunk, m_RenderDistance, this);
     ConsumeGeneratedChunks();
     BuildDirtyChunk();
 }
@@ -322,7 +457,7 @@ void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
     SS_PROFILE_FUNCTION();
     for (const auto &c: chunks | std::views::values)
     {
-         // if (camera.GetFrustum().IsVisible(Sunset::AABB{glm::vec3{c.m_Position.x * SIZE_X, -SIZE_Y, c.m_Position.y * SIZE_Z}, glm::vec3{c.m_Position.x * SIZE_X + SIZE_X, SIZE_Y, c.m_Position.y * SIZE_Z + SIZE_Z}}))
+         if (camera.GetFrustum().IsVisible(Sunset::AABB{glm::vec3{c.m_Position.x * SIZE_X, -SIZE_Y, c.m_Position.y * SIZE_Z}, glm::vec3{c.m_Position.x * SIZE_X + SIZE_X, SIZE_Y, c.m_Position.y * SIZE_Z + SIZE_Z}}))
             c.Draw();
     }
 }

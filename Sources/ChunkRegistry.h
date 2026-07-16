@@ -12,24 +12,33 @@ namespace Sunset
     class Camera;
 }
 
-struct ChunkRegistry
+class ChunkRegistry : public Sunset::ScriptEntity
 {
-    static void Init(int seed, const std::string& folderName, uint8_t renderDistance = 16);
+public:
+    ChunkRegistry(int seed, const std::string& folderName, uint8_t renderDistance = 16);
 
-    static void Destroy();
+    Sunset::ReflectionType Properties() override;
 
-    static void SetRenderDistance(uint8_t renderDistance);
+    void OnUpdate(float dt) override;
 
-    static void UpdateWaterTime(float time);
+    void OnDraw() override;
 
-    static void UpdatePlayerPosition(const glm::vec3& position);
+    void OnEndPlay() override;
 
     [[nodiscard]]
-    static BlockId GetBlock(const glm::vec3& position);
+    BlockId GetBlock(const glm::vec3& position);
 
-    static bool SetBlock(const glm::vec3& position, BlockId blockId);
+    bool SetBlock(const glm::vec3& position, BlockId blockId);
 
-    static void DrawChunk(const Sunset::Camera& camera);
+    void DrawChunk(const Sunset::Camera& camera);
 
-    static void SaveChunk();
+private:
+    void UpdateWaterTime(float time);
+
+    void UpdatePlayerPosition(const glm::vec3& position);
+
+    void SaveChunk();
+
+public:
+    std::uint8_t m_RenderDistance = 16;
 };

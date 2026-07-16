@@ -10,6 +10,8 @@
 #define SIZE_Y 255
 #define SIZE_Z 16
 
+struct ChunkRegistry;
+
 namespace Sunset
 {
     class Drawable;
@@ -37,4 +39,6 @@ public:
 	std::unique_ptr<Sunset::Drawable> m_TransparentDrawable;
     bool bIsDirty = true;
     std::array<BlockId, SIZE_X * (SIZE_Y * 2) * SIZE_Z> m_Blocks;
+
+    ChunkRegistry* m_Registry;
 };
