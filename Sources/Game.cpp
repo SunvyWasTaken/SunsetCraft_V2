@@ -118,8 +118,6 @@ void GameLayer::OnUpdate(float dt)
     if (Sunset::NetworkService::IsInitialized())
         Sunset::NetworkService::Get().Update(dt);
 
-    GetGameInstance()->Update(dt);
-
     m_Inventory.Update(dt);
 
     glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();

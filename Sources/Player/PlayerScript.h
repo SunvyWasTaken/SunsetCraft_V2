@@ -11,7 +11,7 @@ class PlayerScript : public Sunset::ScriptEntity
 public:
     PlayerScript();
 
-    ~PlayerScript();
+    ~PlayerScript() override;
 
     Sunset::ReflectionType Properties() override;
 

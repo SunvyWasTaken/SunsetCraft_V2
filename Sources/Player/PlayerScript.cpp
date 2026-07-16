@@ -27,7 +27,6 @@ namespace
 PlayerScript::PlayerScript()
     : ScriptEntity()
 {
-    LOG("SunsetCraft", info, "Player Script Creation");
 }
 
 PlayerScript::~PlayerScript()
@@ -47,12 +46,12 @@ void PlayerScript::OnBeginPlay()
 {
     ScriptEntity::OnBeginPlay();
     Sunset::RenderCommande::ShowCursor(ShowMouseCursor);
-    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::W, PlayerAction::MoveForward);
-    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::S, PlayerAction::MoveBackward);
-    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::A, PlayerAction::MoveLeft);
-    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::D, PlayerAction::MoveRight);
-    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::E, PlayerAction::MoveUp);
-    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::Q, PlayerAction::MoveDown);
+    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::W, MoveForward);
+    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::S, MoveBackward);
+    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::A, MoveLeft);
+    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::D, MoveRight);
+    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::E, MoveUp);
+    GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::Q, MoveDown);
     GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::Escape, Pause);
 }
 
@@ -67,17 +66,17 @@ void PlayerScript::OnUpdate(float dt)
         return;
 
     glm::vec3 deltaPos{0, 0, 0};
-    if (input->IsActionDown(PlayerAction::MoveForward))
+    if (input->IsActionDown(MoveForward))
         deltaPos += transform->GetForwardVector();
-    if (input->IsActionDown(PlayerAction::MoveBackward))
+    if (input->IsActionDown(MoveBackward))
         deltaPos -= transform->GetForwardVector();
-    if (input->IsActionDown(PlayerAction::MoveLeft))
+    if (input->IsActionDown(MoveLeft))
         deltaPos -= transform->GetRightVector();
-    if (input->IsActionDown(PlayerAction::MoveRight))
+    if (input->IsActionDown(MoveRight))
         deltaPos += transform->GetRightVector();
-    if (input->IsActionDown(PlayerAction::MoveUp))
+    if (input->IsActionDown(MoveUp))
         deltaPos += glm::vec3(0, 1, 0);
-    if (input->IsActionDown(PlayerAction::MoveDown))
+    if (input->IsActionDown(MoveDown))
         deltaPos += glm::vec3(0, -1, 0);
 
     if (glm::length(deltaPos) > 0)
