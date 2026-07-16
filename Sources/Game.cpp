@@ -14,7 +14,7 @@
 #include "Overlay.h"
 #include "WorldParam.h"
 #include "Core/Application.h"
-#include "Core/ApplicationSetting.h"
+#include "Core/WindowSetting.h"
 #include "Core/GameInstance.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/InputComponent.h"
@@ -135,7 +135,7 @@ void GameLayer::OnDraw()
     m_Sky.Draw();
 }
 
-bool GameLayer::OnEvent(Sunset::Event::Type &event)
+bool GameLayer::OnEvent(const Sunset::Event::Type &event)
 {
     SS_PROFILE_FUNCTION();
     Layer::OnEvent(event);

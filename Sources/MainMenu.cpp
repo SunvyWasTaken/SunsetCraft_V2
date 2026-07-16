@@ -10,7 +10,7 @@
 #include "Button.h"
 #include "Game.h"
 #include "Core/Application.h"
-#include "Core/ApplicationSetting.h"
+#include "Core/WindowSetting.h"
 #include "Network/NetworkService.h"
 #include "../SunsetEngine/Engine/Render/Resources/Texture.h"
 #include "Image.h"
@@ -185,7 +185,7 @@ void MainMenu::OnDraw()
     // ImGui::End();
 }
 
-bool MainMenu::OnEvent(Sunset::Event::Type & event)
+bool MainMenu::OnEvent(const Sunset::Event::Type & event)
 {
     Layer::OnEvent(event);
 

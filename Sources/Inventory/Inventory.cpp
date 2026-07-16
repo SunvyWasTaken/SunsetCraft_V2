@@ -9,7 +9,7 @@
 #include "HorizontalBox.h"
 #include "Image.h"
 #include "Core/Application.h"
-#include "Core/ApplicationSetting.h"
+#include "Core/WindowSetting.h"
 #include "Overlay.h"
 #include "Registry/ItemRegistry.h"
 #include "../../SunsetEngine/Engine/Render/Core/RenderCommand.h"
