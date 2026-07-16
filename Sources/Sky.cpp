@@ -6,10 +6,10 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
-#include "../SunsetEngine/Engine/Render/Resources/Drawable.h"
-#include "../SunsetEngine/Engine/Render/Resources/Material.h"
-#include "../SunsetEngine/Engine/Render/Core/RenderCommand.h"
-#include "../SunsetEngine/Engine/Render/Backend/Shader.h"
+#include "Render/Resources/Drawable.h"
+#include "Render/Resources/Material.h"
+#include "Render/Core/RenderCommand.h"
+#include "Render/Core/Shader.h"
 #include "Render/BufferObject/Buffers.h"
 #include "Render/BufferObject/VertexArray.h"
 #include "Render/Meshes/Mesh.h"
