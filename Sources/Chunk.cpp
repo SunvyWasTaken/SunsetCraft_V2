@@ -4,6 +4,8 @@
 
 #include "Chunk.h"
 
+#include <glm/ext/matrix_transform.hpp>
+
 #include "ChunkRegistry.h"
 #include "Registry/TextureRegistry.h"
 #include "../SunsetEngine/Engine/Render/Resources/Drawable.h"
@@ -70,10 +72,12 @@ Chunk::~Chunk()
 
 void Chunk::Draw() const
 {
-    Sunset::RenderCommand::Submit(*m_Drawable);
+    glm::mat4 model = glm::translate(glm::mat4{1.0f}, {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z});
+
+    Sunset::RenderCommand::Submit(*m_Drawable, model);
     if (m_TransparentDrawable->m_Material->m_Shader)
         m_TransparentDrawable->m_Material->Set("u_Time", WaterTime);
-	Sunset::RenderCommand::Submit(*m_TransparentDrawable);
+	Sunset::RenderCommand::Submit(*m_TransparentDrawable, model);
 }
 
 void Chunk::SetWaterTime(const float time)
@@ -166,7 +170,6 @@ void Chunk::BuildMesh()
         auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
         faceData.divisor = 1;
         m_Drawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(uint32_t), points.size(), {faceData});
-        m_Drawable->m_Position = {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
         m_Drawable->m_RenderState.DrawInstance = true;
         m_Drawable->m_RenderState.nbrInstance = 6;
         // m_Drawable->m_RenderState.wireframe = true;
@@ -186,7 +189,6 @@ void Chunk::BuildMesh()
         auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
         faceData.divisor = 1;
         m_TransparentDrawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(TBlocks.data(), sizeof(uint32_t), TBlocks.size(), {faceData});
-        m_TransparentDrawable->m_Position = {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
         m_TransparentDrawable->m_RenderState.DrawInstance = true;
         m_TransparentDrawable->m_RenderState.nbrInstance = 6;
         m_TransparentDrawable->m_RenderState.HasIndice = false;

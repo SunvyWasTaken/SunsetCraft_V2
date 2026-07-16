@@ -4,6 +4,8 @@
 
 #include "Sky.h"
 
+#include <glm/ext/matrix_transform.hpp>
+
 #include "../SunsetEngine/Engine/Render/Resources/Drawable.h"
 #include "../SunsetEngine/Engine/Render/Resources/Material.h"
 #include "../SunsetEngine/Engine/Render/Core/RenderCommand.h"
@@ -114,5 +116,6 @@ void SkyCubed::Update(const float deltaTime)
 
 void SkyCubed::Draw() const
 {
-    Sunset::RenderCommand::Submit(*m_Drawable);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    Sunset::RenderCommand::Submit(*m_Drawable, model);
 }
