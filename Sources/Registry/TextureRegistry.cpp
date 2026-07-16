@@ -6,7 +6,7 @@
 
 #include <stb_image.h>
 
-#include "Render/Texture.h"
+#include "../../SunsetEngine/Engine/Render/Resources/Texture.h"
 #include "Render/Image.h"
 
 namespace

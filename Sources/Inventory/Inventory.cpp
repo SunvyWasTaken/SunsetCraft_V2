@@ -12,8 +12,8 @@
 #include "Core/ApplicationSetting.h"
 #include "Overlay.h"
 #include "Registry/ItemRegistry.h"
-#include "Render/RenderCommande.h"
-#include "Render/Texture.h"
+#include "../../SunsetEngine/Engine/Render/Core/RenderCommand.h"
+#include "../../SunsetEngine/Engine/Render/Resources/Texture.h"
 
 Inventory::Inventory()
     : m_Inventory(nullptr)
@@ -156,7 +156,7 @@ void Inventory::SetShowInventory(bool show)
 void Inventory::ToggleShowInventory()
 {
     ShowInventory = !ShowInventory;
-    Sunset::RenderCommande::ShowCursor(ShowInventory);
+    Sunset::RenderCommand::ShowCursor(ShowInventory);
     SetShowInventory(ShowInventory);
 }
 

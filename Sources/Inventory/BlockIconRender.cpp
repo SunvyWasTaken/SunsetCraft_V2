@@ -9,7 +9,7 @@
 #include "Render/Image.h"
 #include "Log/Logger.h"
 
-#include "Render/Texture.h"
+#include "../../SunsetEngine/Engine/Render/Resources/Texture.h"
 
 namespace
 {

@@ -12,7 +12,7 @@
 #include "Core/Application.h"
 #include "Core/ApplicationSetting.h"
 #include "Network/NetworkService.h"
-#include "Render/Texture.h"
+#include "../SunsetEngine/Engine/Render/Resources/Texture.h"
 #include "Image.h"
 #include "Panel.h"
 #include "Text.h"

@@ -6,10 +6,10 @@
 
 #include "ChunkRegistry.h"
 #include "Registry/TextureRegistry.h"
-#include "Render/Drawable.h"
-#include "Render/Material.h"
-#include "Render/RenderCommande.h"
-#include "Render/Shader.h"
+#include "../SunsetEngine/Engine/Render/Resources/Drawable.h"
+#include "../SunsetEngine/Engine/Render/Resources/Material.h"
+#include "../SunsetEngine/Engine/Render/Core/RenderCommand.h"
+#include "../SunsetEngine/Engine/Render/Backend/Shader.h"
 #include "Render/BufferObject/Buffers.h"
 #include "Render/Meshes/Mesh.h"
 
@@ -70,10 +70,10 @@ Chunk::~Chunk()
 
 void Chunk::Draw() const
 {
-    Sunset::RenderCommande::Submit(*m_Drawable);
+    Sunset::RenderCommand::Submit(*m_Drawable);
     if (m_TransparentDrawable->m_Material->m_Shader)
         m_TransparentDrawable->m_Material->Set("u_Time", WaterTime);
-	Sunset::RenderCommande::Submit(*m_TransparentDrawable);
+	Sunset::RenderCommand::Submit(*m_TransparentDrawable);
 }
 
 void Chunk::SetWaterTime(const float time)

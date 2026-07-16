@@ -6,7 +6,7 @@
 
 #include "GameFramework/Components/InputComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
-#include "Render/RenderCommande.h"
+#include "../../SunsetEngine/Engine/Render/Core/RenderCommand.h"
 
 namespace
 {
@@ -45,7 +45,7 @@ Sunset::ReflectionType PlayerScript::Properties()
 void PlayerScript::OnBeginPlay()
 {
     ScriptEntity::OnBeginPlay();
-    Sunset::RenderCommande::ShowCursor(ShowMouseCursor);
+    Sunset::RenderCommand::ShowCursor(ShowMouseCursor);
     GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::W, MoveForward);
     GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::S, MoveBackward);
     GetComponent<Sunset::InputComponent>()->BindAction(Sunset::Key::A, MoveLeft);
@@ -90,7 +90,7 @@ void PlayerScript::OnUpdate(float dt)
     if (input->IsActionPressed(Pause))
     {
         ShowMouseCursor = !ShowMouseCursor;
-        Sunset::RenderCommande::ShowCursor(ShowMouseCursor);
+        Sunset::RenderCommand::ShowCursor(ShowMouseCursor);
     }
 }
 

@@ -25,8 +25,8 @@
 #include "Player/PlayerScript.h"
 #include "Registry/ItemRegistry.h"
 #include "Registry/RegistryLoader.h"
-#include "Render/RenderCommande.h"
-#include "Render/Texture.h"
+#include "../SunsetEngine/Engine/Render/Core/RenderCommand.h"
+#include "../SunsetEngine/Engine/Render/Resources/Texture.h"
 #include "SaveSystem/SaveSystem.h"
 
 namespace

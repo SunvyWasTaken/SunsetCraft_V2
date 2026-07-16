@@ -4,10 +4,10 @@
 
 #include "Sky.h"
 
-#include "Render/Drawable.h"
-#include "Render/Material.h"
-#include "Render/RenderCommande.h"
-#include "Render/Shader.h"
+#include "../SunsetEngine/Engine/Render/Resources/Drawable.h"
+#include "../SunsetEngine/Engine/Render/Resources/Material.h"
+#include "../SunsetEngine/Engine/Render/Core/RenderCommand.h"
+#include "../SunsetEngine/Engine/Render/Backend/Shader.h"
 #include "Render/BufferObject/Buffers.h"
 #include "Render/BufferObject/VertexArray.h"
 #include "Render/Meshes/Mesh.h"
@@ -114,5 +114,5 @@ void SkyCubed::Update(const float deltaTime)
 
 void SkyCubed::Draw() const
 {
-    Sunset::RenderCommande::Submit(*m_Drawable);
+    Sunset::RenderCommand::Submit(*m_Drawable);
 }
