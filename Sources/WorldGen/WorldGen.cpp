@@ -8,6 +8,7 @@
 #include "HeightGen.h"
 #include "LandGen.h"
 #include "OreGen.h"
+#include "TreeGen.h"
 #include "WaterGen.h"
 #include "../Chunk.h"
 #include "../Noise.h"
@@ -27,16 +28,17 @@ GeneratedChunk::GeneratedChunk(const glm::ivec2 pos)
 
 void WorldGen::Init(const int seed)
 {
-    LOG("SunsetCraft", trace, "WorldGen Init");
+    LOG("SunsetCraft", info, "WorldGen Init");
     Seed = seed;
     Noise::Init(Seed);
 
     // WorldGenLayout.emplace_back(std::make_unique<HaloGen>());
     WorldGenLayout.emplace_back(std::make_unique<HeightGen>());
     WorldGenLayout.emplace_back(std::make_unique<LandGen>());
-    WorldGenLayout.emplace_back(std::make_unique<OreGen>());
     WorldGenLayout.emplace_back(std::make_unique<WaterGen>());
+    WorldGenLayout.emplace_back(std::make_unique<TreeGen>());
     WorldGenLayout.emplace_back(std::make_unique<CaveGen>());
+    WorldGenLayout.emplace_back(std::make_unique<OreGen>());
     // todo : Continue Biome.
 }
 
