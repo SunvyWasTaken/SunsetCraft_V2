@@ -1,6 +1,6 @@
 # SunsetCraft V2
 
-> Prototype voxel C++/OpenGL inspiré de Minecraft, développé pour expérimenter la génération de monde, le rendu et l'intégration progressive avec SunsetEngine.
+> Prototype voxel en C++/OpenGL inspiré de Minecraft, développé pour expérimenter la génération de monde, le rendu et l'intégration progressive avec SunsetEngine.
 
 ![Status](https://img.shields.io/badge/status-prototype-orange)
 ![Language](https://img.shields.io/badge/C%2B%2B-20-blue)
@@ -8,12 +8,14 @@
 ![Graphics](https://img.shields.io/badge/graphics-OpenGL-success)
 
 ---
+## Aperçu
 
 ![Game screenshot](Resources/ScreenShot/Game_10.06.26.png)
 ![Game screenshot](Resources/ScreenShot/Game_18.06.26.png)
 ![Game screenshot](Resources/ScreenShot/Game_19.06.26.png)
 ![Game screenshot](Resources/ScreenShot/Game_20.06.26.png)
 ![Game screenshot](Resources/ScreenShot/Game_21.06.26.png)
+![Game screenshot](Resources/ScreenShot/Game_17.7.26.png)
 
 ---
 
@@ -29,43 +31,52 @@ SunsetCraft V2 est une réécriture de [SunsetCraft](https://github.com/SunvyWas
 
 ---
 
-## Fonctionnalités actuelles
+## Fonctionnalités actuellement présentes
 
-- Menu principal avec les actions `Play` et `Quit`.
-- Lancement d'une partie locale depuis le menu, avec hébergement ENet sur le port `7777`.
-- Exécutable serveur headless `SunsetCraftV2_Server` disponible via CMake.
-- Génération de chunks autour de la position du joueur, avec chargement/déchargement selon la distance de rendu.
+- Menu principal avec les actions `Play`, `New World` et `Quit`.
+- Création/chargement d'un monde local avec sauvegarde du paramètre de monde dans `GameSaved.bin`.
+- Génération de chunks autour de la position du joueur.
+- Chargement/déchargement des chunks selon la distance de rendu.
 - Génération asynchrone des chunks sur plusieurs threads.
-- Génération de terrain à partir de plusieurs couches `FastNoiseSIMD`.
-- Passes de génération pour le relief, la surface, l'eau, les minerais et les caves.
-- Blocs et items chargés depuis les fichiers JSON du dossier `Save`.
-- Rendu OpenGL des chunks, du ciel, de l'eau transparente/animée et de l'interface.
-- Inventaire et barre rapide, avec sélection à la molette.
-- Placement et destruction de blocs avec le raycast caméra.
-- Éditeur ImGui `Parameter` pour :
-  - changer ou randomiser la seed ;
-  - modifier la distance de rendu ;
-  - ajouter et sélectionner des couches de bruit ;
-  - choisir le type de bruit ;
-  - régler les octaves, la fréquence et l'amplitude ;
-  - éditer une courbe de remapping des valeurs de bruit ;
-  - sauvegarder et charger des presets de bruit JSON.
-- Ancienne couche de test réseau avec chat ImGui conservée dans le code, mais non branchée sur le flux de jeu principal.
+- Sauvegarde périodique des chunks modifiés et restauration depuis les fichiers de sauvegarde.
+- Sauvegarde/restauration de la dernière position du joueur.
+- Génération de terrain à partir de couches `FastNoiseSIMD` chargées depuis `NoiseData.json`.
+- Passes de génération pour la hauteur, la surface, l'eau, les arbres, les caves et les minerais.
+- Registres de blocs et d'items chargés depuis les fichiers JSON du dossier `Save`.
+- Rendu OpenGL des chunks avec frustum culling.
+- Rendu du ciel et animation temporelle de l'eau.
+- Interface en jeu avec viseur, inventaire et barre rapide.
+- Déplacement libre du joueur avec caméra à la première personne.
+- Initialisation d'un hôte ENet local au lancement d'une partie, utilisé comme base de travail réseau.
 
 ---
 
 ## État du projet
 
-Le projet est un prototype en développement actif. Une partie peut être lancée depuis le menu et le monde se génère autour du joueur, mais plusieurs systèmes restent incomplets.
+Le projet est un prototype en développement actif. Les points suivants sont volontairement indiqués pour éviter de présenter le projet comme plus avancé qu'il ne l'est :
 
-À savoir :
+- le gameplay est encore orienté exploration et validation technique ;
+- la pose/destruction de blocs par clic est présente dans le code, mais actuellement désactivée dans le flux de jeu ;
+- l'éditeur ImGui de génération n'est pas branché dans cette version ;
+- l'ancienne fenêtre de test réseau/chat existe encore dans le code, mais n'est pas intégrée au parcours principal ;
+- le multijoueur complet et la réplication du monde ne sont pas encore implémentés ;
+- l'exécutable serveur headless n'est pas généré par le CMake actuel ;
+- la distance de rendu est réduite automatiquement en configuration Debug afin de faciliter les tests ;
+- certains systèmes restent expérimentaux et peuvent évoluer rapidement.
 
-- le bouton `Play` démarre une session locale et charge directement le jeu ;
-- il n'y a plus de boutons `Start Server` / `Join Server` dans le menu principal ;
-- la réplication complète du monde en multijoueur n'est pas encore implémentée ;
-- l'exécutable headless héberge une session locale, mais le gameplay reste orienté prototype ;
-- les arbres sont présents dans le code de génération, mais leur placement est actuellement désactivé ;
-- le fichier de bruit chargé par défaut est `NoiseData.json` dans le chemin de sauvegarde configuré par SunsetEngine.
+---
+
+## Contrôles
+
+| Action                      | Touche  |
+|-----------------------------|:-------:|
+| Avancer                     |   `W`   |
+| Reculer                     |   `S`   |
+| Aller à gauche              |   `A`   |
+| Aller à droite              |   `D`   |
+| Monter                      |   `E`   |
+| Descendre                   |   `Q`   |
+| Afficher/masquer le curseur | `Échap` |
 
 ---
 
@@ -97,9 +108,9 @@ Avant de compiler, installez :
 - Git ;
 - vcpkg ;
 - les dépendances graphiques nécessaires à OpenGL sur votre système ;
-- Visual Studio, CLion ou un autre IDE CMake si vous préférez travailler avec une interface graphique.
+- Visual Studio, CLion ou un autre IDE compatible CMake si vous préférez travailler avec une interface graphique.
 
-> Sur Windows, Visual Studio 2022 avec la charge de travail C++ est recommandé. CLion fonctionne aussi correctement avec CMake et vcpkg.
+> Sur Windows, Visual Studio avec la charge de travail C++ est recommandé.
 
 ---
 
@@ -118,10 +129,9 @@ Si le projet a été cloné sans le sous-module [`SunsetEngine`](https://github.
 git submodule update --init --recursive
 ```
 
-### 2. Installer ou préparer vcpkg
+### 2. Préparer vcpkg
 
-Suivez la documentation officielle Microsoft :
-[Get started with vcpkg](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started-vs?pivots=shell-cmd).
+Suivez la documentation officielle Microsoft : [Get started with vcpkg](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started-vs?pivots=shell-cmd).
 
 Exemple d'installation locale à côté du projet :
 

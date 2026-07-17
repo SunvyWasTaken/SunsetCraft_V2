@@ -12,6 +12,7 @@
 #include "ChunkRegistry.h"
 #include "Image.h"
 #include "Overlay.h"
+#include "RaycastHit.h"
 #include "WorldParam.h"
 #include "Core/Application.h"
 #include "Core/WindowSetting.h"
@@ -147,51 +148,51 @@ bool GameLayer::OnEvent(const Sunset::Event::Type &event)
 
     GetGameInstance()->m_ActiveWorld->OnEvent(event);
 
-    // if (auto* mouseEvent = std::get_if<Sunset::Event::MouseEvent>(&event))
-    // {
-    //     if (mouseEvent->Scroll != 0)
-    //     {
-    //         currentSelectItem -= mouseEvent->Scroll;
-    //         if (currentSelectItem < 0)
-    //             currentSelectItem = 8;
-    //         else if (currentSelectItem >= 9)
-    //             currentSelectItem = 0;
-    //
-    //         m_Inventory.SetSelectedSlot(currentSelectItem);
-    //         return true;
-    //     }
-    //
-    //     if (mouseEvent->action == Sunset::Event::Action::Press)
-    //     {
-    //         RaycastHit hit;
-    //         if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
-    //         {
-    //             glm::vec3 start = cam->camera.GetPosition();
-    //             glm::vec3 forward = cam->camera.GetForward();
-    //
-    //             LineTrace(hit, start, forward, 10);
-    //             if (!hit)
-    //                 return false;
-    //
-    //             const glm::vec3 target = hit.blockPose + hit.hitNormal;
-    //
-    //             if (mouseEvent->button == 1)
-    //             {
-    //                 if (!m_Inventory.getSlot(currentSelectItem).Empty())
-    //                 {
-    //                     ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_Inventory.getSlot(currentSelectItem).id).blockId);
-    //                     // m_Inventory.getSlot(currentSelectItem).count--;
-    //                     // if (m_Inventory.getSlot(currentSelectItem).count <= 0)
-    //                     // {
-    //                     //     m_Inventory.getSlot(currentSelectItem) = {Item::null, 0};
-    //                     // }
-    //                 }
-    //             }
-    //             else if (mouseEvent->button == 0)
-    //                 ChunkRegistry::SetBlock(hit.blockPose, BlockRegistry::AIR);
-    //         }
-    //         return true;
-    //     }
-    // }
+    if (auto* mouseEvent = std::get_if<Sunset::Event::MouseScroll>(&event))
+    {
+        if (mouseEvent->offset.y != 0)
+        {
+            currentSelectItem -= mouseEvent->offset.y;
+            if (currentSelectItem < 0)
+                currentSelectItem = 8;
+            else if (currentSelectItem >= 9)
+                currentSelectItem = 0;
+
+            m_Inventory.SetSelectedSlot(currentSelectItem);
+            return true;
+        }
+
+        // if (mouseEvent->action == Sunset::Event::Action::Press)
+        // {
+        //     RaycastHit hit;
+        //     if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
+        //     {
+        //         glm::vec3 start = cam->camera.GetPosition();
+        //         glm::vec3 forward = cam->camera.GetForward();
+        //
+        //         LineTrace(hit, start, forward, 10);
+        //         if (!hit)
+        //             return false;
+        //
+        //         const glm::vec3 target = hit.blockPose + hit.hitNormal;
+        //
+        //         if (mouseEvent->button == 1)
+        //         {
+        //             if (!m_Inventory.getSlot(currentSelectItem).Empty())
+        //             {
+        //                 ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_Inventory.getSlot(currentSelectItem).id).blockId);
+        //                 // m_Inventory.getSlot(currentSelectItem).count--;
+        //                 // if (m_Inventory.getSlot(currentSelectItem).count <= 0)
+        //                 // {
+        //                 //     m_Inventory.getSlot(currentSelectItem) = {Item::null, 0};
+        //                 // }
+        //             }
+        //         }
+        //         else if (mouseEvent->button == 0)
+        //             ChunkRegistry::SetBlock(hit.blockPose, BlockRegistry::AIR);
+        //     }
+        //     return true;
+        // }
+    }
     return false;
 }
