@@ -69,15 +69,17 @@ Inventory::Inventory()
     IndicatorTexture = std::make_unique<Sunset::Texture>();
     IndicatorTexture->LoadImage(RESOURCES "Textures/gui/hotbar_selection.png");
 
-    const glm::ivec2 WinSize = Sunset::Application::GetSetting().WindowSize;
+    const glm::ivec2 HotBarSize{728, 88};
 
     std::shared_ptr<SRmGUI::HorizontalBox> HotBar = nullptr;
     SRmGUI::SNewAssign<SRmGUI::Overlay>(m_Toolbar)
-        .Position({(WinSize.x/2)-364, WinSize.y-88})
-        .Size({728, 88})
+        .Position({-(HotBarSize.x/2), -HotBarSize.y})
+        .Anchors({0.5, 1}, {0.5, 1})
+        .Size(HotBarSize)
         .Child(
             SRmGUI::SNew<SRmGUI::Image>()
             .Image(HotBarTexture->GetId())
+            .Fill()
         )
         .Child(
             SRmGUI::SNewAssign<SRmGUI::HorizontalBox>(HotBar)

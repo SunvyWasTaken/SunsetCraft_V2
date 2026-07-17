@@ -75,7 +75,11 @@ void GameLayer::Init()
     player.AddComponent<Sunset::CameraComponent>().Activate(true);
     player.AddComponent<Sunset::InputComponent>();
     player.AddComponent<Sunset::NativeScriptComponent>().Bind<PlayerScript>();
-    player.GetComponent<Sunset::NativeScriptComponent>()->Bind<ChunkRegistry>(m_Param.seed, m_Param.Name);
+    std::uint8_t renderDistance = 16;
+#ifndef NDEBUG
+    renderDistance = 2;
+#endif
+    player.GetComponent<Sunset::NativeScriptComponent>()->Bind<ChunkRegistry>(m_Param.seed, m_Param.Name, renderDistance);
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
 
@@ -88,7 +92,7 @@ void GameLayer::Init()
     }
 
     std::shared_ptr<SRmGUI::Panel> panel = nullptr;
-    SRmGUI::SNewAssign(panel);
+    SRmGUI::SNewAssign(panel).Fill();
 
     glm::ivec2 winSize = Sunset::Application::GetSetting().WindowSize;
 
@@ -100,7 +104,8 @@ void GameLayer::Init()
 
     std::shared_ptr<SRmGUI::Image> cross = nullptr;
     SRmGUI::SNewAssign(cross)
-        .Position(glm::vec2{winSize.x / 2 - crossHalfSize.x, winSize.y / 2 - crossHalfSize.y})
+        .Position({0, 0})
+        .Anchors({0.5f, 0.5f}, {0.5f, 0.5f})
         .Size(crossSize)
         .Image(crosshairTex->GetId());
 
