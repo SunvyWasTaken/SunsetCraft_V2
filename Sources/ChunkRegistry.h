@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "GameFramework/System/IWorldSystem.h"
 #include "GameFramework/World/ScriptEntity.h"
 #include "Registry/BlockRegistry.h"
 
@@ -12,18 +13,18 @@ namespace Sunset
     class Camera;
 }
 
-class ChunkRegistry : public Sunset::ScriptEntity
+class ChunkRegistry : public Sunset::Component
 {
 public:
     ChunkRegistry(int seed, const std::string& folderName, uint8_t renderDistance = 16);
 
     Sunset::ReflectionType Properties() override;
 
-    void OnUpdate(float dt) override;
+    void Update(float dt);
 
-    void OnDraw() override;
+    void OnDraw();
 
-    void OnEndPlay() override;
+    void OnEndPlay();
 
     [[nodiscard]]
     BlockId GetBlock(const glm::vec3& position);
@@ -41,4 +42,10 @@ private:
 
 public:
     std::uint8_t m_RenderDistance = 16;
+};
+
+struct ChunkRegistrySystem : public Sunset::IWorldSystem
+{
+    using IWorldSystem::IWorldSystem;
+    void Update(float dt);
 };

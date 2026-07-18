@@ -4,15 +4,12 @@
 
 #include "Game.h"
 
-#include <imgui.h>
 #include <random>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Registry/BlockRegistry.h"
 #include "ChunkRegistry.h"
 #include "Image.h"
 #include "Overlay.h"
-#include "RaycastHit.h"
 #include "WorldParam.h"
 #include "Core/Application.h"
 #include "Core/WindowSetting.h"
@@ -26,8 +23,7 @@
 #include "Player/PlayerScript.h"
 #include "Registry/ItemRegistry.h"
 #include "Registry/RegistryLoader.h"
-#include "../SunsetEngine/Engine/Render/Core/RenderCommand.h"
-#include "../SunsetEngine/Engine/Render/Resources/Texture.h"
+#include "Render/Resources/Texture.h"
 #include "SaveSystem/SaveSystem.h"
 
 namespace
@@ -67,6 +63,8 @@ void GameLayer::Init()
 {
     Layer::Init();
 
+    GetWorld()->AddSystem<ChunkRegistrySystem>();
+
     player = GetGameInstance()->m_ActiveWorld->CreateEntity("Player");
     player.AddComponent<Sunset::TransformComponent>();
     if (glm::vec3 playerStartPosition; Sunset::SaveSystem::Load(SAVE_PATH + m_Param.Name + "/PlayerData.bin", playerStartPosition))
@@ -80,7 +78,7 @@ void GameLayer::Init()
 #ifndef NDEBUG
     renderDistance = 2;
 #endif
-    player.GetComponent<Sunset::NativeScriptComponent>()->Bind<ChunkRegistry>(m_Param.seed, m_Param.Name, renderDistance);
+    player.AddComponent<ChunkRegistry>(m_Param.seed, m_Param.Name, renderDistance);
 
     constexpr glm::vec4 color{245.f/255.f, 71.f/255.f, 123.f/255.f, 1.f};
 
@@ -128,6 +126,8 @@ void GameLayer::OnUpdate(float dt)
 
     glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
 
+    PRINTSCREEN("Loc : {}", loc);
+
     if (prevSelectItem != currentSelectItem)
     {
         prevSelectItem = currentSelectItem;
@@ -139,6 +139,8 @@ void GameLayer::OnDraw()
     SS_PROFILE_FUNCTION();
     Layer::OnDraw();
     m_Sky.Draw();
+    auto* chunk = player.GetComponent<ChunkRegistry>();
+    chunk->OnDraw();
 }
 
 bool GameLayer::OnEvent(const Sunset::Event::Type &event)
@@ -161,38 +163,6 @@ bool GameLayer::OnEvent(const Sunset::Event::Type &event)
             m_Inventory.SetSelectedSlot(currentSelectItem);
             return true;
         }
-
-        // if (mouseEvent->action == Sunset::Event::Action::Press)
-        // {
-        //     RaycastHit hit;
-        //     if (const auto* cam = player.GetComponent<Sunset::CameraComponent>())
-        //     {
-        //         glm::vec3 start = cam->camera.GetPosition();
-        //         glm::vec3 forward = cam->camera.GetForward();
-        //
-        //         LineTrace(hit, start, forward, 10);
-        //         if (!hit)
-        //             return false;
-        //
-        //         const glm::vec3 target = hit.blockPose + hit.hitNormal;
-        //
-        //         if (mouseEvent->button == 1)
-        //         {
-        //             if (!m_Inventory.getSlot(currentSelectItem).Empty())
-        //             {
-        //                 ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_Inventory.getSlot(currentSelectItem).id).blockId);
-        //                 // m_Inventory.getSlot(currentSelectItem).count--;
-        //                 // if (m_Inventory.getSlot(currentSelectItem).count <= 0)
-        //                 // {
-        //                 //     m_Inventory.getSlot(currentSelectItem) = {Item::null, 0};
-        //                 // }
-        //             }
-        //         }
-        //         else if (mouseEvent->button == 0)
-        //             ChunkRegistry::SetBlock(hit.blockPose, BlockRegistry::AIR);
-        //     }
-        //     return true;
-        // }
     }
     return false;
 }
