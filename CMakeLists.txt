@@ -18,13 +18,22 @@ file(GLOB_RECURSE SUNSETCRAFT_SOURCES CONFIGURE_DEPENDS
 
 list(FILTER SUNSETCRAFT_SOURCES EXCLUDE REGEX ".*/Sources/main\\.cpp$")
 
-add_library(${PROJECT_NAME} STATIC ${SUNSETCRAFT_SOURCES})
+add_library(${PROJECT_NAME} MODULE ${SUNSETCRAFT_SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/Sources
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC SunsetEngine)
+target_link_libraries(SunsetCraft PRIVATE
+        Sunset::Engine
+)
+
+set_target_properties(SunsetCraft PROPERTIES
+        PREFIX ""
+        OUTPUT_NAME "SunsetCraft"
+)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC Sunset::Runtime)
 
 if(PRODUCTION_BUILD)
     target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"./Sources/Shaders/\")
@@ -40,10 +49,6 @@ endif()
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32 winmm)
 endif()
-
-target_link_libraries(${PROJECT_NAME} PUBLIC
-        SunsetEngine
-)
 
 ## SunsetCraft Server
 
