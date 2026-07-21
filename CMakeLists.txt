@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.28)
 #basically this will change the RESOURCES_PATH to be the local path
 #! ! ! ! ! ! !
 #delete the out folder after changing if visual studio doesn't recognize the change
-set(PRODUCTION_BUILD OFF CACHE BOOL "Make this a production build" FORCE)
+set(PRODUCTION_BUILD ON CACHE BOOL "Make this a production build" FORCE)
 
 project(SunsetCraft)
 
@@ -37,7 +37,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 target_link_libraries(${PROJECT_NAME} PRIVATE glad::glad)
 
 if(PRODUCTION_BUILD)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"./Sources/Shaders/\")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"./Shaders/\")
     target_compile_definitions(${PROJECT_NAME} PUBLIC RESOURCES=\"./Resources/\")
 else()
     target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"${CMAKE_SOURCE_DIR}/Sources/Shaders/\")
