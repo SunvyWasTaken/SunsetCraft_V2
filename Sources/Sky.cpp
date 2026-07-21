@@ -121,6 +121,7 @@ void SkyCubed::Draw() const
     if (m_Drawable->m_Material->m_Shader)
     {
         m_Drawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
+        m_Drawable->m_Material->Set("u_CloudTime", DayNightCycle::GetRenderTime());
         m_Drawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
     }
     Sunset::RenderCommand::Submit(*m_Drawable, model);

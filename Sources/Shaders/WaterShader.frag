@@ -12,6 +12,7 @@ uniform sampler2D u_ShadowMap;
 uniform float u_Time;
 uniform vec3 u_CameraPos;
 uniform float u_TimeOfDay;
+uniform float u_CloudTime;
 uniform vec3 u_SunDirection;
 uniform mat4 u_LightSpaceMatrix;
 uniform int u_ShadowsEnabled;
@@ -92,6 +93,8 @@ vec3 AmbientColor()
     return mix(mix(nightAmbient, dayAmbient, day), duskAmbient, warm * 0.7);
 }
 
+float Fbm(vec2 p);
+
 vec3 SkyColor(vec3 dir)
 {
     float day = DayAmount();
@@ -109,6 +112,28 @@ vec3 SkyColor(vec3 dir)
     vec3 dayColor = mix(dayBottom, dayTop, t);
     vec3 duskColor = mix(duskBottom, duskTop, t);
     return mix(mix(nightColor, dayColor, day), duskColor, dusk * (1.0 - t));
+}
+
+float ReflectionCloudDensity(vec3 dir)
+{
+    if (dir.y <= 0.02)
+        return 0.0;
+
+    vec2 wind = vec2(u_CloudTime * 0.010, u_CloudTime * 0.006);
+    vec2 p = dir.xz / max(dir.y, 0.08);
+    float lower = smoothstep(0.58, 0.95, Fbm(p * 0.72 + wind));
+    float middle = smoothstep(0.64, 0.96, Fbm(p * 0.78 + wind * 1.7 + vec2(4.0, -2.0)));
+
+    return clamp(lower * 0.70 + middle * 0.30, 0.0, 1.0) * smoothstep(0.03, 0.22, dir.y);
+}
+
+vec3 CloudReflectionColor(vec3 dir, vec3 skyColor)
+{
+    float density = ReflectionCloudDensity(dir);
+    vec3 cloudColor = mix(vec3(0.50, 0.56, 0.68), vec3(1.0, 0.96, 0.88), DayAmount());
+    cloudColor = mix(cloudColor, SunColor(), DawnDuskAmount() * 0.25);
+
+    return mix(skyColor, cloudColor, density * 0.85);
 }
 
 vec3 MoonColor()
@@ -165,6 +190,57 @@ float ShadowAmount(vec3 worldPos, vec3 normal, vec3 lightDir)
     return shadow / 9.0;
 }
 
+float Hash(vec2 p)
+{
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float Noise(vec2 p)
+{
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    return mix(
+        mix(Hash(i + vec2(0.0, 0.0)), Hash(i + vec2(1.0, 0.0)), u.x),
+        mix(Hash(i + vec2(0.0, 1.0)), Hash(i + vec2(1.0, 1.0)), u.x),
+        u.y);
+}
+
+float Fbm(vec2 p)
+{
+    float value = 0.0;
+    float amplitude = 0.5;
+
+    for (int i = 0; i < 4; ++i)
+    {
+        value += Noise(p) * amplitude;
+        p = p * 2.03 + vec2(17.7, 9.2);
+        amplitude *= 0.5;
+    }
+
+    return value;
+}
+
+float CloudShadow(vec3 worldPos, vec3 lightDir)
+{
+    if (lightDir.y <= 0.05)
+        return 0.0;
+
+    float cloudHeight = 128.0;
+    float travel = max((cloudHeight - worldPos.y) / lightDir.y, 0.0);
+    vec2 cloudPos = (worldPos + lightDir * travel).xz;
+    vec2 wind = vec2(u_CloudTime * 0.010, u_CloudTime * 0.006);
+
+    float lower = smoothstep(0.56, 0.92, Fbm(cloudPos * 0.0072 + wind));
+    float middle = smoothstep(0.62, 0.94, Fbm(cloudPos * 0.0105 + wind * 1.7 + vec2(4.0, -2.0)));
+    float density = clamp(lower * 0.65 + middle * 0.35, 0.0, 1.0);
+
+    return density * DayAmount() * smoothstep(0.05, 0.30, lightDir.y);
+}
+
 float NoiseFoam(vec2 p)
 {
     float a = sin(p.x * 8.0 + u_Time * 1.7) * sin(p.y * 7.0 - u_Time * 1.3);
@@ -191,9 +267,10 @@ void main()
 
     float diffuse = max(dot(normal, lightDir), 0.0) * sunVisibility;
     float shadow = ShadowAmount(FragWorldPos, normal, lightDir) * sunVisibility;
+    float cloudShadow = CloudShadow(FragWorldPos, lightDir);
 
     vec3 halfDir = normalize(lightDir + viewDir);
-    float specular = pow(max(dot(normal, halfDir), 0.0), 96.0) * 0.45 * sunVisibility * (1.0 - shadow);
+    float specular = pow(max(dot(normal, halfDir), 0.0), 96.0) * 0.45 * sunVisibility * (1.0 - shadow) * mix(1.0, 0.82, cloudShadow);
 
     vec3 moonDir = normalize(-u_SunDirection);
     float moonVisibility = smoothstep(-0.05, 0.35, moonDir.y);
@@ -212,7 +289,7 @@ void main()
     vec3 waterColor = mix(shallowColor, deepColor, depthFactor);
 
     vec3 reflectionDir = reflect(-viewDir, normal);
-    vec3 reflectedSky = SkyColor(reflectionDir);
+    vec3 reflectedSky = CloudReflectionColor(reflectionDir, SkyColor(reflectionDir));
     float reflectionStrength = mix(0.18, 0.72, fresnel) * surface;
     waterColor = mix(waterColor, reflectedSky, reflectionStrength);
 
@@ -224,7 +301,7 @@ void main()
     refractedLight = smoothstep(0.72, 1.0, refractedLight * 0.5 + 0.5);
 
     waterColor += refractedLight * vec3(0.07, 0.16, 0.18) * (1.0 - depthFactor) * (0.6 + underwater * 0.6);
-    waterColor *= AmbientColor() + SunColor() * diffuse * mix(1.0, 0.35, shadow) + MoonColor() * moonDiffuse;
+    waterColor *= AmbientColor() + SunColor() * diffuse * mix(1.0, 0.35, shadow) * mix(1.0, 0.82, cloudShadow) + MoonColor() * moonDiffuse;
     waterColor += SunColor() * specular + MoonColor() * moonSpecular;
 
     float edgeDistance = min(min(FragUv.x, 1.0 - FragUv.x), min(FragUv.y, 1.0 - FragUv.y));

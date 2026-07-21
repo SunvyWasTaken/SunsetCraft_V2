@@ -156,6 +156,7 @@ void Chunk::Draw(const ShadowRenderData& shadowData) const
     if (m_Drawable->m_Material->m_Shader)
     {
         m_Drawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
+        m_Drawable->m_Material->Set("u_CloudTime", DayNightCycle::GetRenderTime());
         m_Drawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
         m_Drawable->m_Material->Set("u_LightSpaceMatrix", shadowData.lightSpaceMatrix);
         m_Drawable->m_Material->Set("u_ShadowMap", shadowData.textureUnit);
@@ -167,6 +168,7 @@ void Chunk::Draw(const ShadowRenderData& shadowData) const
     {
         m_TransparentDrawable->m_Material->Set("u_Time", WaterTime);
         m_TransparentDrawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
+        m_TransparentDrawable->m_Material->Set("u_CloudTime", DayNightCycle::GetRenderTime());
         m_TransparentDrawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
         m_TransparentDrawable->m_Material->Set("u_LightSpaceMatrix", shadowData.lightSpaceMatrix);
         m_TransparentDrawable->m_Material->Set("u_ShadowMap", shadowData.textureUnit);

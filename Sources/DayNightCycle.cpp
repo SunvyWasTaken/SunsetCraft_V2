@@ -11,6 +11,7 @@
 namespace
 {
     float TimeOfDay = 12.0f;
+    float RenderTime = 0.0f;
     bool bAutoCycle = true;
     float TimeScale = 0.04f;
 
@@ -27,6 +28,8 @@ namespace
 
 void DayNightCycle::Update(const float dt)
 {
+    RenderTime += dt;
+
     if (!bAutoCycle)
         return;
 
@@ -51,6 +54,11 @@ bool& DayNightCycle::AutoCycle()
 float& DayNightCycle::CycleSpeed()
 {
     return TimeScale;
+}
+
+float DayNightCycle::GetRenderTime()
+{
+    return RenderTime;
 }
 
 glm::vec3 DayNightCycle::GetSunDirection()

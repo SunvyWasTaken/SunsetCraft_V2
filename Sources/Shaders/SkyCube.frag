@@ -3,6 +3,7 @@
 in vec3 worldPos;
 
 uniform float u_TimeOfDay;
+uniform float u_CloudTime;
 uniform vec3 u_SunDirection;
 
 out vec4 FragColor;
@@ -32,6 +33,78 @@ vec3 MoonColor()
     return vec3(0.72, 0.82, 1.00);
 }
 
+float Hash(vec2 p)
+{
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float Noise(vec2 p)
+{
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    return mix(
+        mix(Hash(i + vec2(0.0, 0.0)), Hash(i + vec2(1.0, 0.0)), u.x),
+        mix(Hash(i + vec2(0.0, 1.0)), Hash(i + vec2(1.0, 1.0)), u.x),
+        u.y);
+}
+
+float Fbm(vec2 p)
+{
+    float value = 0.0;
+    float amplitude = 0.5;
+
+    for (int i = 0; i < 5; ++i)
+    {
+        value += Noise(p) * amplitude;
+        p = p * 2.03 + vec2(17.7, 9.2);
+        amplitude *= 0.5;
+    }
+
+    return value;
+}
+
+float CloudLayer(vec2 p, float scale, float threshold)
+{
+    float base = Fbm(p * scale);
+    float detail = Fbm(p * scale * 3.1 + vec2(11.0, -7.0)) * 0.35;
+    return smoothstep(threshold, 1.0, base + detail);
+}
+
+vec4 VolumetricClouds(vec3 skyDir, vec3 baseSkyColor)
+{
+    if (skyDir.y <= 0.02)
+        return vec4(baseSkyColor, 0.0);
+
+    vec2 wind = vec2(u_CloudTime * 0.010, u_CloudTime * 0.006);
+    vec2 p = skyDir.xz / max(skyDir.y, 0.08);
+
+    float lower = CloudLayer(p + wind, 0.72, 0.58);
+    float middle = CloudLayer(p * 1.35 + wind * 1.7 + vec2(4.0, -2.0), 0.58, 0.62);
+    float upper = CloudLayer(p * 2.10 - wind * 0.75 + vec2(-9.0, 6.0), 0.42, 0.68);
+
+    float density = clamp(lower * 0.62 + middle * 0.38 + upper * 0.18, 0.0, 1.0);
+    density *= smoothstep(0.03, 0.22, skyDir.y) * (1.0 - smoothstep(0.78, 1.0, skyDir.y) * 0.20);
+
+    vec3 sunDir = normalize(u_SunDirection);
+    float day = DayAmount();
+    float sunBackLight = pow(max(dot(skyDir, sunDir), 0.0), 6.0);
+    float directLight = clamp(dot(vec3(0.25, 0.92, 0.25), sunDir) * 0.5 + 0.5, 0.0, 1.0);
+
+    vec3 shadowCloud = mix(vec3(0.20, 0.23, 0.31), vec3(0.58, 0.62, 0.68), day);
+    vec3 litCloud = mix(vec3(0.55, 0.60, 0.76), vec3(1.0, 0.96, 0.88), day);
+    litCloud = mix(litCloud, SunColor(), DawnDuskAmount() * 0.30);
+
+    vec3 cloudColor = mix(shadowCloud, litCloud, directLight);
+    cloudColor += SunColor() * sunBackLight * 0.35 * day;
+    cloudColor = mix(baseSkyColor, cloudColor, density);
+
+    return vec4(cloudColor, density);
+}
+
 void main()
 {
     float h = worldPos.y / uRadius;
@@ -56,6 +129,9 @@ void main()
     color = mix(color, duskColor, dusk * horizon);
 
     vec3 skyDir = normalize(worldPos);
+    vec4 clouds = VolumetricClouds(skyDir, color);
+    color = clouds.rgb;
+
     vec3 sunDir = normalize(u_SunDirection);
     float sunDot = dot(skyDir, sunDir);
     float sunVisible = smoothstep(-0.02, 0.08, sunDir.y);

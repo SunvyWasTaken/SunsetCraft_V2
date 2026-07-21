@@ -16,5 +16,6 @@ struct DayNightCycle
     static bool& AutoCycle();
     static float& CycleSpeed();
 
+    static float GetRenderTime();
     static glm::vec3 GetSunDirection();
 };

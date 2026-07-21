@@ -11,6 +11,7 @@ uniform sampler2D BlockTextures;
 uniform sampler2D u_ShadowMap;
 uniform vec3 u_CameraPos;
 uniform float u_TimeOfDay;
+uniform float u_CloudTime;
 uniform vec3 u_SunDirection;
 uniform mat4 u_LightSpaceMatrix;
 uniform int u_ShadowsEnabled;
@@ -116,6 +117,57 @@ float ShadowAmount(vec3 worldPos, vec3 normal, vec3 lightDir)
     return shadow / 9.0;
 }
 
+float Hash(vec2 p)
+{
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float Noise(vec2 p)
+{
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    return mix(
+        mix(Hash(i + vec2(0.0, 0.0)), Hash(i + vec2(1.0, 0.0)), u.x),
+        mix(Hash(i + vec2(0.0, 1.0)), Hash(i + vec2(1.0, 1.0)), u.x),
+        u.y);
+}
+
+float Fbm(vec2 p)
+{
+    float value = 0.0;
+    float amplitude = 0.5;
+
+    for (int i = 0; i < 4; ++i)
+    {
+        value += Noise(p) * amplitude;
+        p = p * 2.03 + vec2(17.7, 9.2);
+        amplitude *= 0.5;
+    }
+
+    return value;
+}
+
+float CloudShadow(vec3 worldPos, vec3 lightDir)
+{
+    if (lightDir.y <= 0.05)
+        return 0.0;
+
+    float cloudHeight = 128.0;
+    float travel = max((cloudHeight - worldPos.y) / lightDir.y, 0.0);
+    vec2 cloudPos = (worldPos + lightDir * travel).xz;
+    vec2 wind = vec2(u_CloudTime * 0.010, u_CloudTime * 0.006);
+
+    float lower = smoothstep(0.56, 0.92, Fbm(cloudPos * 0.0072 + wind));
+    float middle = smoothstep(0.62, 0.94, Fbm(cloudPos * 0.0105 + wind * 1.7 + vec2(4.0, -2.0)));
+    float density = clamp(lower * 0.65 + middle * 0.35, 0.0, 1.0);
+
+    return density * DayAmount() * smoothstep(0.05, 0.30, lightDir.y);
+}
+
 void main()
 {
     vec4 color = vec4(1.0);
@@ -133,13 +185,14 @@ void main()
     float sunVisibility = smoothstep(-0.08, 0.22, lightDir.y);
     float diffuse = max(dot(normal, lightDir), 0.0) * sunVisibility;
     float shadow = ShadowAmount(FragWorldPos, normal, lightDir) * sunVisibility;
+    float cloudShadow = CloudShadow(FragWorldPos, lightDir);
 
     vec3 moonDir = normalize(-u_SunDirection);
     float moonVisibility = smoothstep(-0.05, 0.35, moonDir.y);
     float moonDiffuse = max(dot(normal, moonDir), 0.0) * moonVisibility;
 
     float faceShade = mix(0.64, 1.0, max(normal.y, 0.0));
-    vec3 lightColor = AmbientColor() + SunColor() * diffuse * mix(1.0, 0.28, shadow) + MoonColor() * moonDiffuse;
+    vec3 lightColor = AmbientColor() + SunColor() * diffuse * mix(1.0, 0.28, shadow) * mix(1.0, 0.76, cloudShadow) + MoonColor() * moonDiffuse;
     vec3 finalColor = texColor.rgb * color.rgb * lightColor * faceShade * FragAO;
     finalColor = mix(finalColor, FogColor(), FogAmount(FragWorldPos));
 
