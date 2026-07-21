@@ -35,8 +35,6 @@ public:
     void OnDraw() override;
     bool OnEvent(const Sunset::Event::Type& event) override;
 private:
-    void DrawLightingEditor();
-
     Inventory m_Inventory;
     SkyCubed m_Sky;
 };

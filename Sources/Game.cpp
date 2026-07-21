@@ -140,7 +140,6 @@ void GameLayer::OnUpdate(float dt)
 void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
-    DrawLightingEditor();
     Layer::OnDraw();
     m_Sky.Draw();
     auto* chunk = player.GetComponent<ChunkRegistry>();
@@ -169,30 +168,4 @@ bool GameLayer::OnEvent(const Sunset::Event::Type &event)
         }
     }
     return false;
-}
-
-void GameLayer::DrawLightingEditor()
-{
-    if (ImGui::GetCurrentContext() == nullptr)
-        return;
-
-    if (!ImGui::Begin("Lighting"))
-    {
-        ImGui::End();
-        return;
-    }
-
-    LOG("SunsetCraft", info, "No light?")
-
-    float timeOfDay = DayNightCycle::GetTimeOfDay();
-    if (ImGui::SliderFloat("Time of day", &timeOfDay, 0.0f, 24.0f, "%.2f h"))
-        DayNightCycle::SetTimeOfDay(timeOfDay);
-
-    ImGui::Checkbox("Auto cycle", &DayNightCycle::AutoCycle());
-    ImGui::DragFloat("Cycle speed", &DayNightCycle::CycleSpeed(), 0.01f, 0.0f, 6.0f, "%.2f h/s");
-
-    const glm::vec3 sunDirection = DayNightCycle::GetSunDirection();
-    ImGui::Text("Sun direction: %.2f %.2f %.2f", sunDirection.x, sunDirection.y, sunDirection.z);
-
-    ImGui::End();
 }
