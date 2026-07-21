@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "Inventory/Inventory.h"
 #include "ShadowMap.h"
 #include "Sky.h"
 #include "Core/Layer.h"
@@ -36,7 +35,6 @@ public:
     void OnDraw() override;
     bool OnEvent(const Sunset::Event::Type& event) override;
 private:
-    Inventory m_Inventory;
     SkyCubed m_Sky;
     ShadowMap m_ShadowMap;
 };

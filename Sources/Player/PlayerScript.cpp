@@ -10,8 +10,8 @@
 #include "GameFramework/Components/TransformComponent.h"
 #include "../../SunsetEngine/Engine/Render/Core/RenderCommand.h"
 #include "GameFramework/Components/CameraComponent.h"
+#include "Inventory/Inventory.h"
 #include "Registry/BlockRegistry.h"
-#include "Registry/ItemRegistry.h"
 
 namespace
 {
@@ -195,35 +195,34 @@ void PlayerScript::OnUpdate(float dt)
         Sunset::RenderCommand::ShowCursor(ShowMouseCursor);
     }
 
-    // auto* chunk = GetComponent<ChunkRegistry>();
-    // if (const auto* cam = GetComponent<Sunset::CameraComponent>())
-    // {
-    //     RaycastHit hit;
-    //     glm::vec3 start = cam->camera.GetPosition();
-    //     glm::vec3 forward = cam->camera.GetForward();
-    //
-    //     LineTrace(hit, chunk, start, forward, 10);
-    //     if (!hit)
-    //         return;
-    //
-    //
-    //     if (input->IsActionPressed(SecondaryAction))
-    //     {
-    //         const glm::vec3 target = hit.blockPose + hit.hitNormal;
-    //
-    //         if (!m_Inventory.getSlot(currentSelectItem).Empty())
-    //         {
-    //             ChunkRegistry::SetBlock(target, ItemRegistry::Get(m_Inventory.getSlot(currentSelectItem).id).blockId);
-    //             m_Inventory.getSlot(currentSelectItem).count--;
-    //             if (m_Inventory.getSlot(currentSelectItem).count <= 0)
-    //             {
-    //                 m_Inventory.getSlot(currentSelectItem) = {Item::null, 0};
-    //             }
-    //         }
-    //     }
-    //     else if (input->IsActionPressed(MainAction))
-    //         chunk->SetBlock(hit.blockPose, BlockRegistry::AIR);
-    // }
+    auto* chunk = GetComponent<ChunkRegistry>();
+    const auto* cam = GetComponent<Sunset::CameraComponent>();
+    auto* inventory = GetComponent<Inventory>();
+    if (!chunk || !cam)
+        return;
+
+    RaycastHit hit;
+    const glm::vec3 start = cam->camera.GetPosition();
+    const glm::vec3 forward = cam->camera.GetForward();
+
+    LineTrace(hit, chunk, start, forward, 10);
+    if (!hit)
+        return;
+
+    if (input->IsActionPressed(SecondaryAction) && inventory)
+    {
+        BlockId selectedBlock = BlockRegistry::AIR;
+        if (!inventory->GetSelectedBlock(selectedBlock))
+            return;
+
+        const glm::vec3 target = hit.blockPose + hit.hitNormal;
+        if (chunk->SetBlock(target, selectedBlock))
+            inventory->ConsumeSelectedItem();
+    }
+    else if (input->IsActionPressed(MainAction))
+    {
+        chunk->SetBlock(hit.blockPose, BlockRegistry::AIR);
+    }
 }
 
 void PlayerScript::OnEndPlay()

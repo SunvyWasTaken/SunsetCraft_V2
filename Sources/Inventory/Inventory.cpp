@@ -20,6 +20,7 @@ Inventory::Inventory()
     , m_Toolbar(nullptr)
     , m_Indicator(nullptr)
     , ShowInventory(false)
+    , SelectedSlot(0)
     , InventoryTexture(nullptr)
     , HotBarTexture(nullptr)
     , IndicatorTexture(nullptr)
@@ -146,7 +147,42 @@ bool Inventory::Add(Item::Id id, uint16_t& amount)
 
 void Inventory::SetSelectedSlot(int nbr)
 {
-    m_Indicator->SetOffset({80.f * nbr, 0.f});
+    nbr %= 9;
+    if (nbr < 0)
+        nbr += 9;
+
+    SelectedSlot = nbr;
+    m_Indicator->SetOffset({80.f * SelectedSlot, 0.f});
+}
+
+int Inventory::GetSelectedSlot() const
+{
+    return SelectedSlot;
+}
+
+bool Inventory::GetSelectedBlock(BlockId& blockId) const
+{
+    const ItemStack& selectedStack = m_Slots[SelectedSlot];
+    if (selectedStack.Empty())
+        return false;
+
+    const ItemDef& item = ItemRegistry::Get(selectedStack.id);
+    if (item.type != ItemType::Block)
+        return false;
+
+    blockId = item.blockId;
+    return blockId != BlockRegistry::AIR;
+}
+
+void Inventory::ConsumeSelectedItem()
+{
+    ItemStack& selectedStack = m_Slots[SelectedSlot];
+    if (selectedStack.Empty())
+        return;
+
+    selectedStack.count--;
+    if (selectedStack.count <= 0)
+        selectedStack = {Item::null, 0};
 }
 
 void Inventory::SetShowInventory(bool show)

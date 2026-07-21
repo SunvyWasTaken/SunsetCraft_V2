@@ -20,6 +20,7 @@
 #include "GameFramework/Components/NativeScriptComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "GameFramework/World/Entity.h"
+#include "Inventory/Inventory.h"
 #include "Network/NetworkService.h"
 #include "Player/PlayerScript.h"
 #include "Registry/ItemRegistry.h"
@@ -32,9 +33,6 @@ namespace
     WorldParam m_Param;
 
     Sunset::Entity player;
-
-    int currentSelectItem = 0;
-    int prevSelectItem = 1;
 
     // std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
@@ -75,6 +73,7 @@ void GameLayer::Init()
     player.AddComponent<Sunset::CameraComponent>().Activate(true);
     player.AddComponent<Sunset::InputComponent>();
     player.AddComponent<Sunset::NativeScriptComponent>().Bind<PlayerScript>();
+    auto& inventory = player.AddComponent<Inventory>();
     std::uint8_t renderDistance = 16;
 #ifndef NDEBUG
     renderDistance = 2;
@@ -88,7 +87,7 @@ void GameLayer::Init()
     for (const auto &id: items | std::views::keys)
     {
         std::uint16_t c = count;
-        m_Inventory.Add(id, c);
+        inventory.Add(id, c);
     }
 
     std::shared_ptr<SRmGUI::Panel> panel = nullptr;
@@ -110,8 +109,8 @@ void GameLayer::Init()
         .Image(crosshairTex->GetId());
 
     panel->AddChild(cross);
-    panel->AddChild(m_Inventory.m_Inventory);
-    panel->AddChild(m_Inventory.m_Toolbar);
+    panel->AddChild(inventory.m_Inventory);
+    panel->AddChild(inventory.m_Toolbar);
 
     AddToViewport(panel);
 }
@@ -125,16 +124,13 @@ void GameLayer::OnUpdate(float dt)
     if (Sunset::NetworkService::IsInitialized())
         Sunset::NetworkService::Get().Update(dt);
 
-    m_Inventory.Update(dt);
+    if (auto* inventory = player.GetComponent<Inventory>())
+        inventory->Update(dt);
 
     glm::vec3 loc = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
 
     PRINTSCREEN("Loc : {}", loc);
 
-    if (prevSelectItem != currentSelectItem)
-    {
-        prevSelectItem = currentSelectItem;
-    }
 }
 
 void GameLayer::OnDraw()
@@ -163,14 +159,11 @@ bool GameLayer::OnEvent(const Sunset::Event::Type &event)
     {
         if (mouseEvent->offset.y != 0)
         {
-            currentSelectItem -= mouseEvent->offset.y;
-            if (currentSelectItem < 0)
-                currentSelectItem = 8;
-            else if (currentSelectItem >= 9)
-                currentSelectItem = 0;
-
-            m_Inventory.SetSelectedSlot(currentSelectItem);
-            return true;
+            if (auto* inventory = player.GetComponent<Inventory>())
+            {
+                inventory->SetSelectedSlot(inventory->GetSelectedSlot() - static_cast<int>(mouseEvent->offset.y));
+                return true;
+            }
         }
     }
     return false;
