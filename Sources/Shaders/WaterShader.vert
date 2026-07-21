@@ -12,6 +12,7 @@ out vec2 FragUv;
 out vec3 FragWorldPos;
 flat out uint UVSide;
 flat out uint FaceSide;
+flat out uint IsWaterSurface;
 
 vec3 DecodePos(uint v)
 {
@@ -32,7 +33,13 @@ uint DecodeUV(uint v)
     return (v >> 20) & uint(0xFFu);
 }
 
-const float y = 0.85;
+uint DecodeWaterSurface(uint v)
+{
+    return (v >> 29) & 0x1u;
+}
+
+const float y = 1.0;
+const float surfaceDrop = -0.12;
 
 const vec3 faceVerts[36] = vec3[](
         vec3(0,0,0), vec3(0,y,0), vec3(0,y,1), vec3(0,y,1), vec3(0,0,1), vec3(0,0,0), // -X
@@ -93,6 +100,7 @@ void main()
     vec3 blockPos = DecodePos(data);
     uint side = DecodeSide(data);
     UVSide = DecodeUV(data);
+    IsWaterSurface = DecodeWaterSurface(data);
 
     int vertIndex = gl_VertexID % 6;
     int offset = faceOffset(side);
@@ -102,14 +110,13 @@ void main()
     vec3 position = blockPos + vertPos - vec3(0.0, 255.0, 0.0);
     vec3 worldPosition = vec3(model * vec4(position, 1.0));
 
-    float topInfluence = smoothstep(0.05, y, vertPos.y);
+    float topInfluence = float(IsWaterSurface) * smoothstep(0.55, y, vertPos.y);
 
     float h = WaterHeight(worldPosition.xz);
     vec2 flow = WaterFlow(worldPosition.xz);
 
-    position.y += h * topInfluence;
+    position.y += (surfaceDrop + h) * topInfluence;
 
-    // Très léger déplacement horizontal, sinon ça devient caoutchouc.
     position.xz += flow * topInfluence;
 
     worldPosition = vec3(model * vec4(position, 1.0));

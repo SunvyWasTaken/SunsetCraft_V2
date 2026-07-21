@@ -3,6 +3,7 @@
 in vec3 FragNormal;
 in vec2 FragUv;
 in vec3 FragWorldPos;
+in float FragAO;
 flat in uint UVSide;
 flat in uint IsGrass;
 
@@ -139,7 +140,7 @@ void main()
 
     float faceShade = mix(0.64, 1.0, max(normal.y, 0.0));
     vec3 lightColor = AmbientColor() + SunColor() * diffuse * mix(1.0, 0.28, shadow) + MoonColor() * moonDiffuse;
-    vec3 finalColor = texColor.rgb * color.rgb * lightColor * faceShade;
+    vec3 finalColor = texColor.rgb * color.rgb * lightColor * faceShade * FragAO;
     finalColor = mix(finalColor, FogColor(), FogAmount(FragWorldPos));
 
     FragColor = vec4(finalColor, texColor.a * color.a);

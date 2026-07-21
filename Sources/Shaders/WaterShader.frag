@@ -5,6 +5,7 @@ in vec2 FragUv;
 in vec3 FragWorldPos;
 flat in uint UVSide;
 flat in uint FaceSide;
+flat in uint IsWaterSurface;
 
 uniform sampler2D BlockTextures;
 uniform sampler2D u_ShadowMap;
@@ -34,10 +35,10 @@ float WaterHeight(vec2 p)
 {
     float h = 0.0;
 
-    h += Wave(p, vec2( 1.0,  0.3), 1.20, 1.40, 0.025);
-    h += Wave(p, vec2(-0.4,  1.0), 0.85, 1.05, 0.018);
-    h += Wave(p, vec2( 0.7, -0.6), 1.75, 1.90, 0.010);
-    h += Wave(p, vec2(-1.0, -0.2), 2.40, 2.30, 0.006);
+    h += Wave(p, vec2( 1.0,  0.3), 1.35, 1.65, 0.040);
+    h += Wave(p, vec2(-0.4,  1.0), 0.90, 1.20, 0.026);
+    h += Wave(p, vec2( 0.7, -0.6), 1.95, 2.10, 0.016);
+    h += Wave(p, vec2(-1.0, -0.2), 2.70, 2.70, 0.010);
 
     return h;
 }
@@ -89,6 +90,25 @@ vec3 AmbientColor()
     vec3 duskAmbient = vec3(0.22, 0.10, 0.08);
 
     return mix(mix(nightAmbient, dayAmbient, day), duskAmbient, warm * 0.7);
+}
+
+vec3 SkyColor(vec3 dir)
+{
+    float day = DayAmount();
+    float dusk = DawnDuskAmount() * max(day, 0.35);
+    float t = clamp(dir.y * 0.5 + 0.5, 0.0, 1.0);
+
+    vec3 nightBottom = vec3(0.018, 0.030, 0.095);
+    vec3 nightTop = vec3(0.002, 0.006, 0.030);
+    vec3 dayBottom = vec3(0.58, 0.76, 1.00);
+    vec3 dayTop = vec3(0.055, 0.28, 0.78);
+    vec3 duskBottom = vec3(1.00, 0.40, 0.14);
+    vec3 duskTop = vec3(0.16, 0.065, 0.20);
+
+    vec3 nightColor = mix(nightBottom, nightTop, t);
+    vec3 dayColor = mix(dayBottom, dayTop, t);
+    vec3 duskColor = mix(duskBottom, duskTop, t);
+    return mix(mix(nightColor, dayColor, day), duskColor, dusk * (1.0 - t));
 }
 
 vec3 MoonColor()
@@ -145,11 +165,20 @@ float ShadowAmount(vec3 worldPos, vec3 normal, vec3 lightDir)
     return shadow / 9.0;
 }
 
+float NoiseFoam(vec2 p)
+{
+    float a = sin(p.x * 8.0 + u_Time * 1.7) * sin(p.y * 7.0 - u_Time * 1.3);
+    float b = sin((p.x + p.y) * 12.0 + u_Time * 2.2);
+    return clamp(a * 0.5 + b * 0.25 + 0.5, 0.0, 1.0);
+}
+
 void main()
 {
     vec3 viewDir = normalize(u_CameraPos - FragWorldPos);
     vec3 lightDir = normalize(u_SunDirection);
     float sunVisibility = smoothstep(-0.08, 0.22, lightDir.y);
+    float surface = IsWaterSurface == 0u ? 0.0 : 1.0;
+    float topFace = FaceSide == 3u ? 1.0 : 0.0;
 
     vec3 normal = normalize(FragNormal);
 
@@ -175,17 +204,41 @@ void main()
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
     fresnel = clamp(fresnel, 0.0, 1.0);
 
-    vec3 shallowColor = vec3(0.35, 0.70, 1.00);
-    vec3 deepColor    = vec3(0.05, 0.28, 0.55);
+    float depthFactor = clamp((0.85 - FragWorldPos.y) / 9.0 + distance(u_CameraPos, FragWorldPos) / 180.0, 0.0, 1.0);
+    float underwater = u_CameraPos.y < FragWorldPos.y + 0.15 ? 1.0 : 0.0;
 
-    vec3 waterColor = deepColor;
+    vec3 shallowColor = vec3(0.28, 0.76, 0.95);
+    vec3 deepColor = vec3(0.025, 0.16, 0.38);
+    vec3 waterColor = mix(shallowColor, deepColor, depthFactor);
 
-    waterColor += fresnel * vec3(0.35, 0.55, 0.75);
+    vec3 reflectionDir = reflect(-viewDir, normal);
+    vec3 reflectedSky = SkyColor(reflectionDir);
+    float reflectionStrength = mix(0.18, 0.72, fresnel) * surface;
+    waterColor = mix(waterColor, reflectedSky, reflectionStrength);
+
+    vec2 distortion = normal.xz * 0.10 + vec2(
+        sin(FragWorldPos.z * 3.5 + u_Time * 1.8),
+        cos(FragWorldPos.x * 3.2 - u_Time * 1.5)) * 0.018;
+    float refractedLight = sin((FragWorldPos.x + distortion.x * 8.0) * 4.0 + u_Time * 1.6)
+                         * cos((FragWorldPos.z + distortion.y * 8.0) * 4.5 - u_Time * 1.2);
+    refractedLight = smoothstep(0.72, 1.0, refractedLight * 0.5 + 0.5);
+
+    waterColor += refractedLight * vec3(0.07, 0.16, 0.18) * (1.0 - depthFactor) * (0.6 + underwater * 0.6);
     waterColor *= AmbientColor() + SunColor() * diffuse * mix(1.0, 0.35, shadow) + MoonColor() * moonDiffuse;
     waterColor += SunColor() * specular + MoonColor() * moonSpecular;
+
+    float edgeDistance = min(min(FragUv.x, 1.0 - FragUv.x), min(FragUv.y, 1.0 - FragUv.y));
+    float edgeFoam = 1.0 - smoothstep(0.0, 0.08, edgeDistance);
+    float sideFoam = surface * (1.0 - topFace) * smoothstep(0.70, 1.0, FragUv.y);
+    float crestFoam = smoothstep(0.045, 0.080, WaterHeight(FragWorldPos.xz));
+    float foam = clamp((edgeFoam * 0.20 + sideFoam * 0.45 + crestFoam * 0.25) * NoiseFoam(FragWorldPos.xz), 0.0, 0.75);
+    waterColor = mix(waterColor, vec3(0.86, 0.96, 1.0), foam);
+
     waterColor = mix(waterColor, FogColor(), FogAmount(FragWorldPos));
 
-    float alpha = mix(0.45, 0.68, fresnel);
+    float alpha = mix(0.34, 0.70, depthFactor);
+    alpha = mix(alpha, 0.74, fresnel);
+    alpha = mix(alpha, 0.82, underwater);
 
     FragColor = vec4(waterColor, alpha);
 }

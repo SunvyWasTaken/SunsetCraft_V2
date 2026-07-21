@@ -1,6 +1,7 @@
 #version 330 core
 
 layout(location = 0) in uint data;
+layout(location = 1) in uint aoData;
 
 uniform mat4 model;
 uniform mat4 projection;
@@ -9,6 +10,7 @@ uniform mat4 view;
 out vec3 FragNormal;
 out vec2 FragUv;
 out vec3 FragWorldPos;
+out float FragAO;
 flat out uint UVSide;
 flat out uint IsGrass;
 
@@ -29,6 +31,20 @@ uint DecodeSide(uint v)
 uint DecodeUV(uint v)
 {
     return (v >> 20) & 0xFFu;
+}
+
+float DecodeAO(uint packedAO, int vertIndex)
+{
+    int cornerIndex = 0;
+    if (vertIndex == 1)
+        cornerIndex = 1;
+    else if (vertIndex == 2 || vertIndex == 3)
+        cornerIndex = 2;
+    else if (vertIndex == 4)
+        cornerIndex = 3;
+
+    uint value = (packedAO >> uint(cornerIndex * 2)) & 0x3u;
+    return mix(0.55, 1.0, float(value) / 3.0);
 }
 
 const vec3 faceVerts[36] = vec3[](
@@ -76,5 +92,6 @@ void main()
     FragNormal = faceNormals[int(side)];
     FragUv = faceUVs[vertIndex];
     FragWorldPos = worldPosition;
+    FragAO = DecodeAO(aoData, vertIndex);
     IsGrass = (data >> 28) & 0x1u;
 }

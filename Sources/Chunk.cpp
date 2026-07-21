@@ -24,6 +24,12 @@ namespace
     std::weak_ptr<Sunset::Shader> TransparentShader;
     float WaterTime = 0.0f;
 
+    struct FaceInstance
+    {
+        uint32_t data = 0;
+        uint32_t ao = 0;
+    };
+
     constexpr std::array<glm::ivec3, 6> checkDir = {
         glm::ivec3 {-1,  0,  0},
                 { 1,  0,  0},
@@ -31,6 +37,15 @@ namespace
                 { 0,  1,  0},
                 { 0,  0, -1},
                 { 0,  0,  1}
+    };
+
+    const std::array<glm::vec3, 36> faceVerts = {
+        glm::vec3{0,0,0}, glm::vec3{0,1,0}, glm::vec3{0,1,1}, glm::vec3{0,1,1}, glm::vec3{0,0,1}, glm::vec3{0,0,0},
+        glm::vec3{1,0,1}, glm::vec3{1,1,1}, glm::vec3{1,1,0}, glm::vec3{1,1,0}, glm::vec3{1,0,0}, glm::vec3{1,0,1},
+        glm::vec3{0,0,0}, glm::vec3{0,0,1}, glm::vec3{1,0,1}, glm::vec3{1,0,1}, glm::vec3{1,0,0}, glm::vec3{0,0,0},
+        glm::vec3{0,1,0}, glm::vec3{1,1,0}, glm::vec3{1,1,1}, glm::vec3{1,1,1}, glm::vec3{0,1,1}, glm::vec3{0,1,0},
+        glm::vec3{1,0,0}, glm::vec3{1,1,0}, glm::vec3{0,1,0}, glm::vec3{0,1,0}, glm::vec3{0,0,0}, glm::vec3{1,0,0},
+        glm::vec3{0,0,1}, glm::vec3{0,1,1}, glm::vec3{1,1,1}, glm::vec3{1,1,1}, glm::vec3{1,0,1}, glm::vec3{0,0,1}
     };
 
     bool IsInChunk(const int x, const int y, const int z)
@@ -43,14 +58,25 @@ namespace
         return x + z * SIZE_X + (y + SIZE_Y) * SIZE_X * SIZE_Z;
     }
 
-    uint32_t EncodePoint(const int x, const int y, const int z, const int dir, const int blockType, const int color)
+    constexpr uint32_t WaterSurfaceBit = 1u << 29;
+
+    uint32_t EncodePoint(const int x, const int y, const int z, const int dir, const int blockType, const int color, const bool waterSurface = false)
     {
         return   (static_cast<uint32_t>(x) & 0xFu)                  |
                 ((static_cast<uint32_t>(y) & 0x1FFu) << 4)          |
                 ((static_cast<uint32_t>(z) & 0xFu) << 13)           |
                 ((static_cast<uint32_t>(dir) & 0x7u) << 17)         |
                 ((static_cast<uint32_t>(blockType) & 0xFFu) << 20)  |
-                ((static_cast<uint32_t>(color) & 0x1u) << 28);
+                ((static_cast<uint32_t>(color) & 0x1u) << 28)       |
+                (waterSurface ? WaterSurfaceBit : 0u);
+    }
+
+    uint32_t PackAO(const std::array<uint8_t, 4>& values)
+    {
+        return (static_cast<uint32_t>(values[0]) & 0x3u)        |
+              ((static_cast<uint32_t>(values[1]) & 0x3u) << 2)  |
+              ((static_cast<uint32_t>(values[2]) & 0x3u) << 4)  |
+              ((static_cast<uint32_t>(values[3]) & 0x3u) << 6);
     }
 
     glm::ivec3 WorldToChunk(const glm::ivec2& ChunkPos, const glm::ivec3& pos)
@@ -73,6 +99,34 @@ namespace
         glActiveTexture(GL_TEXTURE0 + shadowData.textureUnit);
         glBindTexture(GL_TEXTURE_2D, shadowData.depthTexture);
         glActiveTexture(GL_TEXTURE0);
+    }
+
+    glm::ivec3 FaceAxisU(const int side)
+    {
+        if (side == 0 || side == 1)
+            return {0, 1, 0};
+        return {1, 0, 0};
+    }
+
+    glm::ivec3 FaceAxisV(const int side)
+    {
+        if (side == 4 || side == 5)
+            return {0, 1, 0};
+        return {0, 0, 1};
+    }
+
+    int AxisSign(const glm::vec3& vertex, const glm::ivec3& axis)
+    {
+        const float value = axis.x != 0 ? vertex.x : axis.y != 0 ? vertex.y : vertex.z;
+        return value < 0.5f ? -1 : 1;
+    }
+
+    uint8_t VertexAO(const bool sideA, const bool sideB, const bool corner)
+    {
+        if (sideA && sideB)
+            return 0;
+
+        return static_cast<uint8_t>(3 - static_cast<int>(sideA) - static_cast<int>(sideB) - static_cast<int>(corner));
     }
 }
 
@@ -161,8 +215,72 @@ bool Chunk::SetBlock(const glm::vec3 &position, BlockId block)
 void Chunk::BuildMesh()
 {
     SS_PROFILE_FUNCTION();
-    std::vector<uint32_t> points;
-    std::vector<uint32_t> TBlocks;
+    std::vector<FaceInstance> points;
+    std::vector<FaceInstance> TBlocks;
+
+    const auto isOccludingBlock = [this](const int x, const int y, const int z)
+    {
+        if (!IsInChunk(x, y, z))
+        {
+            glm::ivec3 worldPos{x, y, z};
+            worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
+            const BlockId block = m_Registry ? m_Registry->GetBlock(worldPos) : BlockRegistry::AIR;
+            return block != BlockRegistry::AIR && !BlockRegistry::IsTransparent(block);
+        }
+
+        const BlockId block = m_Blocks[GetIndex(x, y, z)];
+        return block != BlockRegistry::AIR && !BlockRegistry::IsTransparent(block);
+    };
+
+    const auto isWaterBlock = [this](const int x, const int y, const int z)
+    {
+        if (!IsInChunk(x, y, z))
+        {
+            glm::ivec3 worldPos{x, y, z};
+            worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
+            return m_Registry && m_Registry->GetBlock(worldPos) == BlockRegistry::WATER;
+        }
+
+        return m_Blocks[GetIndex(x, y, z)] == BlockRegistry::WATER;
+    };
+
+    const auto computeFaceAO = [&](const int x, const int y, const int z, const int side)
+    {
+        constexpr std::array<int, 4> cornerVertexIndices{0, 1, 2, 4};
+        std::array<uint8_t, 4> ao{};
+        const glm::ivec3 normal = checkDir[side];
+        const glm::ivec3 axisU = FaceAxisU(side);
+        const glm::ivec3 axisV = FaceAxisV(side);
+
+        const int offset = side * 6;
+        for (size_t i = 0; i < cornerVertexIndices.size(); ++i)
+        {
+            const glm::vec3 vertex = faceVerts[offset + cornerVertexIndices[i]];
+            const int uSign = AxisSign(vertex, axisU);
+            const int vSign = AxisSign(vertex, axisV);
+
+            const glm::ivec3 sideA = normal + axisU * uSign;
+            const glm::ivec3 sideB = normal + axisV * vSign;
+            const glm::ivec3 corner = normal + axisU * uSign + axisV * vSign;
+
+            ao[i] = VertexAO(
+                isOccludingBlock(x + sideA.x, y + sideA.y, z + sideA.z),
+                isOccludingBlock(x + sideB.x, y + sideB.y, z + sideB.z),
+                isOccludingBlock(x + corner.x, y + corner.y, z + corner.z));
+        }
+
+        return PackAO(ao);
+    };
+
+    const auto makeFace = [&](const int x, const int y, const int z, const int side, const int uv, const bool isGrass, const BlockId block)
+    {
+        const bool isWaterSurface = block == BlockRegistry::WATER && !isWaterBlock(x, y + 1, z);
+        return FaceInstance{
+            .data = EncodePoint(x, y + SIZE_Y, z, side, uv, isGrass, isWaterSurface),
+            .ao = computeFaceAO(x, y, z, side)
+        };
+    };
+
     for (int x = 0; x < SIZE_X; ++x)
     {
         for (int z = 0; z < SIZE_Z; ++z)
@@ -190,11 +308,11 @@ void Chunk::BuildMesh()
                         {
                             if (b != testBlock)
                                 if (BlockRegistry::IsTransparent(testBlock))
-                                    TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
+                                    TBlocks.emplace_back(makeFace(x, y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass, b));
                         }
                         else if (BlockRegistry::IsTransparent(testBlock))
                         {
-                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
+                            points.emplace_back(makeFace(x, y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass, b));
                         }
                     }
                     else if (const BlockId testBlock = m_Blocks[GetIndex(x + dir.x, y + dir.y, z + dir.z)]; BlockRegistry::IsTransparent(testBlock))
@@ -207,11 +325,11 @@ void Chunk::BuildMesh()
                         if (BlockRegistry::IsTransparent(b))
                         {
                             if (b != testBlock)
-                                TBlocks.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
+                                TBlocks.emplace_back(makeFace(x, y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass, b));
                         }
                         else if (BlockRegistry::IsTransparent(testBlock))
                         {
-                            points.emplace_back(EncodePoint(x, y + SIZE_Y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass));
+                            points.emplace_back(makeFace(x, y, z, side, TextureBlockRegistry::GetUvBlock(b, side), IsGrass, b));
                         }
                     }
                 }
@@ -221,8 +339,10 @@ void Chunk::BuildMesh()
 
     {
         auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
+        auto aoData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "aoData");
         faceData.divisor = 1;
-        m_Drawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(uint32_t), points.size(), {faceData});
+        aoData.divisor = 1;
+        m_Drawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(points.data(), sizeof(FaceInstance), points.size(), {faceData, aoData});
         m_Drawable->m_RenderState.DrawInstance = true;
         m_Drawable->m_RenderState.nbrInstance = 6;
         // m_Drawable->m_RenderState.wireframe = true;
@@ -240,8 +360,10 @@ void Chunk::BuildMesh()
     if (!TBlocks.empty())
     {
         auto faceData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "data");
+        auto aoData = Sunset::BufferElement(Sunset::ShaderDataType::UInt, "aoData");
         faceData.divisor = 1;
-        m_TransparentDrawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(TBlocks.data(), sizeof(uint32_t), TBlocks.size(), {faceData});
+        aoData.divisor = 1;
+        m_TransparentDrawable->m_Mesh = Sunset::Mesh::CreateVertexOnly(TBlocks.data(), sizeof(FaceInstance), TBlocks.size(), {faceData, aoData});
         m_TransparentDrawable->m_RenderState.DrawInstance = true;
         m_TransparentDrawable->m_RenderState.nbrInstance = 6;
         m_TransparentDrawable->m_RenderState.HasIndice = false;
