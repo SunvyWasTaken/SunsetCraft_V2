@@ -16,6 +16,7 @@
 ![Game screenshot](Resources/ScreenShot/Game_20.06.26.png)
 ![Game screenshot](Resources/ScreenShot/Game_21.06.26.png)
 ![Game screenshot](Resources/ScreenShot/Game_17.7.26.png)
+![Game screenshot](Resources/ScreenShot/Game_21.07.26.png)
 
 ---
 
