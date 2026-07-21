@@ -12,7 +12,7 @@ namespace
 {
     float TimeOfDay = 12.0f;
     bool bAutoCycle = true;
-    float TimeScale = 0.08f;
+    float TimeScale = 0.04f;
 
     float NormalizeTime(float timeOfDay)
     {

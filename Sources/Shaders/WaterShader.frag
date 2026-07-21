@@ -93,6 +93,27 @@ vec3 MoonColor()
     return vec3(0.16, 0.22, 0.42);
 }
 
+vec3 FogColor()
+{
+    float day = DayAmount();
+    float dusk = DawnDuskAmount() * max(day, 0.35);
+
+    vec3 nightFog = vec3(0.018, 0.030, 0.095);
+    vec3 dayFog = vec3(0.58, 0.76, 1.00);
+    vec3 duskFog = vec3(0.95, 0.34, 0.16);
+
+    return mix(mix(nightFog, dayFog, day), duskFog, dusk * 0.85);
+}
+
+float FogAmount(vec3 worldPos)
+{
+    float distanceFog = smoothstep(70.0, 240.0, distance(u_CameraPos, worldPos));
+    float groundMist = exp(-max(worldPos.y + 1.0, 0.0) * 0.065) * 0.24;
+    float waterMist = exp(-abs(worldPos.y) * 0.16) * 0.34;
+
+    return clamp(distanceFog + max(groundMist, waterMist) * (1.0 - distanceFog * 0.4), 0.0, 0.90);
+}
+
 void main()
 {
     vec3 viewDir = normalize(u_CameraPos - FragWorldPos);
@@ -130,6 +151,7 @@ void main()
     waterColor += fresnel * vec3(0.35, 0.55, 0.75);
     waterColor *= AmbientColor() + SunColor() * diffuse + MoonColor() * moonDiffuse;
     waterColor += SunColor() * specular + MoonColor() * moonSpecular;
+    waterColor = mix(waterColor, FogColor(), FogAmount(FragWorldPos));
 
     float alpha = mix(0.45, 0.68, fresnel);
 

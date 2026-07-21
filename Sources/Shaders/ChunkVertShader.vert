@@ -8,6 +8,7 @@ uniform mat4 view;
 
 out vec3 FragNormal;
 out vec2 FragUv;
+out vec3 FragWorldPos;
 flat out uint UVSide;
 flat out uint IsGrass;
 
@@ -69,9 +70,11 @@ void main()
     vec3 vertPos = faceVerts[offset + vertIndex];
 
     vec3 position = blockPos + vertPos - vec3(0.0, 255.0, 0.0);
+    vec3 worldPosition = vec3(model * vec4(position, 1.0));
 
-    gl_Position = projection * view * model * vec4(position, 1.0);
+    gl_Position = projection * view * vec4(worldPosition, 1.0);
     FragNormal = faceNormals[int(side)];
     FragUv = faceUVs[vertIndex];
+    FragWorldPos = worldPosition;
     IsGrass = (data >> 28) & 0x1u;
 }

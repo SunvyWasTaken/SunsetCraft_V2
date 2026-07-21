@@ -2,10 +2,12 @@
 
 in vec3 FragNormal;
 in vec2 FragUv;
+in vec3 FragWorldPos;
 flat in uint UVSide;
 flat in uint IsGrass;
 
 uniform sampler2D BlockTextures;
+uniform vec3 u_CameraPos;
 uniform float u_TimeOfDay;
 uniform vec3 u_SunDirection;
 
@@ -61,6 +63,27 @@ vec3 MoonColor()
     return vec3(0.18, 0.24, 0.42);
 }
 
+vec3 FogColor()
+{
+    float day = DayAmount();
+    float dusk = DawnDuskAmount() * max(day, 0.35);
+
+    vec3 nightFog = vec3(0.018, 0.030, 0.095);
+    vec3 dayFog = vec3(0.58, 0.76, 1.00);
+    vec3 duskFog = vec3(0.95, 0.34, 0.16);
+
+    return mix(mix(nightFog, dayFog, day), duskFog, dusk * 0.85);
+}
+
+float FogAmount(vec3 worldPos)
+{
+    float distanceFog = smoothstep(80.0, 260.0, distance(u_CameraPos, worldPos));
+    float groundMist = exp(-max(worldPos.y + 2.0, 0.0) * 0.070) * 0.28;
+    float waterMist = exp(-abs(worldPos.y) * 0.22) * 0.16;
+
+    return clamp(distanceFog + max(groundMist, waterMist) * (1.0 - distanceFog * 0.45), 0.0, 0.88);
+}
+
 void main()
 {
     vec4 color = vec4(1.0);
@@ -84,6 +107,8 @@ void main()
 
     float faceShade = mix(0.64, 1.0, max(normal.y, 0.0));
     vec3 lightColor = AmbientColor() + SunColor() * diffuse + MoonColor() * moonDiffuse;
+    vec3 finalColor = texColor.rgb * color.rgb * lightColor * faceShade;
+    finalColor = mix(finalColor, FogColor(), FogAmount(FragWorldPos));
 
-    FragColor = vec4(texColor.rgb * color.rgb * lightColor * faceShade, texColor.a * color.a);
+    FragColor = vec4(finalColor, texColor.a * color.a);
 }
