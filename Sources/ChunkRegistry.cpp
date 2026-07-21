@@ -11,6 +11,7 @@
 
 #include "Chunk.h"
 #include "RaycastHit.h"
+#include "ShadowMap.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Math/AABB.h"
@@ -328,13 +329,18 @@ void ChunkRegistry::Update(float dt)
 
 void ChunkRegistry::OnDraw()
 {
+    OnDraw(ShadowRenderData{});
+}
+
+void ChunkRegistry::OnDraw(const ShadowRenderData& shadowData)
+{
     // todo : this is a temporary solution.
     auto* cam = GetComponent<Sunset::CameraComponent>();
     glm::vec3 loc = GetComponent<Sunset::TransformComponent>()->GetLocation();
     cam->camera.SetPosition(loc);
     cam->camera.SetForward(GetComponent<Sunset::TransformComponent>()->GetForwardVector());
 
-    DrawChunk(cam->camera);
+    DrawChunk(cam->camera, shadowData);
 }
 
 void ChunkRegistry::OnEndPlay()
@@ -428,11 +434,25 @@ bool ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
 
 void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
 {
+    DrawChunk(camera, ShadowRenderData{});
+}
+
+void ChunkRegistry::DrawChunk(const Sunset::Camera& camera, const ShadowRenderData& shadowData)
+{
     SS_PROFILE_FUNCTION();
     for (const auto &c: chunks | std::views::values)
     {
          if (camera.GetFrustum().IsVisible(Sunset::AABB{glm::vec3{c.m_Position.x * SIZE_X, -SIZE_Y, c.m_Position.y * SIZE_Z}, glm::vec3{c.m_Position.x * SIZE_X + SIZE_X, SIZE_Y, c.m_Position.y * SIZE_Z + SIZE_Z}}))
-            c.Draw();
+            c.Draw(shadowData);
+    }
+}
+
+void ChunkRegistry::DrawShadowDepth(const Sunset::Shader& shadowShader)
+{
+    SS_PROFILE_FUNCTION();
+    for (const auto& c : chunks | std::views::values)
+    {
+        c.DrawShadowDepth(shadowShader);
     }
 }
 

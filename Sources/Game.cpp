@@ -141,9 +141,15 @@ void GameLayer::OnDraw()
 {
     SS_PROFILE_FUNCTION();
     Layer::OnDraw();
-    m_Sky.Draw();
     auto* chunk = player.GetComponent<ChunkRegistry>();
-    chunk->OnDraw();
+    const glm::vec3 playerLocation = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
+
+    m_ShadowMap.Render(playerLocation, DayNightCycle::GetSunDirection(), *chunk);
+    const ShadowRenderData shadowData = m_ShadowMap.GetRenderData();
+    m_ShadowMap.BindForRead(shadowData.textureUnit);
+
+    m_Sky.Draw();
+    chunk->OnDraw(shadowData);
 }
 
 bool GameLayer::OnEvent(const Sunset::Event::Type &event)

@@ -15,7 +15,10 @@ struct ChunkRegistry;
 namespace Sunset
 {
     class Drawable;
+    class Shader;
 }
+
+struct ShadowRenderData;
 
 class Chunk
 {
@@ -25,6 +28,8 @@ public:
     ~Chunk();
 
     void Draw() const;
+    void Draw(const ShadowRenderData& shadowData) const;
+    void DrawShadowDepth(const Sunset::Shader& shadowShader) const;
 
     BlockId GetBlock(const glm::vec3& position) const;
 

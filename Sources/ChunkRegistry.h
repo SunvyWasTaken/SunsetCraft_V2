@@ -11,7 +11,10 @@
 namespace Sunset
 {
     class Camera;
+    class Shader;
 }
+
+struct ShadowRenderData;
 
 class ChunkRegistry : public Sunset::Component
 {
@@ -25,6 +28,7 @@ public:
     void Update(float dt);
 
     void OnDraw();
+    void OnDraw(const ShadowRenderData& shadowData);
 
     void OnEndPlay();
 
@@ -34,6 +38,8 @@ public:
     bool SetBlock(const glm::vec3& position, BlockId blockId);
 
     void DrawChunk(const Sunset::Camera& camera);
+    void DrawChunk(const Sunset::Camera& camera, const ShadowRenderData& shadowData);
+    void DrawShadowDepth(const Sunset::Shader& shadowShader);
 
 private:
     void UpdateWaterTime(float time);

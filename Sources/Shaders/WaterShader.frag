@@ -7,10 +7,13 @@ flat in uint UVSide;
 flat in uint FaceSide;
 
 uniform sampler2D BlockTextures;
+uniform sampler2D u_ShadowMap;
 uniform float u_Time;
 uniform vec3 u_CameraPos;
 uniform float u_TimeOfDay;
 uniform vec3 u_SunDirection;
+uniform mat4 u_LightSpaceMatrix;
+uniform int u_ShadowsEnabled;
 
 out vec4 FragColor;
 
@@ -114,6 +117,34 @@ float FogAmount(vec3 worldPos)
     return clamp(distanceFog + max(groundMist, waterMist) * (1.0 - distanceFog * 0.4), 0.0, 0.90);
 }
 
+float ShadowAmount(vec3 worldPos, vec3 normal, vec3 lightDir)
+{
+    if (u_ShadowsEnabled == 0)
+        return 0.0;
+
+    vec4 lightSpacePosition = u_LightSpaceMatrix * vec4(worldPos, 1.0);
+    vec3 projectionCoords = lightSpacePosition.xyz / lightSpacePosition.w;
+    projectionCoords = projectionCoords * 0.5 + 0.5;
+
+    if (projectionCoords.z > 1.0 || projectionCoords.x < 0.0 || projectionCoords.x > 1.0 || projectionCoords.y < 0.0 || projectionCoords.y > 1.0)
+        return 0.0;
+
+    float bias = max(0.004 * (1.0 - dot(normal, lightDir)), 0.0015);
+    vec2 texelSize = 1.0 / vec2(textureSize(u_ShadowMap, 0));
+    float shadow = 0.0;
+
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
+            float closestDepth = texture(u_ShadowMap, projectionCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += projectionCoords.z - bias > closestDepth ? 1.0 : 0.0;
+        }
+    }
+
+    return shadow / 9.0;
+}
+
 void main()
 {
     vec3 viewDir = normalize(u_CameraPos - FragWorldPos);
@@ -130,9 +161,10 @@ void main()
     }
 
     float diffuse = max(dot(normal, lightDir), 0.0) * sunVisibility;
+    float shadow = ShadowAmount(FragWorldPos, normal, lightDir) * sunVisibility;
 
     vec3 halfDir = normalize(lightDir + viewDir);
-    float specular = pow(max(dot(normal, halfDir), 0.0), 96.0) * 0.45 * sunVisibility;
+    float specular = pow(max(dot(normal, halfDir), 0.0), 96.0) * 0.45 * sunVisibility * (1.0 - shadow);
 
     vec3 moonDir = normalize(-u_SunDirection);
     float moonVisibility = smoothstep(-0.05, 0.35, moonDir.y);
@@ -149,7 +181,7 @@ void main()
     vec3 waterColor = deepColor;
 
     waterColor += fresnel * vec3(0.35, 0.55, 0.75);
-    waterColor *= AmbientColor() + SunColor() * diffuse + MoonColor() * moonDiffuse;
+    waterColor *= AmbientColor() + SunColor() * diffuse * mix(1.0, 0.35, shadow) + MoonColor() * moonDiffuse;
     waterColor += SunColor() * specular + MoonColor() * moonSpecular;
     waterColor = mix(waterColor, FogColor(), FogAmount(FragWorldPos));
 
