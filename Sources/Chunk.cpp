@@ -85,8 +85,6 @@ void Chunk::Draw() const
     {
         m_Drawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
         m_Drawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
-        m_Drawable->m_Material->Set("u_SunColor", DayNightCycle::GetSunColor());
-        m_Drawable->m_Material->Set("u_AmbientColor", DayNightCycle::GetAmbientColor());
     }
 
     Sunset::RenderCommand::Submit(*m_Drawable, model);
@@ -95,8 +93,6 @@ void Chunk::Draw() const
         m_TransparentDrawable->m_Material->Set("u_Time", WaterTime);
         m_TransparentDrawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
         m_TransparentDrawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
-        m_TransparentDrawable->m_Material->Set("u_SunColor", DayNightCycle::GetSunColor());
-        m_TransparentDrawable->m_Material->Set("u_AmbientColor", DayNightCycle::GetAmbientColor());
     }
 	Sunset::RenderCommand::Submit(*m_TransparentDrawable, model);
 }

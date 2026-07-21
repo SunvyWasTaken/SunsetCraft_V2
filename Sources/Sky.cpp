@@ -122,8 +122,6 @@ void SkyCubed::Draw() const
     {
         m_Drawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
         m_Drawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
-        m_Drawable->m_Material->Set("u_SunColor", DayNightCycle::GetSunColor());
-        m_Drawable->m_Material->Set("u_AmbientColor", DayNightCycle::GetAmbientColor());
     }
     Sunset::RenderCommand::Submit(*m_Drawable, model);
 }

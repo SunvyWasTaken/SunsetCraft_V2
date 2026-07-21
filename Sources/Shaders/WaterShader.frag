@@ -11,8 +11,6 @@ uniform float u_Time;
 uniform vec3 u_CameraPos;
 uniform float u_TimeOfDay;
 uniform vec3 u_SunDirection;
-uniform vec3 u_SunColor;
-uniform vec3 u_AmbientColor;
 
 out vec4 FragColor;
 
@@ -53,6 +51,48 @@ vec3 ComputeWaterNormal(vec2 p)
     return normalize(vec3(hL - hR, 2.0 * e, hD - hU));
 }
 
+float DayAmount()
+{
+    float angle = (u_TimeOfDay - 6.0) / 24.0 * 6.2831853;
+    return smoothstep(0.04, 0.38, sin(angle));
+}
+
+float DawnDuskAmount()
+{
+    float dawn = abs(u_TimeOfDay - 6.0);
+    float dusk = abs(u_TimeOfDay - 18.0);
+    return 1.0 - smoothstep(0.0, 3.2, min(dawn, dusk));
+}
+
+vec3 SunColor()
+{
+    float day = DayAmount();
+    float warm = DawnDuskAmount();
+
+    vec3 nightLight = vec3(0.08, 0.11, 0.24);
+    vec3 dayLight = vec3(1.00, 0.96, 0.84);
+    vec3 duskLight = vec3(1.00, 0.43, 0.16);
+
+    return mix(mix(nightLight, dayLight, day), duskLight, warm);
+}
+
+vec3 AmbientColor()
+{
+    float day = DayAmount();
+    float warm = DawnDuskAmount();
+
+    vec3 nightAmbient = vec3(0.018, 0.030, 0.085);
+    vec3 dayAmbient = vec3(0.30, 0.38, 0.48);
+    vec3 duskAmbient = vec3(0.22, 0.10, 0.08);
+
+    return mix(mix(nightAmbient, dayAmbient, day), duskAmbient, warm * 0.7);
+}
+
+vec3 MoonColor()
+{
+    return vec3(0.16, 0.22, 0.42);
+}
+
 void main()
 {
     vec3 viewDir = normalize(u_CameraPos - FragWorldPos);
@@ -73,18 +113,23 @@ void main()
     vec3 halfDir = normalize(lightDir + viewDir);
     float specular = pow(max(dot(normal, halfDir), 0.0), 96.0) * 0.45 * sunVisibility;
 
+    vec3 moonDir = normalize(-u_SunDirection);
+    float moonVisibility = smoothstep(-0.05, 0.35, moonDir.y);
+    float moonDiffuse = max(dot(normal, moonDir), 0.0) * moonVisibility;
+    vec3 moonHalfDir = normalize(moonDir + viewDir);
+    float moonSpecular = pow(max(dot(normal, moonHalfDir), 0.0), 128.0) * 0.18 * moonVisibility;
+
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
     fresnel = clamp(fresnel, 0.0, 1.0);
 
     vec3 shallowColor = vec3(0.35, 0.70, 1.00);
     vec3 deepColor    = vec3(0.05, 0.28, 0.55);
 
-    float colorMix = 0.5 + 0.5 * sin((FragWorldPos.x + FragWorldPos.z) * 0.08 + u_Time * 0.25);
     vec3 waterColor = deepColor;
 
     waterColor += fresnel * vec3(0.35, 0.55, 0.75);
-    waterColor *= u_AmbientColor + u_SunColor * diffuse;
-    waterColor += u_SunColor * specular;
+    waterColor *= AmbientColor() + SunColor() * diffuse + MoonColor() * moonDiffuse;
+    waterColor += SunColor() * specular + MoonColor() * moonSpecular;
 
     float alpha = mix(0.45, 0.68, fresnel);
 
