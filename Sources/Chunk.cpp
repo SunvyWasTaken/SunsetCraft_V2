@@ -7,6 +7,7 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "ChunkRegistry.h"
+#include "DayNightCycle.h"
 #include "Registry/TextureRegistry.h"
 #include "Render/Resources/Drawable.h"
 #include "Render/Resources/Material.h"
@@ -80,9 +81,23 @@ void Chunk::Draw() const
 {
     glm::mat4 model = glm::translate(glm::mat4{1.0f}, {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z});
 
+    if (m_Drawable->m_Material->m_Shader)
+    {
+        m_Drawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
+        m_Drawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
+        m_Drawable->m_Material->Set("u_SunColor", DayNightCycle::GetSunColor());
+        m_Drawable->m_Material->Set("u_AmbientColor", DayNightCycle::GetAmbientColor());
+    }
+
     Sunset::RenderCommand::Submit(*m_Drawable, model);
     if (m_TransparentDrawable->m_Material->m_Shader)
+    {
         m_TransparentDrawable->m_Material->Set("u_Time", WaterTime);
+        m_TransparentDrawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
+        m_TransparentDrawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
+        m_TransparentDrawable->m_Material->Set("u_SunColor", DayNightCycle::GetSunColor());
+        m_TransparentDrawable->m_Material->Set("u_AmbientColor", DayNightCycle::GetAmbientColor());
+    }
 	Sunset::RenderCommand::Submit(*m_TransparentDrawable, model);
 }
 

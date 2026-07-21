@@ -11,6 +11,8 @@ project(SunsetCraft)
 
 add_subdirectory(SunsetEngine)
 
+find_package(imgui CONFIG REQUIRED)
+
 file(GLOB_RECURSE SUNSETCRAFT_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/Sources/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/Sources/*.h"
@@ -30,6 +32,7 @@ set_target_properties(SunsetCraft PROPERTIES
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Sunset::Runtime)
+target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 
 if(PRODUCTION_BUILD)
     target_compile_definitions(${PROJECT_NAME} PUBLIC SHADERS_PATH=\"./Sources/Shaders/\")

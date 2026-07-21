@@ -6,6 +6,7 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
+#include "DayNightCycle.h"
 #include "Render/Resources/Drawable.h"
 #include "Render/Resources/Material.h"
 #include "Render/Core/RenderCommand.h"
@@ -117,5 +118,12 @@ void SkyCubed::Update(const float deltaTime)
 void SkyCubed::Draw() const
 {
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    if (m_Drawable->m_Material->m_Shader)
+    {
+        m_Drawable->m_Material->Set("u_TimeOfDay", DayNightCycle::GetTimeOfDay());
+        m_Drawable->m_Material->Set("u_SunDirection", DayNightCycle::GetSunDirection());
+        m_Drawable->m_Material->Set("u_SunColor", DayNightCycle::GetSunColor());
+        m_Drawable->m_Material->Set("u_AmbientColor", DayNightCycle::GetAmbientColor());
+    }
     Sunset::RenderCommand::Submit(*m_Drawable, model);
 }

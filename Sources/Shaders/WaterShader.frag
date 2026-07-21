@@ -9,6 +9,10 @@ flat in uint FaceSide;
 uniform sampler2D BlockTextures;
 uniform float u_Time;
 uniform vec3 u_CameraPos;
+uniform float u_TimeOfDay;
+uniform vec3 u_SunDirection;
+uniform vec3 u_SunColor;
+uniform vec3 u_AmbientColor;
 
 out vec4 FragColor;
 
@@ -52,7 +56,8 @@ vec3 ComputeWaterNormal(vec2 p)
 void main()
 {
     vec3 viewDir = normalize(u_CameraPos - FragWorldPos);
-    vec3 lightDir = normalize(vec3(0.45, 1.0, 0.25));
+    vec3 lightDir = normalize(u_SunDirection);
+    float sunVisibility = smoothstep(-0.08, 0.22, lightDir.y);
 
     vec3 normal = normalize(FragNormal);
 
@@ -63,10 +68,10 @@ void main()
         normal = ComputeWaterNormal(FragWorldPos.xz);
     }
 
-    float diffuse = max(dot(normal, lightDir), 0.25);
+    float diffuse = max(dot(normal, lightDir), 0.0) * sunVisibility;
 
     vec3 halfDir = normalize(lightDir + viewDir);
-    float specular = pow(max(dot(normal, halfDir), 0.0), 96.0) * 0.45;
+    float specular = pow(max(dot(normal, halfDir), 0.0), 96.0) * 0.45 * sunVisibility;
 
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
     fresnel = clamp(fresnel, 0.0, 1.0);
@@ -78,8 +83,8 @@ void main()
     vec3 waterColor = deepColor;
 
     waterColor += fresnel * vec3(0.35, 0.55, 0.75);
-    waterColor *= diffuse;
-    waterColor += specular;
+    waterColor *= u_AmbientColor + u_SunColor * diffuse;
+    waterColor += u_SunColor * specular;
 
     float alpha = mix(0.45, 0.68, fresnel);
 

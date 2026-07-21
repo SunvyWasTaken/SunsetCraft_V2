@@ -28,7 +28,7 @@ namespace
         SecondaryAction,
     };
 
-    bool ShowMouseCursor = false;
+    bool ShowMouseCursor = true;
 
 #pragma region LineTrace
     void LineTrace(RaycastHit& hit, ChunkRegistry* chunk, const glm::vec3& start, const glm::vec3& forward, float distance)
