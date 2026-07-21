@@ -18,6 +18,8 @@ class ChunkRegistry : public Sunset::Component
 public:
     ChunkRegistry(int seed, const std::string& folderName, uint8_t renderDistance = 16);
 
+    ~ChunkRegistry() override;
+
     Sunset::ReflectionType Properties() override;
 
     void Update(float dt);
@@ -42,6 +44,9 @@ private:
 
 public:
     std::uint8_t m_RenderDistance = 16;
+
+private:
+    bool m_IsShutdown = false;
 };
 
 struct ChunkRegistrySystem : public Sunset::IWorldSystem

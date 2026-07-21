@@ -55,6 +55,12 @@ namespace
         const glm::ivec3 localPos = pos - glm::ivec3{ChunkPos.x, 0, ChunkPos.y} * glm::ivec3{SIZE_X, 0, SIZE_Z};
         return localPos;
     }
+
+    void UseBlockAtlas(Sunset::Drawable& drawable)
+    {
+        if (drawable.m_Material->m_Textures.empty())
+            drawable.m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
+    }
 }
 
 Chunk::Chunk(const glm::vec2 &position)
@@ -127,7 +133,7 @@ void Chunk::BuildMesh()
                     {
                         glm::ivec3 worldPos{x + dir.x, y + dir.y, z + dir.z};
                         worldPos += glm::ivec3{m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z};
-                        const BlockId testBlock = m_Registry->GetBlock(worldPos);
+                        const BlockId testBlock = m_Registry ? m_Registry->GetBlock(worldPos) : BlockRegistry::AIR;
                         if (b == BlockRegistry::AIR)
                             continue;
 
@@ -174,7 +180,7 @@ void Chunk::BuildMesh()
         m_Drawable->m_RenderState.nbrInstance = 6;
         // m_Drawable->m_RenderState.wireframe = true;
         m_Drawable->m_RenderState.HasIndice = false;
-        m_Drawable->m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
+        UseBlockAtlas(*m_Drawable);
         if (shader.expired())
         {
             m_Drawable->m_Material->m_Shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "ChunkVertShader.vert", SHADERS_PATH "ChunkFragShader.frag");
@@ -197,7 +203,7 @@ void Chunk::BuildMesh()
         m_TransparentDrawable->m_RenderState.dest = Sunset::BlendFactor::OneMinusSrcAlpha;
         m_TransparentDrawable->m_RenderState.depthWrite = false;
         m_TransparentDrawable->m_RenderState.cullMode = Sunset::CullMode::None;
-        m_TransparentDrawable->m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
+        UseBlockAtlas(*m_TransparentDrawable);
         if (TransparentShader.expired())
         {
             m_TransparentDrawable->m_Material->m_Shader = std::make_shared<Sunset::Shader>(SHADERS_PATH "WaterShader.vert", SHADERS_PATH "WaterShader.frag");

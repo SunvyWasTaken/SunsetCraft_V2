@@ -40,5 +40,5 @@ public:
     bool bIsDirty = true;
     std::array<BlockId, SIZE_X * (SIZE_Y * 2) * SIZE_Z> m_Blocks;
 
-    ChunkRegistry* m_Registry;
+    ChunkRegistry* m_Registry = nullptr;
 };

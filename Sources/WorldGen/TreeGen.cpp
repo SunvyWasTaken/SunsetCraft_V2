@@ -4,10 +4,19 @@
 
 #include "TreeGen.h"
 
+#include "HeightGen.h"
+#include "LandGen.h"
+#include "WaterGen.h"
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
 namespace
 {
     constexpr int TreeMinHeight = 10;
     constexpr int TrunkHeight = 4;
+    constexpr int LeafRadius = 2;
 
     struct TreeSettings
     {
@@ -16,6 +25,22 @@ namespace
         // Taille d'une cellule d'arbre en blocs. Plus la valeur est grande, plus les arbres sont espacés.
         int spacing = 5;
     } TreeSettingsInstance;
+
+    struct PreTreeSource
+    {
+        explicit PreTreeSource(const glm::ivec2 sourcePosition, const int seed)
+            : chunk(sourcePosition)
+        {
+            data.seed = seed;
+
+            HeightGen{}(chunk, data);
+            LandGen{}(chunk, data);
+            WaterGen{}(chunk, data);
+        }
+
+        GeneratedChunk chunk;
+        GenerationData data;
+    };
 
     int FloorDiv(const int value, const int divisor)
     {
@@ -73,7 +98,69 @@ namespace
         return worldX == treeX && worldZ == treeZ;
     }
 
-    void PlaceTree(GeneratedChunk& chunk, const int x, const int y, const int z)
+    int WorldToChunkCoord(const int value, const int chunkSize)
+    {
+        return FloorDiv(value, chunkSize);
+    }
+
+    int WorldToLocalCoord(const int value, const int chunkCoord, const int chunkSize)
+    {
+        return value - chunkCoord * chunkSize;
+    }
+
+    int GetTreeBaseY(
+        const int worldX,
+        const int worldZ,
+        const glm::ivec2 position,
+        const GeneratedChunk& currentChunk,
+        const GenerationData& currentData,
+        std::vector<PreTreeSource>& sourceChunks,
+        const int seed)
+    {
+        const int sourceX = WorldToLocalCoord(worldX, position.x, SIZE_X);
+        const int sourceZ = WorldToLocalCoord(worldZ, position.y, SIZE_Z);
+        auto baseYOrAir = [sourceX, sourceZ](const GeneratedChunk& sourceChunk, const GenerationData& sourceData)
+        {
+            const int h = static_cast<int>(std::floor(sourceData.NoiseValue[Index(sourceX, sourceZ)]));
+            if (h <= -SIZE_Y || h > SIZE_Y)
+                return -SIZE_Y;
+
+            return sourceChunk.blocks[Index(sourceX, h - 1, sourceZ)] == BlockRegistry::GRASS ? h : -SIZE_Y;
+        };
+
+        if (position == currentChunk.position)
+            return baseYOrAir(currentChunk, currentData);
+
+        for (const PreTreeSource& source : sourceChunks)
+        {
+            if (source.chunk.position == position)
+                return baseYOrAir(source.chunk, source.data);
+        }
+
+        sourceChunks.emplace_back(position, seed);
+        const PreTreeSource& source = sourceChunks.back();
+        return baseYOrAir(source.chunk, source.data);
+    }
+
+    void SetBlockIfInside(GeneratedChunk& chunk, const int worldX, const int y, const int worldZ, const BlockId block)
+    {
+        const int lx = worldX - chunk.position.x * SIZE_X;
+        const int lz = worldZ - chunk.position.y * SIZE_Z;
+
+        if (lx < 0 || lx >= SIZE_X || y < -SIZE_Y || y >= SIZE_Y || lz < 0 || lz >= SIZE_Z)
+            return;
+
+        chunk.blocks[Index(lx, y, lz)] = block;
+    }
+
+    BlockId& BlockAtWorld(GeneratedChunk& chunk, const int worldX, const int y, const int worldZ)
+    {
+        const int lx = worldX - chunk.position.x * SIZE_X;
+        const int lz = worldZ - chunk.position.y * SIZE_Z;
+        return chunk.blocks[Index(lx, y, lz)];
+    }
+
+    void PlaceTree(GeneratedChunk& chunk, const int worldX, const int y, const int worldZ)
     {
         const BlockId wood = BlockRegistry::Get("wood");
         const BlockId leaves = BlockRegistry::Get("oak_leaf");
@@ -87,7 +174,7 @@ namespace
             if (localY >= SIZE_Y)
                 break;
 
-            chunk.blocks[Index(x, localY, z)] = i == TrunkHeight ? leaves : wood;
+            SetBlockIfInside(chunk, worldX, localY, worldZ, i == TrunkHeight ? leaves : wood);
         }
 
         const int topY = y + TrunkHeight;
@@ -103,16 +190,17 @@ namespace
             {
                 for (int dx = -radius; dx <= radius; ++dx)
                 {
-                    const int lx = x + dx;
-                    const int lz = z + dz;
-
-                    if (lx < 0 || lx >= SIZE_X || lz < 0 || lz >= SIZE_Z)
-                        continue;
-
                     if (std::abs(dx) == radius && std::abs(dz) == radius)
                         continue;
 
-                    BlockId& block = chunk.blocks[Index(lx, currentY, lz)];
+                    const int leafWorldX = worldX + dx;
+                    const int leafWorldZ = worldZ + dz;
+                    const int leafLocalX = leafWorldX - chunk.position.x * SIZE_X;
+                    const int leafLocalZ = leafWorldZ - chunk.position.y * SIZE_Z;
+                    if (leafLocalX < 0 || leafLocalX >= SIZE_X || leafLocalZ < 0 || leafLocalZ >= SIZE_Z)
+                        continue;
+
+                    BlockId& block = BlockAtWorld(chunk, leafWorldX, currentY, leafWorldZ);
                     if (block == BlockRegistry::AIR)
                         block = leaves;
                 }
@@ -123,21 +211,29 @@ namespace
 
 void TreeGen::operator()(GeneratedChunk& chunk, GenerationData& data)
 {
-    for (int z = 0; z < SIZE_Z; ++z)
+    std::vector<PreTreeSource> sourceChunks;
+
+    const int minWorldX = chunk.position.x * SIZE_X - LeafRadius;
+    const int maxWorldX = chunk.position.x * SIZE_X + SIZE_X + LeafRadius - 1;
+    const int minWorldZ = chunk.position.y * SIZE_Z - LeafRadius;
+    const int maxWorldZ = chunk.position.y * SIZE_Z + SIZE_Z + LeafRadius - 1;
+
+    for (int worldZ = minWorldZ; worldZ <= maxWorldZ; ++worldZ)
     {
-        for (int x = 0; x < SIZE_X; ++x)
+        for (int worldX = minWorldX; worldX <= maxWorldX; ++worldX)
         {
-            const int h = static_cast<int>(std::floor(data.NoiseValue[Index(x, z)]));
+            if (!IsTreeCandidate(worldX, worldZ, data.seed, TreeSettingsInstance))
+                continue;
+
+            const glm::ivec2 sourcePosition{
+                WorldToChunkCoord(worldX, SIZE_X),
+                WorldToChunkCoord(worldZ, SIZE_Z)
+            };
+            const int h = GetTreeBaseY(worldX, worldZ, sourcePosition, chunk, data, sourceChunks, data.seed);
             if (h < TreeMinHeight || h + TrunkHeight >= SIZE_Y)
                 continue;
 
-            if (chunk.blocks[Index(x, h - 1, z)] != BlockRegistry::GRASS)
-                continue;
-
-            const int worldX = chunk.position.x * SIZE_X + x;
-            const int worldZ = chunk.position.y * SIZE_Z + z;
-            if (IsTreeCandidate(worldX, worldZ, data.seed, TreeSettingsInstance))
-                PlaceTree(chunk, x, h, z);
+            PlaceTree(chunk, worldX, h, worldZ);
         }
     }
 }

@@ -8,6 +8,7 @@
 #include "HeightGen.h"
 #include "LandGen.h"
 #include "OreGen.h"
+#include "RiverGen.h"
 #include "TreeGen.h"
 #include "WaterGen.h"
 #include "../Chunk.h"
@@ -35,6 +36,7 @@ void WorldGen::Init(const int seed)
     // WorldGenLayout.emplace_back(std::make_unique<HaloGen>());
     WorldGenLayout.emplace_back(std::make_unique<HeightGen>());
     WorldGenLayout.emplace_back(std::make_unique<LandGen>());
+    WorldGenLayout.emplace_back(std::make_unique<RiverGen>());
     WorldGenLayout.emplace_back(std::make_unique<WaterGen>());
     WorldGenLayout.emplace_back(std::make_unique<TreeGen>());
     WorldGenLayout.emplace_back(std::make_unique<CaveGen>());

@@ -24,10 +24,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/Sources
 )
 
-target_link_libraries(SunsetCraft PRIVATE
-        Sunset::Engine
-)
-
 set_target_properties(SunsetCraft PROPERTIES
         PREFIX ""
         OUTPUT_NAME "SunsetCraft"

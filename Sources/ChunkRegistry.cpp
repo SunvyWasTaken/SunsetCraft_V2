@@ -4,8 +4,10 @@
 
 #include "ChunkRegistry.h"
 
+#include <algorithm>
 #include <queue>
 #include <unordered_set>
+#include <vector>
 
 #include "Chunk.h"
 #include "RaycastHit.h"
@@ -53,13 +55,22 @@ namespace
     struct ChunkJob
     {
         glm::ivec2 position{};
+        int distance2 = 0;
+    };
+
+    struct ChunkJobPriority
+    {
+        bool operator()(const ChunkJob& left, const ChunkJob& right) const
+        {
+            return left.distance2 > right.distance2;
+        }
     };
 
     std::vector<std::jthread> workers;
 
     std::mutex jobMutex;
     std::condition_variable_any jobCv;
-    std::queue<ChunkJob> jobs;
+    std::priority_queue<ChunkJob, std::vector<ChunkJob>, ChunkJobPriority> jobs;
 
     std::mutex resultMutex;
     std::queue<GeneratedChunk> results;
@@ -85,12 +96,15 @@ namespace
                 if (stopToken.stop_requested())
                     return;
 
-                job = jobs.front();
+                job = jobs.top();
                 jobs.pop();
             }
 
             GeneratedChunk generated{job.position};
             WorldGen::GenChunk(generated);
+
+            if (stopToken.stop_requested())
+                return;
 
             {
                 std::lock_guard lock(resultMutex);
@@ -99,7 +113,7 @@ namespace
         }
     }
 
-    void RequestChunkGeneration(const glm::ivec2& key)
+    void RequestChunkGeneration(const glm::ivec2& key, const int distance2)
     {
         if (chunks.contains(key))
             return;
@@ -111,13 +125,43 @@ namespace
 
         {
             std::lock_guard lock(jobMutex);
-            jobs.push(ChunkJob{ key });
+            jobs.push(ChunkJob{key, distance2});
         }
 
         jobCv.notify_one();
     }
 
-    void ConsumeGeneratedChunks()
+    void MarkLoadedNeighborsDirty(const glm::ivec2& position)
+    {
+        for (const auto& dir : dirs)
+        {
+            const auto it = chunks.find(position + dir);
+            if (it != chunks.end())
+                it->second.bIsDirty = true;
+        }
+    }
+
+    void MarkLoadedChunkDirty(const glm::ivec2& position)
+    {
+        const auto it = chunks.find(position);
+        if (it != chunks.end())
+            it->second.bIsDirty = true;
+    }
+
+    void MarkBoundaryNeighborsDirty(const glm::ivec2& chunkPosition, const glm::ivec3& localPosition)
+    {
+        if (localPosition.x == 0)
+            MarkLoadedChunkDirty(chunkPosition + glm::ivec2{-1, 0});
+        else if (localPosition.x == SIZE_X - 1)
+            MarkLoadedChunkDirty(chunkPosition + glm::ivec2{1, 0});
+
+        if (localPosition.z == 0)
+            MarkLoadedChunkDirty(chunkPosition + glm::ivec2{0, -1});
+        else if (localPosition.z == SIZE_Z - 1)
+            MarkLoadedChunkDirty(chunkPosition + glm::ivec2{0, 1});
+    }
+
+    void ConsumeGeneratedChunks(ChunkRegistry* registry)
     {
         std::queue<GeneratedChunk> localResults;
 
@@ -139,12 +183,9 @@ namespace
             auto& chunk = chunks.try_emplace(generated.position, generated.position).first->second;
             chunk.m_Blocks = std::move(generated.blocks);
             chunk.bIsDirty = true;
+            chunk.m_Registry = registry;
 
-            for (auto& dir : dirs)
-            {
-                if (chunks.contains(generated.position + dir))
-                    chunks.at(generated.position + dir).bIsDirty = true;
-            }
+            MarkLoadedNeighborsDirty(generated.position);
         }
     }
 #pragma endregion // THREAD
@@ -160,6 +201,9 @@ namespace
     void LoadChunk(const glm::ivec2& position, const std::uint8_t renderDistance, ChunkRegistry* registry)
     {
         SS_PROFILE_FUNCTION();
+        std::vector<ChunkJob> candidates;
+        candidates.reserve((renderDistance * 2 + 1) * (renderDistance * 2 + 1));
+
         for (int32_t x = position.x - renderDistance; x <= position.x + renderDistance; ++x)
         {
             for (int32_t y = position.y - renderDistance; y <= position.y + renderDistance; ++y)
@@ -171,22 +215,34 @@ namespace
                 if (chunks.contains(key))
                     continue;
 
-                const std::string fileName = std::format("{}_{}", x, y);
-                if (ChunkSave cs; Sunset::SaveSystem::Load(SAVE_PATH + fName + "/" + fileName + ".bin", cs))
-                {
-                    chunks.try_emplace(cs.position, cs.position);
-                    Chunk& chunk = chunks.at(cs.position);
-                    chunk.m_Blocks = cs.blocks;
-                    chunk.bIsDirty = true;
-                    chunk.m_Registry = registry;
+                if (dist2 > renderDistance * renderDistance)
                     continue;
-                }
 
-                if (dist2 <= renderDistance * renderDistance)
-                {
-                    RequestChunkGeneration(key);
-                }
+                candidates.push_back({key, dist2});
             }
+        }
+
+        std::ranges::sort(candidates, [](const ChunkJob& left, const ChunkJob& right)
+        {
+            return left.distance2 < right.distance2;
+        });
+
+        for (const auto& candidate : candidates)
+        {
+            const auto& key = candidate.position;
+            const std::string fileName = std::format("{}_{}", key.x, key.y);
+            if (ChunkSave cs; Sunset::SaveSystem::Load(SAVE_PATH + fName + "/" + fileName + ".bin", cs))
+            {
+                chunks.try_emplace(cs.position, cs.position);
+                Chunk& chunk = chunks.at(cs.position);
+                chunk.m_Blocks = cs.blocks;
+                chunk.bIsDirty = true;
+                chunk.m_Registry = registry;
+                MarkLoadedNeighborsDirty(cs.position);
+                continue;
+            }
+
+            RequestChunkGeneration(key, candidate.distance2);
         }
     }
 
@@ -200,6 +256,7 @@ namespace
 
             if (dx > renderDistance || dy > renderDistance)
             {
+                MarkLoadedNeighborsDirty(it->first);
                 it = chunks.erase(it);
             }
             else
@@ -212,10 +269,10 @@ namespace
     void BuildDirtyChunk()
     {
         SS_PROFILE_FUNCTION();
-        for (auto& c : chunks | std::views::values)
+        for (auto& chunk : chunks | std::views::values)
         {
-            if (c.bIsDirty)
-                c.BuildMesh();
+            if (chunk.bIsDirty)
+                chunk.BuildMesh();
         }
     }
 }
@@ -228,7 +285,8 @@ ChunkRegistry::ChunkRegistry(int seed, const std::string &folderName, uint8_t re
     m_RenderDistance = renderDistance;
     WorldGen::Init(seed);
 
-    const uint32_t threadCount = std::max(1u, std::thread::hardware_concurrency() - 1);
+    const uint32_t hardwareThreadCount = std::thread::hardware_concurrency();
+    const uint32_t threadCount = std::max(1u, hardwareThreadCount > 1 ? hardwareThreadCount - 1 : 1u);
 
     workers.reserve(threadCount);
 
@@ -236,6 +294,11 @@ ChunkRegistry::ChunkRegistry(int seed, const std::string &folderName, uint8_t re
     {
         workers.emplace_back(WorkerLoop);
     }
+}
+
+ChunkRegistry::~ChunkRegistry()
+{
+    OnEndPlay();
 }
 
 Sunset::ReflectionType ChunkRegistry::Properties()
@@ -276,6 +339,11 @@ void ChunkRegistry::OnDraw()
 
 void ChunkRegistry::OnEndPlay()
 {
+    if (m_IsShutdown)
+        return;
+
+    m_IsShutdown = true;
+
     LOG("ChunkRegistry", info, "ChunkRegistry destroy");
 
     SaveChunk();
@@ -290,7 +358,7 @@ void ChunkRegistry::OnEndPlay()
 
     {
         std::lock_guard lock(jobMutex);
-        std::queue<ChunkJob> empty;
+        std::priority_queue<ChunkJob, std::vector<ChunkJob>, ChunkJobPriority> empty;
         jobs.swap(empty);
     }
 
@@ -320,7 +388,7 @@ void ChunkRegistry::UpdatePlayerPosition(const glm::vec3 &position)
 
     UnloadChunk(positionInChunk, m_RenderDistance);
     LoadChunk(positionInChunk, m_RenderDistance, this);
-    ConsumeGeneratedChunks();
+    ConsumeGeneratedChunks(this);
     BuildDirtyChunk();
 }
 
@@ -349,6 +417,10 @@ bool ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
 
     if (!it->second.SetBlock(position, blockId))
         return false;
+
+    const glm::ivec3 localPosition = glm::ivec3{position}
+        - glm::ivec3{positionInChunk.x * SIZE_X, 0, positionInChunk.y * SIZE_Z};
+    MarkBoundaryNeighborsDirty(positionInChunk, localPosition);
 
     chunkToSave.emplace_back(it->second.m_Position, it->second.m_Blocks);
     return true;
