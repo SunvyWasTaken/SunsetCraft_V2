@@ -41,7 +41,7 @@ Inventory::Inventory()
     .Visibility(ShowInventory)
     .Child(
         SRmGUI::SNew<SRmGUI::Image>()
-        .Image(InventoryTexture->GetId()))
+        .Image(InventoryTexture->GetRendererId()))
     .Child(
         SRmGUI::SNewAssign<SRmGUI::GridPanel>(inv)
         .Padding({261.f, 83.f, 83.f, 128.f})
@@ -79,7 +79,7 @@ Inventory::Inventory()
         .Size(HotBarSize)
         .Child(
             SRmGUI::SNew<SRmGUI::Image>()
-            .Image(HotBarTexture->GetId())
+            .Image(HotBarTexture->GetRendererId())
             .Fill()
         )
         .Child(
@@ -87,7 +87,7 @@ Inventory::Inventory()
                 .Padding({5.f, 5.f, 5.f, 5.f})
         ).Child(
             SRmGUI::SNewAssign<SRmGUI::Image>(m_Indicator)
-            .Image(IndicatorTexture->GetId())
+            .Image(IndicatorTexture->GetRendererId())
             .Size({88, 88})
             .Padding({-5.f, -5.f, -5.f, -5.f})
         );

@@ -5,7 +5,6 @@
 #include "Chunk.h"
 
 #include <glm/ext/matrix_transform.hpp>
-#include <glad/glad.h>
 
 #include "ChunkRegistry.h"
 #include "DayNightCycle.h"
@@ -96,9 +95,7 @@ namespace
         if (!shadowData.enabled || shadowData.depthTexture == 0)
             return;
 
-        glActiveTexture(GL_TEXTURE0 + shadowData.textureUnit);
-        glBindTexture(GL_TEXTURE_2D, shadowData.depthTexture);
-        glActiveTexture(GL_TEXTURE0);
+        Sunset::RenderCommand::BindTexture(shadowData.depthTexture, shadowData.textureUnit);
     }
 
     glm::ivec3 FaceAxisU(const int side)
@@ -185,8 +182,11 @@ void Chunk::DrawShadowDepth(const Sunset::Shader& shadowShader) const
     const glm::mat4 model = glm::translate(glm::mat4{1.0f}, {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z});
     shadowShader.SetMat4("model", model);
 
-    glBindVertexArray(m_Drawable->m_Mesh->GetVAO());
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, m_Drawable->m_Mesh->GetVertexCount());
+    Sunset::RenderState state;
+    state.DrawInstance = true;
+    state.nbrInstance = 6;
+    state.HasIndice = false;
+    Sunset::RenderCommand::DrawMesh(*m_Drawable->m_Mesh, state);
 }
 
 void Chunk::SetWaterTime(const float time)

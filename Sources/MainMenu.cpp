@@ -57,7 +57,7 @@ void MainMenu::Init()
             SRmGUI::SNew<SRmGUI::Image>()
             .Position((setting.WindowSize/2) - (LogoSize / 2) - glm::ivec2{0, 120})
             .Size(LogoSize)
-            .Image(m_Image->GetId())
+            .Image(m_Image->GetRendererId())
             )
         .Child(
             SRmGUI::SNew<SRmGUI::VerticalBox>()
