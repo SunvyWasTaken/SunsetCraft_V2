@@ -22,6 +22,7 @@
 #include "GameFramework/World/Entity.h"
 #include "Inventory/Inventory.h"
 #include "Network/NetworkService.h"
+#include "Player/MovementComponent.h"
 #include "Player/PlayerScript.h"
 #include "Registry/ItemRegistry.h"
 #include "Registry/RegistryLoader.h"
@@ -36,7 +37,7 @@ namespace
 
     // std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
-    constexpr int ShadowResolution = 4096;
+    constexpr int ShadowResolution = 1024;
 
     std::unique_ptr<Sunset::Texture> crosshairTex = nullptr;
 }
@@ -72,6 +73,7 @@ void GameLayer::Init()
     Layer::Init();
 
     GetWorld()->AddSystem<ChunkRegistrySystem>();
+    GetWorld()->AddSystem<MovementSystem>();
 
     player = GetGameInstance()->m_ActiveWorld->CreateEntity("Player");
     player.AddComponent<Sunset::TransformComponent>();
@@ -81,6 +83,8 @@ void GameLayer::Init()
     }
     player.AddComponent<Sunset::CameraComponent>().Activate(true);
     player.AddComponent<Sunset::InputComponent>();
+    player.AddComponent<MovementComponent>();
+    player.AddComponent<PhysicsComponent>();
     player.AddComponent<Sunset::NativeScriptComponent>().Bind<PlayerScript>();
     auto& inventory = player.AddComponent<Inventory>();
     std::uint8_t renderDistance = 16;

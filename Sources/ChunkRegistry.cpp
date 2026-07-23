@@ -410,6 +410,15 @@ BlockId ChunkRegistry::GetBlock(const glm::vec3 &position)
     return it->second.GetBlock(position);
 }
 
+bool ChunkRegistry::IsChunkLoadedAt(const glm::vec3& position) const
+{
+    const glm::ivec2 positionInChunk{
+        WorldToChunk(position.x, SIZE_X),
+        WorldToChunk(position.z, SIZE_Z)};
+
+    return chunks.contains(positionInChunk);
+}
+
 bool ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
 {
     const glm::ivec2 positionInChunk{

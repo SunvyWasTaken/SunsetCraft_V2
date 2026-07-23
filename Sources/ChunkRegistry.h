@@ -34,6 +34,9 @@ public:
     [[nodiscard]]
     BlockId GetBlock(const glm::vec3& position);
 
+    [[nodiscard]]
+    bool IsChunkLoadedAt(const glm::vec3& position) const;
+
     bool SetBlock(const glm::vec3& position, BlockId blockId);
 
     void DrawChunk(const Sunset::Camera& camera);

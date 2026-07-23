@@ -11,6 +11,7 @@
 #include "../../SunsetEngine/Engine/Render/Core/RenderCommand.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "Inventory/Inventory.h"
+#include "Player/MovementComponent.h"
 #include "Registry/BlockRegistry.h"
 
 namespace
@@ -163,28 +164,50 @@ void PlayerScript::OnUpdate(float dt)
 
     auto* transform = GetComponent<Sunset::TransformComponent>();
     auto* input = GetComponent<Sunset::InputComponent>();
+    auto* movement = GetComponent<MovementComponent>();
 
     if (!transform || !input)
         return;
 
     glm::vec3 deltaPos{0, 0, 0};
+
+    glm::vec3 moveForward = transform->GetForwardVector();
+    moveForward.y = 0.0f;
+    if (glm::length(moveForward) > 0.0f)
+        moveForward = glm::normalize(moveForward);
+
+    glm::vec3 right = transform->GetRightVector();
+    right.y = 0.0f;
+    if (glm::length(right) > 0.0f)
+        right = glm::normalize(right);
+
     if (input->IsActionDown(MoveForward))
-        deltaPos += transform->GetForwardVector();
+        deltaPos += moveForward;
     if (input->IsActionDown(MoveBackward))
-        deltaPos -= transform->GetForwardVector();
+        deltaPos -= moveForward;
     if (input->IsActionDown(MoveLeft))
-        deltaPos -= transform->GetRightVector();
+        deltaPos -= right;
     if (input->IsActionDown(MoveRight))
-        deltaPos += transform->GetRightVector();
-    if (input->IsActionDown(MoveUp))
-        deltaPos += glm::vec3(0, 1, 0);
-    if (input->IsActionDown(MoveDown))
-        deltaPos += glm::vec3(0, -1, 0);
+        deltaPos += right;
 
-    if (glm::length(deltaPos) > 0)
-        deltaPos = glm::normalize(deltaPos);
+    if (movement)
+    {
+        movement->MaxSpeed = speed;
 
-    transform->AddLocation(deltaPos * speed * dt);
+        if (movement->bFlyMode)
+        {
+            if (input->IsActionDown(MoveUp))
+                deltaPos += glm::vec3(0, 1, 0);
+            if (input->IsActionDown(MoveDown))
+                deltaPos += glm::vec3(0, -1, 0);
+        }
+        else if (input->IsActionPressed(MoveUp))
+        {
+            movement->RequestJump();
+        }
+
+        movement->SetMoveIntent(deltaPos);
+    }
 
     transform->Rotate(-transform->GetRightVector(), input->MoveY() * MouseSpeed);
     transform->Rotate({0, -1, 0}, input->MoveX() * MouseSpeed);
