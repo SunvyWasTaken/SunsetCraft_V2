@@ -8,7 +8,6 @@
 
 #include "ChunkRegistry.h"
 #include "DayNightCycle.h"
-#include "ShadowMap.h"
 #include "Registry/TextureRegistry.h"
 #include "Render/Resources/Drawable.h"
 #include "Render/Resources/Material.h"
@@ -90,7 +89,7 @@ namespace
             drawable.m_Material->m_Textures.emplace_back(TextureBlockRegistry::GetTexture());
     }
 
-    void BindShadowMap(const ShadowRenderData& shadowData)
+    void BindShadowMap(const Sunset::ShadowRenderData& shadowData)
     {
         if (!shadowData.enabled || shadowData.depthTexture == 0)
             return;
@@ -142,10 +141,10 @@ Chunk::~Chunk()
 
 void Chunk::Draw() const
 {
-    Draw(ShadowRenderData{});
+    Draw(Sunset::ShadowRenderData{});
 }
 
-void Chunk::Draw(const ShadowRenderData& shadowData) const
+void Chunk::Draw(const Sunset::ShadowRenderData& shadowData) const
 {
     glm::mat4 model = glm::translate(glm::mat4{1.0f}, {m_Position.x * SIZE_X, 0, m_Position.y * SIZE_Z});
     BindShadowMap(shadowData);

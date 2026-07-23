@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "ShadowMap.h"
 #include "Sky.h"
 #include "Core/Layer.h"
+#include "Render/Pipeline/ShadowPass.h"
 
 namespace Sunset
 {
@@ -36,5 +36,5 @@ public:
     bool OnEvent(const Sunset::Event::Type& event) override;
 private:
     SkyCubed m_Sky;
-    ShadowMap m_ShadowMap;
+    Sunset::ShadowPass m_ShadowPass;
 };

@@ -11,7 +11,6 @@
 
 #include "Chunk.h"
 #include "RaycastHit.h"
-#include "ShadowMap.h"
 #include "GameFramework/Components/CameraComponent.h"
 #include "GameFramework/Components/TransformComponent.h"
 #include "Math/AABB.h"
@@ -329,10 +328,10 @@ void ChunkRegistry::Update(float dt)
 
 void ChunkRegistry::OnDraw()
 {
-    OnDraw(ShadowRenderData{});
+    OnDraw(Sunset::ShadowRenderData{});
 }
 
-void ChunkRegistry::OnDraw(const ShadowRenderData& shadowData)
+void ChunkRegistry::OnDraw(const Sunset::ShadowRenderData& shadowData)
 {
     // todo : this is a temporary solution.
     auto* cam = GetComponent<Sunset::CameraComponent>();
@@ -434,10 +433,10 @@ bool ChunkRegistry::SetBlock(const glm::vec3 &position, BlockId blockId)
 
 void ChunkRegistry::DrawChunk(const Sunset::Camera& camera)
 {
-    DrawChunk(camera, ShadowRenderData{});
+    DrawChunk(camera, Sunset::ShadowRenderData{});
 }
 
-void ChunkRegistry::DrawChunk(const Sunset::Camera& camera, const ShadowRenderData& shadowData)
+void ChunkRegistry::DrawChunk(const Sunset::Camera& camera, const Sunset::ShadowRenderData& shadowData)
 {
     SS_PROFILE_FUNCTION();
     for (const auto &c: chunks | std::views::values)

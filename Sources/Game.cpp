@@ -36,11 +36,20 @@ namespace
 
     // std::unique_ptr<Sunset::Drawable> BlockHandDrawable = nullptr;
 
+    constexpr int ShadowResolution = 4096;
+
     std::unique_ptr<Sunset::Texture> crosshairTex = nullptr;
 }
 
 GameLayer::GameLayer(WorldParam param)
     : Layer()
+    , m_ShadowPass({
+        .size = ShadowResolution,
+        .distance = 128.0f,
+        .lightHeight = 180.0f,
+        .vertexShaderPath = SHADERS_PATH "ShadowChunk.vert",
+        .fragmentShaderPath = SHADERS_PATH "ShadowDepth.frag"
+    })
 {
     m_Param = param;
 
@@ -140,9 +149,12 @@ void GameLayer::OnDraw()
     auto* chunk = player.GetComponent<ChunkRegistry>();
     const glm::vec3 playerLocation = player.GetComponent<Sunset::TransformComponent>()->GetLocation();
 
-    m_ShadowMap.Render(playerLocation, DayNightCycle::GetSunDirection(), *chunk);
-    const ShadowRenderData shadowData = m_ShadowMap.GetRenderData();
-    m_ShadowMap.BindForRead(shadowData.textureUnit);
+    m_ShadowPass.Render(playerLocation, DayNightCycle::GetSunDirection(), [chunk](const Sunset::Shader& shadowShader)
+    {
+        chunk->DrawShadowDepth(shadowShader);
+    });
+    const Sunset::ShadowRenderData shadowData = m_ShadowPass.GetRenderData();
+    m_ShadowPass.BindForRead(shadowData.textureUnit);
 
     m_Sky.Draw();
     chunk->OnDraw(shadowData);

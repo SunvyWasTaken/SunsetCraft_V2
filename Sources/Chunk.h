@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Registry/BlockRegistry.h"
+#include "Render/Pipeline/ShadowPass.h"
 
 #define SIZE_X 16
 #define SIZE_Y 255
@@ -18,8 +19,6 @@ namespace Sunset
     class Shader;
 }
 
-struct ShadowRenderData;
-
 class Chunk
 {
 public:
@@ -28,7 +27,7 @@ public:
     ~Chunk();
 
     void Draw() const;
-    void Draw(const ShadowRenderData& shadowData) const;
+    void Draw(const Sunset::ShadowRenderData& shadowData) const;
     void DrawShadowDepth(const Sunset::Shader& shadowShader) const;
 
     BlockId GetBlock(const glm::vec3& position) const;
