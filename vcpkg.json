@@ -8,6 +8,11 @@
     "glad",
     "glfw3",
     "glm",
+    "vulkan",
+    {
+      "name" : "vulkan-loader",
+      "features" : [ "xcb", "xlib", "wayland" ]
+    },
     {
       "name" : "imgui",
       "features" : [ "glfw-binding", "opengl3-binding", "docking-experimental" ]

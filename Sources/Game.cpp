@@ -115,7 +115,7 @@ void GameLayer::Init()
         .Position({0, 0})
         .Anchors({0.5f, 0.5f}, {0.5f, 0.5f})
         .Size(crossSize)
-        .Image(crosshairTex->GetRendererId());
+        .Image(crosshairTex->GetRendererId().id);
 
     panel->AddChild(cross);
     panel->AddChild(inventory.m_Inventory);

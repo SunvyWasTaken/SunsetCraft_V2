@@ -99,7 +99,7 @@ void BlockIconRender::Destroy()
 
 std::uint32_t BlockIconRender::GetTexture()
 {
-    return TextureID ? TextureID->GetRendererId() : 0;
+    return TextureID ? TextureID->GetRendererId().id : 0;
 }
 
 glm::vec4 BlockIconRender::GetIconUv(Item::Id id)

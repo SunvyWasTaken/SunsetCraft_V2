@@ -91,7 +91,7 @@ namespace
 
     void BindShadowMap(const Sunset::ShadowRenderData& shadowData)
     {
-        if (!shadowData.enabled || shadowData.depthTexture == 0)
+        if (!shadowData.enabled || !shadowData.depthTexture)
             return;
 
         Sunset::RenderCommand::BindTexture(shadowData.depthTexture, shadowData.textureUnit);
